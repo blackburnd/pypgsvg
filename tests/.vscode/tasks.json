@@ -1,0 +1,109 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Tests with Coverage",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"--cov=src",
+				"--cov-report=html",
+				"--cov-report=term-missing",
+				"-v"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Run Unit Tests Only",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"-m",
+				"unit",
+				"-v"
+			],
+			"group": "test",
+			"problemMatcher": ["$python"]
+		},
+		{
+			"label": "Run Integration Tests Only", 
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"-m",
+				"integration",
+				"-v"
+			],
+			"group": "test",
+			"problemMatcher": ["$python"]
+		},
+		{
+			"label": "Run Quick Tests (No Coverage)",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"-x",
+				"-v"
+			],
+			"group": "test",
+			"problemMatcher": ["$python"]
+		},
+		{
+			"label": "Generate Coverage Report Only",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"--cov=src",
+				"--cov-report=html",
+				"--cov-report=xml",
+				"--cov-only"
+			],
+			"group": "test",
+			"problemMatcher": ["$python"]
+		},
+		{
+			"label": "Install Dependencies",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"-m",
+				"pip",
+				"install",
+				"-r",
+				"requirements.txt"
+			],
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Main Application",
+			"type": "shell",
+			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
+			"args": [
+				"src/create_graph.py"
+			],
+			"group": "build",
+			"problemMatcher": ["$python"]
+		}
+	]
+}

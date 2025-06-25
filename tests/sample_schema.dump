@@ -1,0 +1,32 @@
+-- Sample SQL dump for testing
+CREATE TABLE users (
+    id integer NOT NULL,
+    username character varying(50) NOT NULL,
+    email character varying(100),
+    created_at timestamp without time zone DEFAULT now()
+);
+
+CREATE TABLE posts (
+    id integer NOT NULL,
+    title character varying(200) NOT NULL,
+    content text,
+    user_id integer,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+CREATE TABLE comments (
+    id integer NOT NULL,
+    post_id integer,
+    user_id integer,
+    content text NOT NULL,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+ALTER TABLE ONLY posts
+    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_post_id_fkey FOREIGN KEY (post_id) REFERENCES posts(id);
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);

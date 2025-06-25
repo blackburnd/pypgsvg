@@ -1,0 +1,40 @@
+// Database ERD
+digraph {
+	concentrate=true esep=4.5 nodesep=5 normalize=true pack=true packmode=array pathsep=2.5 rank=BT ranksep=2.5
+	users [label="{<table_header> users | <id> id (integer)  | <username> username (character varying(50))  | <email> email (character varying(100))  | <created_at> created_at (timestamp without time zone) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="users
+id integer NOT NULL
+username character varying(50) NOT NULL
+email character varying(100)
+created_at timestamp without time zone DEFAULT now()"]
+	posts [label="{<table_header> posts | <id> id (integer)  | <title> title (character varying(200))  | <content> content (text)  | <user_id> user_id  (integer) -FK- | <created_at> created_at (timestamp without time zone) }" fillcolor="#264653" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="posts
+id integer NOT NULL
+title character varying(200) NOT NULL
+content text
+user_id integer
+created_at timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+"]
+	comments [label="{<table_header> comments | <id> id (integer)  | <post_id> post_id  (integer) -FK- | <user_id> user_id  (integer) -FK- | <content> content (text)  | <created_at> created_at (timestamp without time zone) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="comments
+id integer NOT NULL
+post_id integer
+user_id integer
+content text NOT NULL
+created_at timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_post_id_fkey FOREIGN KEY (post_id) REFERENCES posts(id);
+
+
+ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);
+"]
+	users:<id> -> posts:<user_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#90BE6D:#264653" dir=both fillcolor="#90BE6D" headtooltip="ALTER TABLE ONLY posts
+    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY posts
+    ADD CONSTRAINT posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);" weight=2.5]
+	posts:<id> -> comments:<post_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#264653:#F9C74F" dir=both fillcolor="#264653" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	users:<id> -> comments:<user_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#90BE6D:#F9C74F" dir=both fillcolor="#90BE6D" headtooltip="ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);" weight=2.5]
+}
