@@ -13,19 +13,46 @@ A Python application that parses SQL dump files and generates Entity Relationshi
 
 ## Installation
 
-1. Install required dependencies:
+1. Install pypgsvg:
+
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 2. Ensure Graphviz is installed on your system:
    - **macOS**: `brew install graphviz`
    - **Ubuntu/Debian**: `sudo apt-get install graphviz`
-   - **Windows**: Download from https://graphviz.org/download/
+   - **Windows**: Download from <https://graphviz.org/download/>
 
 ## Usage
 
 ### Basic Usage
+
+Generate an ERD from your SQL dump file:
+
+```bash
+pypgsvg your_database.sql
+```
+
+This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
+
+### Advanced Usage
+
+Specify a custom output filename:
+
+```bash
+pypgsvg your_database.sql --output custom_diagram.svg
+```
+
+View the diagram immediately after generation:
+
+```bash
+pypgsvg your_database.sql --view
+```
+
+### Python API Usage
+
+For programmatic use:
 
 ```python
 from src.create_graph import parse_sql_dump, generate_erd_with_graphviz
@@ -44,14 +71,6 @@ if not errors:
 else:
     print("Parsing errors found:", errors)
 ```
-
-### Command Line Usage
-
-```bash
-python src/create_graph.py
-```
-
-Note: Update the `sql_file_path` variable in the `__main__` section to point to your SQL dump file.
 
 ## Testing
 
@@ -75,7 +94,7 @@ open htmlcov/index.html  # View coverage report
 
 ## Project Structure
 
-```
+```text
 ├── src/
 │   └── create_graph.py          # Main application code
 ├── tests/
@@ -94,6 +113,7 @@ open htmlcov/index.html  # View coverage report
 ### Table Exclusion
 
 The application automatically excludes tables matching certain patterns (defined in `should_exclude_table`):
+
 - Views (`vw_`)
 - Backup tables (`bk`)
 - Temporary fix tables (`fix`)
@@ -120,6 +140,7 @@ The ERD uses an accessible color palette with automatic contrast calculation for
 ## Error Handling
 
 The application includes comprehensive error handling for:
+
 - Malformed SQL syntax
 - Missing table references in foreign keys
 - Unicode encoding issues
