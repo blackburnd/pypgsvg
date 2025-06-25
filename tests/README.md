@@ -1,14 +1,15 @@
-# Python ERD Generator
+# Python Postgres ERD Generator
 
-A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
+Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres schema dump file.
 
 ## Features
 
-- Parse PostgreSQL dump files to extract table definitions and relationships
+- Parse PostgreSQL schema dump file to extract table definitions and relationships
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette
 - Support for complex SQL structures including foreign keys, constraints, and various data types
 - Table filtering to exclude temporary/utility tables
+- MouseOver for extra information on paths, and entities.
 - Comprehensive test suite with >90% code coverage
 
 ## Installation
@@ -42,7 +43,7 @@ This will create an SVG file with the same name as your input file (e.g., `your_
 
 Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
 
-![Sample ERD](../Samples/sample_schema_erd.svg)
+![Sample ERD](Samples/sample_schema_erd.svg)
 
 The diagram shows:
 
