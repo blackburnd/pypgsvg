@@ -36,6 +36,25 @@ pypgsvg your_database.sql
 
 This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
 
+### Example Output
+
+Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
+
+![Sample ERD](sample_schema_erd.svg)
+
+The diagram shows:
+
+- **Tables** as nodes with their column definitions
+- **Foreign key relationships** as directed edges between tables
+- **Automatic color coding** for visual distinction
+- **Accessible color palette** with proper contrast for readability
+
+This example demonstrates a typical blog schema where:
+
+- Users can create multiple posts
+- Posts can have multiple comments
+- Comments belong to both a post and a user
+
 ### Advanced Usage
 
 Specify a custom output filename:
