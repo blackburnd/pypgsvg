@@ -15,14 +15,14 @@ def read_readme():
     return "A PostgreSQL database schema to SVG ERD generator"
 
 setup(
-    name="pypgsvg-erd-generator",
+    name="pypgsvg",
     version="1.0.0",
     author="Daniel Blackburn",
-    author_email="your.email@example.com",  # Update with your email
+    author_email="daniel@example.com",
     description="Generate SVG Entity Relationship Diagrams from PostgreSQL database dumps",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/pypgsvg",  # Update with your repo URL
+    url="https://github.com/danielblackburn/pypgsvg",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
@@ -69,8 +69,8 @@ setup(
     zip_safe=False,
     keywords="postgresql database erd diagram svg graphviz schema visualization",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/pypgsvg/issues",
-        "Source": "https://github.com/yourusername/pypgsvg",
-        "Documentation": "https://github.com/yourusername/pypgsvg#readme",
+        "Bug Reports": "https://github.com/danielblackburn/pypgsvg/issues",
+        "Source": "https://github.com/danielblackburn/pypgsvg",
+        "Documentation": "https://github.com/danielblackburn/pypgsvg#readme",
     },
 )
