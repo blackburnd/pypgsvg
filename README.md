@@ -54,7 +54,7 @@ For more complex databases, pypgsvg can handle extensive schemas with many table
 
 *View the interactive SVG diagrams:*
 
-- [Simple Blog Schema Example](Samples/sample_schema_erd.svg)
+- [Simple Schema Example](Samples/sample_schema_erd.svg)
 - [Complex Database Schema Example](Samples/schema_erd.svg)
 
 The diagram shows:
