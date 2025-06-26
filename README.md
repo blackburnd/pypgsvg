@@ -40,7 +40,22 @@ This will create an SVG file with the same name as your input file (e.g., `your_
 
 Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
 
-![Sample ERD](sample_schema_erd.svg)
+[![Sample ERD](Samples/sample_schema_erd.svg)](Samples/sample_schema_erd.svg)
+
+*Simple Blog Schema - showing basic relationships between users, posts, and comments*
+
+---
+
+For more complex databases, pypgsvg can handle extensive schemas with many tables and relationships:
+
+[![Complex Database Schema](Samples/example.png)](Samples/schema_erd.svg)
+
+*Complex Database Schema - demonstrating pypgsvg's ability to visualize large, real-world database structures*
+
+*View the interactive SVG diagrams:*
+
+- [Simple Blog Schema Example](Samples/sample_schema_erd.svg)
+- [Complex Database Schema Example](Samples/schema_erd.svg)
 
 The diagram shows:
 
