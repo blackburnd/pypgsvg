@@ -1,0 +1,1984 @@
+// Database ERD
+digraph {
+	concentrate=true esep=4.5 nodesep=5 normalize=true pack=true packmode=array pathsep=2.5 rank=BT ranksep=2.5
+	"public.activation_details" [label="{<table_header> public.activation_details | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <activation_id> activation_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.activation_details
+id integer NOT NULL
+player_id integer
+activation_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.activation_details
+    ADD CONSTRAINT activation_details_activation_id_fkey FOREIGN KEY (activation_id) REFERENCES public.activation_states(id);
+"]
+	"public.activation_states" [label="{<table_header> public.activation_states | <id> id  (integer) -FK- | <activation_id> activation_id  (integer) -FK- | <activation_title> activation_title (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.activation_states
+id integer NOT NULL
+activation_id integer
+activation_title character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.activation_details
+    ADD CONSTRAINT activation_details_activation_id_fkey FOREIGN KEY (activation_id) REFERENCES public.activation_states(id);
+"]
+	"public.assoc_course_types" [label="{<table_header> public.assoc_course_types | <id> id  (integer) -FK- | <title> title (character varying(255))  | <description> description (character varying(255))  | <association_id> association_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.assoc_course_types
+id integer NOT NULL
+title character varying(255)
+description character varying(255)
+association_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.assoc_franchise_gp_map" [label="{<table_header> public.assoc_franchise_gp_map | <gp_id> gp_id  (integer) -FK- | <association_id> association_id  (integer) -FK-}" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.assoc_franchise_gp_map
+gp_id integer NOT NULL
+association_id integer NOT NULL
+
+ALTER TABLE ONLY public.assoc_franchise_gp_map
+    ADD CONSTRAINT assoc_franchise_gp_map_gp_id_fkey FOREIGN KEY (gp_id) REFERENCES public.franchise_gp(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.assoc_franchise_type_map" [label="{<table_header> public.assoc_franchise_type_map | <type_id> type_id  (integer) -FK- | <association_id> association_id  (integer) -FK-}" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.assoc_franchise_type_map
+type_id integer NOT NULL
+association_id integer NOT NULL
+
+ALTER TABLE ONLY public.assoc_franchise_type_map
+    ADD CONSTRAINT assoc_franchise_type_map_type_id_fkey FOREIGN KEY (type_id) REFERENCES public.franchise_type(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.assoc_quest_types" [label="{<table_header> public.assoc_quest_types | <id> id  (integer) -FK- | <title> title (character varying(255))  | <description> description (character varying(255))  | <association_id> association_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <learning_path_id> learning_path_id (character varying(255))  | <proctor_options> proctor_options (character varying(16)[]) }" fillcolor="#F9844A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.assoc_quest_types
+id integer NOT NULL
+title character varying(255)
+description character varying(255)
+association_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+learning_path_id character varying(255)
+proctor_options character varying(16)[]
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.association_map" [label="{<table_header> public.association_map | <id> id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <quest_id> quest_id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <login_sequence_id> login_sequence_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.association_map
+id integer NOT NULL
+association_id integer
+franchise_id integer
+quest_id integer
+player_id integer
+product_id integer
+login_sequence_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.product_login_sequence_step
+    ADD CONSTRAINT product_login_sequence_step_login_sequence_id_fkey FOREIGN KEY (login_sequence_id) REFERENCES public.product_login_sequence(id) ON DELETE CASCADE;
+"]
+	"public.associations" [label="{<table_header> public.associations | <id> id  (integer) -FK- | <association_id> association_id  (character varying) -FK- | <association_title> association_title (character varying)  | <address> address (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <prc_address> prc_address (character varying(255))  | <crm_address> crm_address (character varying(255))  | <chooser_address> chooser_address (character varying(255))  | <email_from_address> email_from_address (character varying(255))  | <global_bcc> global_bcc (character varying(255))  | <ecom_bcc> ecom_bcc (character varying(255))  | <ecom_error_email> ecom_error_email (character varying(255))  | <business_owner_email> business_owner_email (character varying(255))  | <assoc_support_email> assoc_support_email (character varying(255))  | <inventory_updated_roles> inventory_updated_roles (character varying[])  | <lac_address> lac_address (character varying(255))  | <help_url_en> help_url_en (character varying(255))  | <help_url_fr> help_url_fr (character varying(255))  | <prc_groups_merged> prc_groups_merged (boolean)  | <system_error_email> system_error_email (character varying(255))  | <ws_test_uri> ws_test_uri (character varying(255))  | <customercare_phone> customercare_phone (character varying)  | <customercare_email> customercare_email (character varying)  | <ecom_store_url> ecom_store_url (character varying)  | <allow_deep_links> allow_deep_links (boolean)  | <languages> languages (character varying[]) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.associations
+id integer NOT NULL
+association_id character varying
+association_title character varying
+address character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+prc_address character varying(255) DEFAULT ''::character varying
+crm_address character varying(255) DEFAULT ''::character varying
+chooser_address character varying(255) DEFAULT ''::character varying
+email_from_address character varying(255) DEFAULT ''::character varying
+global_bcc character varying(255) DEFAULT ''::character varying
+ecom_bcc character varying(255) DEFAULT ''::character varying
+ecom_error_email character varying(255) DEFAULT ''::character varying
+business_owner_email character varying(255)
+assoc_support_email character varying(255)
+inventory_updated_roles character varying[]
+lac_address character varying(255)
+help_url_en character varying(255) DEFAULT NULL::character varying
+help_url_fr character varying(255) DEFAULT NULL::character varying
+prc_groups_merged boolean DEFAULT false
+system_error_email character varying(255)
+ws_test_uri character varying(255)
+customercare_phone character varying
+customercare_email character varying
+ecom_store_url character varying
+allow_deep_links boolean DEFAULT false
+languages character varying[]
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.ceu" [label="{<table_header> public.ceu | <id> id  (integer) -FK- | <provider_id> provider_id  (integer) -FK- | <parent_id> parent_id  (integer) -FK- | <title> title (character varying)  | <author> author (character varying)  | <employer> employer (character varying)  | <organization> organization (character varying)  | <job_title> job_title (character varying)  | <other_provider> other_provider (character varying)  | <content_areas> content_areas (character varying[])  | <description> description (character varying)  | <start_date> start_date (date)  | <end_date> end_date (date)  | <url> url (character varying)  | <contact_name> contact_name (character varying)  | <contact_email> contact_email (character varying)  | <contact_phone> contact_phone (character varying)  | <credits> credits (double precision)  | <category> category (character varying)  | <publication_year> publication_year (character varying)  | <recertification_date> recertification_date (date)  | <created> created (timestamp without time zone) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.ceu
+id integer NOT NULL
+provider_id integer
+parent_id integer NOT NULL
+title character varying
+author character varying
+employer character varying
+organization character varying
+job_title character varying
+other_provider character varying
+content_areas character varying[]
+description character varying
+start_date date
+end_date date
+url character varying
+contact_name character varying
+contact_email character varying
+contact_phone character varying
+credits double precision
+category character varying
+publication_year character varying
+recertification_date date
+created timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.ceu_container(id) ON DELETE CASCADE;
+"]
+	"public.ceu_container" [label="{<table_header> public.ceu_container | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <status> status (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <renewal_date> renewal_date (date) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.ceu_container
+id integer NOT NULL
+player_id integer
+product_id integer
+status character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+renewal_date date
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.ceu_provider" [label="{<table_header> public.ceu_provider | <id> id  (integer) -FK- | <title> title (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.ceu_provider
+id integer NOT NULL
+title character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.ceu_provider_assoc_map" [label="{<table_header> public.ceu_provider_assoc_map | <id> id  (integer) -FK- | <provider_id> provider_id  (integer) -FK- | <association_id> association_id  (integer) -FK-}" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.ceu_provider_assoc_map
+id integer NOT NULL
+provider_id integer
+association_id integer
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.course_types" [label="{<table_header> public.course_types | <id> id  (integer) -FK- | <title> title (character varying)  | <description> description (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.course_types
+id integer NOT NULL
+title character varying
+description character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.ecommerce" [label="{<table_header> public.ecommerce | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <xml_payload> xml_payload (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.ecommerce
+id integer NOT NULL
+player_id integer
+franchise_id integer
+xml_payload character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+"]
+	"public.global" [label="{<table_header> public.global | <id> id  (integer) -FK- | <great_plains_url> great_plains_url (character varying(255))  | <great_plains_error_email> great_plains_error_email (character varying(255))  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.global
+id integer NOT NULL
+great_plains_url character varying(255)
+great_plains_error_email character varying(255)
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.gp_log" [label="{<table_header> public.gp_log | <id> id  (integer) -FK- | <request> request (text)  | <response> response (text)  | <status> status (character varying(10))  | <msg> msg (character varying)  | <upload_type> upload_type (character varying(25))  | <actor> actor (character varying(25))  | <player_id> player_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.gp_log
+id integer NOT NULL
+request text
+response text
+status character varying(10)
+msg character varying
+upload_type character varying(25)
+actor character varying(25)
+player_id integer
+product_id integer
+franchise_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+"]
+	"public.history" [label="{<table_header> public.history | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <matches> matches (integer)  | <timestamp> timestamp (timestamp without time zone)  | <association_id> association_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <filename> filename (character varying(50))  | <actor> actor (character varying)  | <action> action (character varying(255)) }" fillcolor="#4D908E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.history
+id integer NOT NULL
+franchise_id integer
+matches integer DEFAULT 0
+\"timestamp\" timestamp without time zone DEFAULT now()
+association_id integer
+product_id integer
+filename character varying(50)
+actor character varying
+action character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.crm_log" [label="{<table_header> public.crm_log | <id> id  (integer) -FK- | <payload_id> payload_id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <quest_id> quest_id  (integer) -FK- | <message> message (text)  | <status> status (character varying(255))  | <meeting_code> meeting_code (character varying(255))  | <player_number> player_number (character varying(255))  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <order_number> order_number (character varying(25)) }" fillcolor="#F3722C" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.crm_log
+id integer NOT NULL
+payload_id integer
+player_id integer
+quest_id integer
+message text
+status character varying(255)
+meeting_code character varying(255)
+player_number character varying(255)
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+order_number character varying(25)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.crm_log
+    ADD CONSTRAINT crm_log_payload_id_fkey FOREIGN KEY (payload_id) REFERENCES public.crm_payload(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+"]
+	"public.crm_payload" [label="{<table_header> public.crm_payload | <id> id  (integer) -FK- | <payload> payload (text)  | <status> status (character varying(255))  | <actor> actor (character varying(255))  | <upload_type> upload_type (character varying(255))  | <message> message (text)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <error_count> error_count (integer) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.crm_payload
+id integer NOT NULL
+payload text
+status character varying(255)
+actor character varying(255)
+upload_type character varying(255)
+message text
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+error_count integer DEFAULT 0 NOT NULL
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.instances" [label="{<table_header> public.instances | <instance_id> instance_id (character varying(255))  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.instances
+instance_id character varying(255)
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()"]
+	"public.marketing_tiles" [label="{<table_header> public.marketing_tiles | <id> id  (integer) -FK- | <title> title (character varying)  | <file_path> file_path (character varying)  | <address> address (character varying)  | <pre_expire_days> pre_expire_days (integer)  | <description> description (character varying)  | <included> included (character varying[])  | <excluded> excluded (character varying[])  | <association_id> association_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <target> target (character varying(8))  | <extension_sku> extension_sku (integer)  | <conditional_include> conditional_include (character varying[]) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.marketing_tiles
+id integer NOT NULL
+title character varying
+file_path character varying
+address character varying
+pre_expire_days integer
+description character varying
+included character varying[]
+excluded character varying[]
+association_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+target character varying(8) DEFAULT '_self'::character varying
+extension_sku integer
+conditional_include character varying[]
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.mceu" [label="{<table_header> public.mceu | <id> id  (integer) -FK- | <provider_id> provider_id  (integer) -FK- | <parent_id> parent_id  (integer) -FK- | <title> title (character varying)  | <other_provider> other_provider (character varying)  | <speaker> speaker (character varying)  | <credits> credits (double precision)  | <start_date> start_date (date)  | <end_date> end_date (date)  | <created> created (timestamp without time zone) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.mceu
+id integer NOT NULL
+provider_id integer NOT NULL
+parent_id integer NOT NULL
+title character varying
+other_provider character varying
+speaker character varying
+credits double precision
+start_date date
+end_date date
+created timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.ceu_container(id) ON DELETE CASCADE;
+"]
+	"public.player_details" [label="{<table_header> public.player_details | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <address_1> address_1 (character varying)  | <address_2> address_2 (character varying)  | <designation> designation (character varying)  | <job_title> job_title (character varying)  | <company_name> company_name (character varying)  | <player_number> player_number (character varying)  | <telephone1> telephone1 (character varying)  | <mobile_phone> mobile_phone (character varying)  | <fax> fax (character varying)  | <postal_code> postal_code (character varying)  | <country> country (character varying)  | <state> state (character varying)  | <city> city (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <telephone1_ext> telephone1_ext (character varying(255))  | <department> department (character varying(255))  | <opt_in> opt_in (boolean)  | <telephone2> telephone2 (character varying)  | <telephone2_ext> telephone2_ext (character varying) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_details
+id integer NOT NULL
+player_id integer
+address_1 character varying
+address_2 character varying
+designation character varying
+job_title character varying
+company_name character varying
+player_number character varying
+telephone1 character varying
+mobile_phone character varying
+fax character varying
+postal_code character varying
+country character varying
+state character varying
+city character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+telephone1_ext character varying(255)
+department character varying(255)
+opt_in boolean DEFAULT false
+telephone2 character varying
+telephone2_ext character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.player_emails_history" [label="{<table_header> public.player_emails_history | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <email_description> email_description (character varying)  | <email_type> email_type (character varying)  | <email_state> email_state (character varying)  | <email_content> email_content (character varying)  | <actor> actor (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F8961E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_emails_history
+id integer NOT NULL
+player_id integer
+email_description character varying
+email_type character varying
+email_state character varying
+email_content character varying
+actor character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.player_eula" [label="{<table_header> public.player_eula | <id> id  (integer) -FK- | <eula_id> eula_id  (integer) -FK- | <state> state (character varying(255))  | <player_id> player_id  (integer) -FK- | <msg> msg (character varying)  | <creator> creator (integer)  | <created> created (timestamp without time zone)  | <accepted> accepted (timestamp without time zone) }" fillcolor="#F8961E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_eula
+id integer NOT NULL
+eula_id integer
+state character varying(255)
+player_id integer
+msg character varying
+creator integer
+created timestamp without time zone DEFAULT now()
+accepted timestamp without time zone
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.eula_history
+    ADD CONSTRAINT eula_hist_id FOREIGN KEY (eula_id) REFERENCES public.eula(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.player_login_sequence" [label="{<table_header> public.player_login_sequence | <id> id  (integer) -FK- | <login_sequence_name> login_sequence_name  (character varying) -FK- | <player_id> player_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <completed> completed (boolean) }" fillcolor="#E9C46A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_login_sequence
+id integer NOT NULL
+login_sequence_name character varying
+player_id integer
+product_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+completed boolean DEFAULT true
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.player_login_sequence
+    ADD CONSTRAINT player_login_sequence_login_sequence_name_fkey FOREIGN KEY (login_sequence_name) REFERENCES public.product_login_sequence_step(name) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.player_franchise_contact" [label="{<table_header> public.player_franchise_contact | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <main> main (boolean)  | <marketing> marketing (boolean)  | <alternate> alternate (boolean)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F3722C" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_franchise_contact
+id integer NOT NULL
+franchise_id integer
+player_id integer
+product_id integer
+main boolean DEFAULT false
+marketing boolean DEFAULT false
+alternate boolean DEFAULT false
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.player_franchise_rank" [label="{<table_header> public.player_franchise_rank | <id> id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <rank> rank (integer)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F9844A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.player_franchise_rank
+id integer NOT NULL
+association_id integer
+franchise_id integer
+player_id integer
+rank integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.players" [label="{<table_header> public.players | <id> id  (integer) -FK- | <player_id> player_id  (character varying) -FK- | <firstname> firstname (character varying)  | <middlename> middlename (character varying)  | <lastname> lastname (character varying)  | <email> email (character varying)  | <language> language (character varying)  | <phone> phone (character varying)  | <comments> comments (character varying)  | <user_id> user_id (character varying)  | <rand_key> rand_key (character varying)  | <last_login> last_login (timestamp without time zone)  | <login_step> login_step (character varying)  | <notify> notify (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <principal_id> principal_id  (integer) -FK- | <employee_id> employee_id (character varying(255))  | <login_count> login_count (integer)  | <current_state> current_state (character varying(255))  | <crm> crm (character varying(255))  | <bio> bio (character varying) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.players
+id integer NOT NULL
+player_id character varying
+firstname character varying
+middlename character varying
+lastname character varying
+email character varying
+language character varying
+phone character varying
+comments character varying
+user_id character varying
+rand_key character varying
+last_login timestamp without time zone
+login_step character varying
+notify character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+principal_id integer
+employee_id character varying(255)
+login_count integer DEFAULT 0
+current_state character varying(255)
+crm character varying(255)
+bio character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.players_licenses" [label="{<table_header> public.players_licenses | <id> id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <product_code> product_code (character varying)  | <ecom> ecom (boolean)  | <error> error (boolean)  | <expires> expires (timestamp without time zone)  | <free_product> free_product (boolean)  | <state> state (character varying)  | <substate> substate (character varying)  | <rand_key> rand_key (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <ecom_sku> ecom_sku (character varying)  | <order_id> order_id (character varying) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.players_licenses
+id integer NOT NULL
+player_id integer
+franchise_id integer
+product_id integer
+product_code character varying
+ecom boolean
+error boolean
+expires timestamp without time zone
+free_product boolean
+state character varying
+substate character varying
+rand_key character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+ecom_sku character varying
+order_id character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.orders" [label="{<table_header> public.orders | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <comment> comment (character varying)  | <quantity> quantity (character varying)  | <sellerId> sellerId (character varying)  | <order_id> order_id (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <ecom_sku> ecom_sku (character varying) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.orders
+id integer NOT NULL
+franchise_id integer
+product_id integer
+comment character varying
+quantity character varying
+\"sellerId\" character varying
+order_id character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+ecom_sku character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.franchise_courses" [label="{<table_header> public.franchise_courses | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <url> url (character varying)  | <zip_codes> zip_codes (character varying)  | <marketing_flag> marketing_flag (boolean)  | <enable> enable (boolean)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <virtual> virtual (boolean) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.franchise_courses
+id integer NOT NULL
+franchise_id integer
+product_id integer
+url character varying
+zip_codes character varying
+marketing_flag boolean
+enable boolean
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+virtual boolean
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.franchise_gp" [label="{<table_header> public.franchise_gp | <id> id  (integer) -FK- | <gp_id> gp_id  (character varying(255)) -FK- | <description> description (character varying)  | <franchise_id> franchise_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.franchise_gp
+id integer NOT NULL
+gp_id character varying(255) NOT NULL
+description character varying
+franchise_id integer NOT NULL
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.assoc_franchise_gp_map
+    ADD CONSTRAINT assoc_franchise_gp_map_gp_id_fkey FOREIGN KEY (gp_id) REFERENCES public.franchise_gp(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+"]
+	"public.franchise_product_map" [label="{<table_header> public.franchise_product_map | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.franchise_product_map
+id integer NOT NULL
+franchise_id integer
+product_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.franchise_type" [label="{<table_header> public.franchise_type | <id> id  (integer) -FK- | <title> title (character varying)  | <group_id> group_id  (character varying) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <principal_id> principal_id  (integer) -FK-}" fillcolor="#264653" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.franchise_type
+id integer NOT NULL
+title character varying
+group_id character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+principal_id integer
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.franchises" [label="{<table_header> public.franchises | <id> id  (integer) -FK- | <franchise_id> franchise_id  (character varying) -FK- | <group_id> group_id  (character varying) -FK- | <title> title (character varying)  | <description> description (character varying)  | <contactinfo> contactinfo (character varying)  | <websiteURL> websiteURL (character varying)  | <franchiseCountry> franchiseCountry (character varying)  | <franchiseCity> franchiseCity (character varying)  | <franchiseState> franchiseState (character varying)  | <franchiseAddress> franchiseAddress (character varying)  | <franchiseZip> franchiseZip (character varying)  | <marketingZipCodes> marketingZipCodes (character varying)  | <marketingURL> marketingURL (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <address2> address2 (character varying)  | <address3> address3 (character varying)  | <franchise_type> franchise_type  (integer) -FK- | <principal_id> principal_id  (integer) -FK- | <allow_virtual_instruction> allow_virtual_instruction (boolean)  | <ignore_inventory> ignore_inventory (boolean)  | <assoc_franchise_type> assoc_franchise_type (integer) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.franchises
+id integer NOT NULL
+franchise_id character varying
+group_id character varying
+title character varying
+description character varying
+contactinfo character varying
+\"websiteURL\" character varying
+\"franchiseCountry\" character varying
+\"franchiseCity\" character varying
+\"franchiseState\" character varying
+\"franchiseAddress\" character varying
+\"franchiseZip\" character varying
+\"marketingZipCodes\" character varying
+\"marketingURL\" character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+address2 character varying
+address3 character varying
+franchise_type integer
+principal_id integer
+allow_virtual_instruction boolean DEFAULT false
+ignore_inventory boolean DEFAULT false
+assoc_franchise_type integer
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.franchises
+    ADD CONSTRAINT franchises_franchise_type_fkey FOREIGN KEY (franchise_type) REFERENCES public.franchise_type(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.proctor" [label="{<table_header> public.proctor | <id> id  (integer) -FK- | <firstname> firstname (character varying(50))  | <lastname> lastname (character varying(50))  | <email> email (character varying(50))  | <company> company (character varying(255))  | <title> title (character varying(50))  | <phone> phone (character varying(50))  | <relationship> relationship (character varying(255))  | <message> message (character varying(255))  | <invite_email_content> invite_email_content (character varying)  | <invite_created> invite_created (timestamp without time zone)  | <response_email_content> response_email_content (character varying)  | <response_created> response_created (timestamp without time zone)  | <status> status (character varying(10))  | <status_date> status_date (timestamp without time zone)  | <unlock_code> unlock_code (character varying(255))  | <rand_key> rand_key (character varying(255))  | <actor> actor (character varying)  | <player_id> player_id  (integer) -FK- | <quest_id> quest_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.proctor
+id integer NOT NULL
+firstname character varying(50)
+lastname character varying(50)
+email character varying(50)
+company character varying(255)
+title character varying(50)
+phone character varying(50)
+relationship character varying(255)
+message character varying(255)
+invite_email_content character varying
+invite_created timestamp without time zone
+response_email_content character varying
+response_created timestamp without time zone
+status character varying(10)
+status_date timestamp without time zone DEFAULT now()
+unlock_code character varying(255)
+rand_key character varying(255)
+actor character varying
+player_id integer
+quest_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+"]
+	"public.proctor_log" [label="{<table_header> public.proctor_log | <id> id  (integer) -FK- | <proctor_id> proctor_id  (integer) -FK- | <player_id> player_id  (integer) -FK- | <site_id> site_id (character varying(255))  | <exid> exid (character varying(255))  | <msg> msg (character varying)  | <action> action (character varying(15))  | <actor> actor (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.proctor_log
+id integer NOT NULL
+proctor_id integer
+player_id integer
+site_id character varying(255)
+exid character varying(255)
+msg character varying
+action character varying(15)
+actor character varying
+created timestamp without time zone
+modified timestamp without time zone
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_log
+    ADD CONSTRAINT proctor_log_proctor_id_fkey FOREIGN KEY (proctor_id) REFERENCES public.proctor(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.product_code_map" [label="{<table_header> public.product_code_map | <id> id  (integer) -FK- | <product_code> product_code (character varying)  | <product_id> product_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.product_code_map
+id integer NOT NULL
+product_code character varying
+product_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.product_kits" [label="{<table_header> public.product_kits | <id> id  (integer) -FK- | <kit_id> kit_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <description> description (character varying)  | <exp_duration> exp_duration (integer)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.product_kits
+id integer NOT NULL
+kit_id integer
+product_id integer
+description character varying
+exp_duration integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.product_kits
+    ADD CONSTRAINT product_kits_kit_id_fkey FOREIGN KEY (kit_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.product_login_sequence" [label="{<table_header> public.product_login_sequence | <id> id  (integer) -FK- | <title> title (character varying)  | <description> description (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.product_login_sequence
+id integer NOT NULL
+title character varying
+description character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.product_login_sequence_step" [label="{<table_header> public.product_login_sequence_step | <id> id  (integer) -FK- | <login_sequence_id> login_sequence_id  (integer) -FK- | <url> url (character varying)  | <title> title (character varying)  | <description> description (character varying)  | <name> name (character varying)  | <number> number (integer)  | <contentpage> contentpage (boolean)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <language> language (character varying(16)) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.product_login_sequence_step
+id integer NOT NULL
+login_sequence_id integer
+url character varying
+title character varying
+description character varying
+name character varying
+number integer
+contentpage boolean
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+language character varying(16)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.product_login_sequence_step
+    ADD CONSTRAINT product_login_sequence_step_login_sequence_id_fkey FOREIGN KEY (login_sequence_id) REFERENCES public.product_login_sequence(id) ON DELETE CASCADE;
+"]
+	"public.product_title_translation" [label="{<table_header> public.product_title_translation | <id> id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <language> language (character varying(16))  | <title> title (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.product_title_translation
+id integer NOT NULL
+product_id integer
+language character varying(16)
+title character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.products" [label="{<table_header> public.products | <id> id  (integer) -FK- | <login_sequence_id> login_sequence_id  (integer) -FK- | <product_id> product_id  (character varying) -FK- | <product_title> product_title (character varying)  | <description> description (character varying)  | <product_url> product_url (character varying)  | <invite_view> invite_view (character varying)  | <exp_duration> exp_duration (integer)  | <mapped_group> mapped_group (character varying)  | <product_version> product_version (character varying)  | <franchise_default> franchise_default (boolean)  | <learning_system> learning_system (boolean)  | <ecommerce_product> ecommerce_product (boolean)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <ignore> ignore (boolean)  | <language> language (character varying(16))  | <individual_sale> individual_sale (boolean)  | <principal_id> principal_id  (integer) -FK- | <send_ecom_receipt> send_ecom_receipt (boolean)  | <set_expire_immediately> set_expire_immediately (boolean)  | <site_product> site_product (character varying(255))  | <product_order> product_order (integer)  | <image_url> image_url (character varying(255))  | <association_id> association_id  (integer) -FK- | <dsf_parent_id> dsf_parent_id  (integer) -FK- | <requires_quest_enrollment> requires_quest_enrollment (boolean)  | <fr_product_title> fr_product_title (character varying)  | <instructor_kit> instructor_kit (boolean)  | <learning_path_id> learning_path_id (character varying(255))  | <use_lac_url> use_lac_url (boolean)  | <end_of_life> end_of_life (timestamp without time zone)  | <es_product_title> es_product_title (character varying)  | <certification_product> certification_product (boolean)  | <active> active (boolean)  | <extension_grace_period> extension_grace_period (integer)  | <license_extension_only> license_extension_only (boolean)  | <midterm_exurl> midterm_exurl (character varying(255))  | <final_exurl> final_exurl (character varying(255))  | <validate_user_data> validate_user_data (boolean)  | <requisite_products> requisite_products (integer[])  | <require_valid_requisite> require_valid_requisite (boolean) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.products
+id integer NOT NULL
+login_sequence_id integer
+product_id character varying NOT NULL
+product_title character varying
+description character varying
+product_url character varying DEFAULT ''::character varying
+invite_view character varying
+exp_duration integer
+mapped_group character varying
+product_version character varying
+franchise_default boolean
+learning_system boolean
+ecommerce_product boolean DEFAULT false
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+ignore boolean
+language character varying(16)
+individual_sale boolean
+principal_id integer
+send_ecom_receipt boolean DEFAULT true
+set_expire_immediately boolean DEFAULT false
+site_product character varying(255)
+product_order integer
+image_url character varying(255)
+association_id integer
+dsf_parent_id integer
+requires_quest_enrollment boolean DEFAULT false
+fr_product_title character varying
+instructor_kit boolean DEFAULT false
+learning_path_id character varying(255)
+use_lac_url boolean DEFAULT false
+end_of_life timestamp without time zone
+es_product_title character varying
+certification_product boolean DEFAULT false
+active boolean DEFAULT true
+extension_grace_period integer
+license_extension_only boolean
+midterm_exurl character varying(255)
+final_exurl character varying(255)
+validate_user_data boolean DEFAULT true
+requisite_products integer[]
+require_valid_requisite boolean DEFAULT false
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.product_login_sequence_step
+    ADD CONSTRAINT product_login_sequence_step_login_sequence_id_fkey FOREIGN KEY (login_sequence_id) REFERENCES public.product_login_sequence(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT dsf_parent_idx FOREIGN KEY (dsf_parent_id) REFERENCES public.products(id);
+"]
+	"public.quest_types" [label="{<table_header> public.quest_types | <id> id  (integer) -FK- | <title> title (character varying)  | <description> description (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.quest_types
+id integer NOT NULL
+title character varying
+description character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.quests" [label="{<table_header> public.quests | <id> id  (integer) -FK- | <quest_id> quest_id  (character varying) -FK- | <franchise_id> franchise_id  (integer) -FK- | <title> title (character varying)  | <description> description (character varying)  | <quest_type> quest_type  (integer) -FK- | <course_type> course_type  (integer) -FK- | <college_credit> college_credit (boolean)  | <closed> closed (boolean)  | <est_player_count> est_player_count (character varying)  | <city> city (character varying)  | <state> state (character varying)  | <country> country (character varying)  | <startDate> startDate (character varying)  | <endDate> endDate (character varying)  | <comments> comments (character varying)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <group_id> group_id  (character varying) -FK- | <principal_id> principal_id  (integer) -FK- | <access_by_quest_window> access_by_quest_window (boolean)  | <assoc_course_type> assoc_course_type (integer)  | <assoc_quest_type> assoc_quest_type (integer)  | <max_player_count> max_player_count (integer)  | <mid_exstart> mid_exstart (character varying(255))  | <mid_exend> mid_exend (character varying(255))  | <final_exstart> final_exstart (character varying(255))  | <final_exend> final_exend (character varying(255))  | <language> language (character varying(16))  | <crm> crm (character varying(255))  | <association_id> association_id  (integer) -FK-}" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.quests
+id integer NOT NULL
+quest_id character varying
+franchise_id integer
+title character varying
+description character varying
+quest_type integer
+course_type integer
+college_credit boolean
+closed boolean
+est_player_count character varying
+city character varying
+state character varying
+country character varying
+\"startDate\" character varying
+\"endDate\" character varying
+comments character varying
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+group_id character varying
+principal_id integer
+access_by_quest_window boolean DEFAULT false
+assoc_course_type integer
+assoc_quest_type integer
+max_player_count integer
+mid_exstart character varying(255)
+mid_exend character varying(255)
+final_exstart character varying(255)
+final_exend character varying(255)
+language character varying(16)
+crm character varying(255)
+association_id integer
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.quests
+    ADD CONSTRAINT quests_quest_type_fkey FOREIGN KEY (quest_type) REFERENCES public.quest_types(id);
+
+
+ALTER TABLE ONLY public.quests
+    ADD CONSTRAINT quests_course_type_fkey FOREIGN KEY (course_type) REFERENCES public.course_types(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.quests_req_lics" [label="{<table_header> public.quests_req_lics | <id> id  (integer) -FK- | <quest_id> quest_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#264653" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.quests_req_lics
+id integer NOT NULL
+quest_id integer
+product_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.templates" [label="{<table_header> public.templates | <id> id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <body> body (text)  | <cls> cls (character varying(255))  | <actor> actor (character varying(255))  | <template_id> template_id (character varying(255))  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <language> language (character varying(10)) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.templates
+id integer NOT NULL
+association_id integer
+body text
+cls character varying(255)
+actor character varying(255)
+template_id character varying(255)
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+language character varying(10) DEFAULT NULL::character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.code_profile" [label="{<table_header> public.code_profile | <id> id  (integer) -FK- | <package> package (character varying)  | <class> class (character varying)  | <function> function (character varying)  | <url> url (character varying)  | <actor> actor (character varying)  | <lifespan> lifespan (double precision)  | <hostname> hostname (character varying)  | <transaction> transaction (character varying)  | <layer> layer (integer)  | <pid> pid (integer)  | <created> created (timestamp without time zone)  | <instance> instance (character varying(255)) }" fillcolor="#F9844A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.code_profile
+id integer NOT NULL
+package character varying
+class character varying
+function character varying
+url character varying
+actor character varying
+lifespan double precision
+hostname character varying
+transaction character varying
+layer integer
+pid integer
+created timestamp without time zone DEFAULT now()
+instance character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.content" [label="{<table_header> public.content | <content_id> content_id  (integer) -FK- | <id> id  (character varying(256)) -FK- | <uid> uid (character varying(36))  | <portal_type> portal_type (character varying(64))  | <status> status (character varying(64))  | <type> type (character varying(64))  | <container_id> container_id  (integer) -FK- | <path> path (text)  | <title> title (text)  | <description> description (text)  | <subject> subject (text)  | <location> location (text)  | <contributors> contributors (text)  | <creators> creators (text)  | <creation_date> creation_date (timestamp without time zone)  | <modification_date> modification_date (timestamp without time zone)  | <effectivedate> effectivedate (timestamp without time zone)  | <expirationdate> expirationdate (timestamp without time zone)  | <language> language (text)  | <rights> rights (text)  | <format> format (character varying(64))  | <excludefromnav> excludefromnav (boolean)  | <allowdiscussion> allowdiscussion (boolean)  | <posincontainer> posincontainer (integer)  | <translation_source> translation_source  (integer) -FK- | <okforuse> okforuse (boolean)  | <hidekids> hidekids (boolean) }" fillcolor="#F3722C" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.content
+content_id integer NOT NULL
+id character varying(256) NOT NULL
+uid character varying(36) NOT NULL
+portal_type character varying(64)
+status character varying(64)
+type character varying(64)
+container_id integer
+path text
+title text DEFAULT ''::text
+description text DEFAULT ''::text
+subject text
+location text
+contributors text
+creators text
+creation_date timestamp without time zone DEFAULT now()
+modification_date timestamp without time zone DEFAULT now()
+effectivedate timestamp without time zone
+expirationdate timestamp without time zone
+language text
+rights text
+format character varying(64) DEFAULT 'text/html'::character varying
+excludefromnav boolean
+allowdiscussion boolean
+posincontainer integer DEFAULT 0
+translation_source integer
+okforuse boolean DEFAULT true NOT NULL
+hidekids boolean DEFAULT false NOT NULL
+
+ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.content
+    ADD CONSTRAINT content_container_id_fkey FOREIGN KEY (container_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.content
+    ADD CONSTRAINT content_translation_source_fkey FOREIGN KEY (translation_source) REFERENCES public.content(content_id);
+"]
+	"public.credentials" [label="{<table_header> public.credentials | <id> id  (integer) -FK- | <name> name (character varying(10)) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.credentials
+id integer NOT NULL
+name character varying(10)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.credentials_assoc" [label="{<table_header> public.credentials_assoc | <mailinglist_id> mailinglist_id  (integer) -FK- | <credentials_id> credentials_id  (integer) -FK-}" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.credentials_assoc
+mailinglist_id integer
+credentials_id integer
+
+ALTER TABLE ONLY public.credentials_assoc
+    ADD CONSTRAINT credentials_assoc_mailinglist_id_fkey FOREIGN KEY (mailinglist_id) REFERENCES public.mailinglist(id);
+
+
+ALTER TABLE ONLY public.credentials_assoc
+    ADD CONSTRAINT credentials_assoc_credentials_id_fkey FOREIGN KEY (credentials_id) REFERENCES public.credentials(id);
+"]
+	"public.customer_care_contact" [label="{<table_header> public.customer_care_contact | <id> id  (integer) -FK- | <title> title (character varying)  | <internal_title> internal_title (character varying)  | <language> language (character varying)  | <roles> roles (character varying[])  | <product_ids> product_ids (integer[])  | <association_id> association_id  (integer) -FK- | <display_order> display_order (integer)  | <email> email (character varying)  | <telephone1> telephone1 (character varying)  | <all_users> all_users (boolean)  | <fax> fax (character varying)  | <postal_code> postal_code (character varying)  | <country> country (character varying)  | <state> state (character varying)  | <city> city (character varying)  | <address_1> address_1 (character varying)  | <address_2> address_2 (character varying)  | <address_3> address_3 (character varying)  | <created_by> created_by  (integer) -FK- | <modified_by> modified_by  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.customer_care_contact
+id integer NOT NULL
+title character varying
+internal_title character varying
+language character varying
+roles character varying[]
+product_ids integer[]
+association_id integer
+display_order integer
+email character varying
+telephone1 character varying
+all_users boolean
+fax character varying
+postal_code character varying
+country character varying
+state character varying
+city character varying
+address_1 character varying
+address_2 character varying
+address_3 character varying
+created_by integer
+modified_by integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+
+ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_modified_by_fkey FOREIGN KEY (modified_by) REFERENCES public.users(id);
+"]
+	"public.eula" [label="{<table_header> public.eula | <id> id  (integer) -FK- | <active> active (boolean)  | <short_name> short_name (character varying(255))  | <title> title (character varying(255))  | <body> body (character varying)  | <refusal_msg> refusal_msg (character varying(1024))  | <lang> lang (character varying(16))  | <all_users_must_accept> all_users_must_accept (boolean)  | <new_product_reaccept> new_product_reaccept (boolean)  | <roles> roles (character varying(255)[])  | <association_id> association_id  (integer) -FK- | <parent_eula_id> parent_eula_id (integer)  | <display_order> display_order (integer)  | <creator> creator (integer)  | <modified_by> modified_by  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <ignore_existing_activated> ignore_existing_activated (boolean) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.eula
+id integer NOT NULL
+active boolean
+short_name character varying(255)
+title character varying(255)
+body character varying
+refusal_msg character varying(1024)
+lang character varying(16)
+all_users_must_accept boolean
+new_product_reaccept boolean
+roles character varying(255)[]
+association_id integer
+parent_eula_id integer
+display_order integer
+creator integer
+modified_by integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+ignore_existing_activated boolean DEFAULT true
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_modified_by_fkey FOREIGN KEY (modified_by) REFERENCES public.users(id);
+"]
+	"public.eula_history" [label="{<table_header> public.eula_history | <id> id  (integer) -FK- | <actor> actor (character varying(255))  | <action> action (character varying(255))  | <principal_id> principal_id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <body_diff> body_diff (character varying)  | <eula_id> eula_id  (integer) -FK- | <msg> msg (character varying)  | <created> created (timestamp without time zone) }" fillcolor="#264653" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.eula_history
+id integer NOT NULL
+actor character varying(255)
+action character varying(255)
+principal_id integer
+association_id integer
+body_diff character varying
+eula_id integer
+msg character varying
+created timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.eula_history
+    ADD CONSTRAINT eula_hist_id FOREIGN KEY (eula_id) REFERENCES public.eula(id) ON DELETE CASCADE;
+"]
+	"public.eula_product" [label="{<table_header> public.eula_product | <eula_id> eula_id  (integer) -FK- | <product_id> product_id  (integer) -FK-}" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.eula_product
+eula_id integer
+product_id integer
+
+ALTER TABLE ONLY public.eula_history
+    ADD CONSTRAINT eula_hist_id FOREIGN KEY (eula_id) REFERENCES public.eula(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.files" [label="{<table_header> public.files | <id> id  (integer) -FK- | <content_id> content_id  (integer) -FK- | <attribute> attribute (character varying(156))  | <type> type (character varying(30))  | <content> content (bytea)  | <path> path (character varying(300))  | <size> size (integer)  | <checksum> checksum (character varying(33))  | <file_name> file_name (character varying(156))  | <mime_type> mime_type (character varying(80)) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.files
+id integer NOT NULL
+content_id integer
+attribute character varying(156)
+type character varying(30)
+content bytea
+path character varying(300)
+size integer
+checksum character varying(33)
+file_name character varying(156)
+mime_type character varying(80)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+"]
+	"public.login_flood_counter" [label="{<table_header> public.login_flood_counter | <player_id> player_id  (integer) -FK- | <login_count> login_count (integer)  | <last_login> last_login (timestamp without time zone) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.login_flood_counter
+player_id integer NOT NULL
+login_count integer
+last_login timestamp without time zone
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.mailinglist" [label="{<table_header> public.mailinglist | <id> id  (integer) -FK- | <added> added (timestamp with time zone)  | <updated> updated (timestamp with time zone)  | <first> first (character varying(25))  | <last> last (character varying(25))  | <display> display (character varying(80))  | <title> title (character varying(255))  | <company> company (character varying(50))  | <address1> address1 (character varying(80))  | <address2> address2 (character varying(25))  | <address3> address3 (character varying(25))  | <city> city (character varying(25))  | <state> state (character varying(25))  | <zipcode> zipcode (character varying(10))  | <email> email (character varying(80))  | <association_id> association_id  (integer) -FK- | <product_id> product_id  (integer) -FK-}" fillcolor="#F8961E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.mailinglist
+id integer NOT NULL
+added timestamp with time zone
+updated timestamp with time zone
+first character varying(25)
+last character varying(25)
+display character varying(80)
+title character varying(255)
+company character varying(50)
+address1 character varying(80)
+address2 character varying(25)
+address3 character varying(25)
+city character varying(25)
+state character varying(25)
+zipcode character varying(10)
+email character varying(80)
+association_id integer
+product_id integer
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+"]
+	"public.mailinglist_history" [label="{<table_header> public.mailinglist_history | <id> id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <matches> matches (integer)  | <timestamp> timestamp (timestamp without time zone)  | <association_id> association_id  (integer) -FK- | <product_id> product_id  (integer) -FK- | <filename> filename (character varying(50))  | <actor> actor (character varying)  | <action> action (character varying(255))  | <mailinglist_id> mailinglist_id  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#F3722C" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.mailinglist_history
+id integer NOT NULL
+franchise_id integer
+matches integer
+\"timestamp\" timestamp without time zone DEFAULT now()
+association_id integer
+product_id integer
+filename character varying(50)
+actor character varying
+action character varying(255)
+mailinglist_id integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.credentials_assoc
+    ADD CONSTRAINT credentials_assoc_mailinglist_id_fkey FOREIGN KEY (mailinglist_id) REFERENCES public.mailinglist(id);
+"]
+	"public.media" [label="{<table_header> public.media | <content_id> content_id  (integer) -FK- | <filename> filename (character varying(255))  | <mime_type> mime_type (character varying(255))  | <width> width (integer)  | <height> height (integer)  | <playtime> playtime (interval) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.media
+content_id integer NOT NULL
+filename character varying(255)
+mime_type character varying(255)
+width integer
+height integer
+playtime interval
+
+ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+"]
+	"public.playerdata" [label="{<table_header> public.playerdata | <id> id  (integer) -FK- | <fullname> fullname (character varying(255))  | <email> email (character varying(255))  | <home_page> home_page (character varying(255))  | <portal_skin> portal_skin (character varying(60))  | <location> location (character varying(255))  | <description> description (text)  | <language> language (character varying(40))  | <wysiwyg_editor> wysiwyg_editor (character varying(40))  | <listed> listed (boolean)  | <visible_ids> visible_ids (boolean)  | <ext_editor> ext_editor (boolean)  | <login_time> login_time (timestamp without time zone)  | <last_login_time> last_login_time (timestamp without time zone)  | <firstname> firstname (character varying(127))  | <lastname> lastname (character varying(127))  | <phone> phone (character varying(60)) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.playerdata
+id integer NOT NULL
+fullname character varying(255)
+email character varying(255)
+home_page character varying(255)
+portal_skin character varying(60)
+location character varying(255)
+description text
+language character varying(40)
+wysiwyg_editor character varying(40)
+listed boolean
+visible_ids boolean
+ext_editor boolean
+login_time timestamp without time zone
+last_login_time timestamp without time zone
+firstname character varying(127)
+lastname character varying(127)
+phone character varying(60)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.oauth2_client" [label="{<table_header> public.oauth2_client | <id> id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <title> title (character varying(255))  | <client_id> client_id (character varying(255))  | <comment> comment (character varying)  | <authorization_uri> authorization_uri (character varying(255))  | <error_threshold_value> error_threshold_value (integer)  | <error_threshold_metric> error_threshold_metric (character varying)  | <error_email_sent> error_email_sent (timestamp without time zone)  | <contact_email> contact_email (character varying)  | <email_interval> email_interval (integer)  | <redirect_uri> redirect_uri (character varying(255))  | <active> active (boolean)  | <creator> creator (integer)  | <modified_by> modified_by  (integer) -FK- | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <owner> owner (integer[])  | <contact_phone> contact_phone (character varying(255))  | <contact_person> contact_person (character varying(16))  | <success_uri> success_uri (character varying(255)) }" fillcolor="#90BE6D" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_client
+id integer NOT NULL
+association_id integer
+title character varying(255)
+client_id character varying(255)
+comment character varying
+authorization_uri character varying(255)
+error_threshold_value integer
+error_threshold_metric character varying
+error_email_sent timestamp without time zone
+contact_email character varying
+email_interval integer
+redirect_uri character varying(255)
+active boolean
+creator integer
+modified_by integer
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+owner integer[]
+contact_phone character varying(255)
+contact_person character varying(16)
+success_uri character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_modified_by_fkey FOREIGN KEY (modified_by) REFERENCES public.users(id);
+"]
+	"public.oauth2_client_user" [label="{<table_header> public.oauth2_client_user | <id> id  (integer) -FK- | <client_id> client_id (integer)  | <remote_user_id> remote_user_id (character varying(255))  | <principal_id> principal_id  (integer) -FK- | <creator> creator (integer)  | <association_id> association_id  (integer) -FK- | <active> active (boolean)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_client_user
+id integer NOT NULL
+client_id integer
+remote_user_id character varying(255)
+principal_id integer
+creator integer
+association_id integer
+active boolean
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.oauth2_email" [label="{<table_header> public.oauth2_email | <id> id  (integer) -FK- | <recipient> recipient (character varying)  | <errors_since_last_email> errors_since_last_email (integer)  | <client_id> client_id (integer)  | <sent> sent (boolean)  | <record_id> record_id (integer)  | <error_id> error_id (integer)  | <association_id> association_id  (integer) -FK- | <created> created (timestamp without time zone) }" fillcolor="#F8961E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_email
+id integer NOT NULL
+recipient character varying
+errors_since_last_email integer
+client_id integer
+sent boolean
+record_id integer
+error_id integer
+association_id integer
+created timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.oauth2_error" [label="{<table_header> public.oauth2_error | <id> id  (integer) -FK- | <client_id> client_id (integer)  | <client_user_id> client_user_id (integer)  | <record_id> record_id (integer)  | <association_id> association_id  (integer) -FK- | <error> error (character varying(255))  | <error_description> error_description (character varying)  | <created> created (timestamp without time zone)  | <hostname> hostname (character varying(255))  | <pid> pid (character varying(16)) }" fillcolor="#43AA8B" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_error
+id integer NOT NULL
+client_id integer
+client_user_id integer
+record_id integer
+association_id integer
+error character varying(255)
+error_description character varying
+created timestamp without time zone DEFAULT now()
+hostname character varying(255)
+pid character varying(16)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.oauth2_history" [label="{<table_header> public.oauth2_history | <id> id  (integer) -FK- | <actor> actor (character varying(255))  | <action> action (character varying(255))  | <association_id> association_id  (integer) -FK- | <principal_id> principal_id  (integer) -FK- | <record_id> record_id (integer)  | <client_id> client_id (integer)  | <msg> msg (character varying)  | <created> created (timestamp without time zone) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_history
+id integer NOT NULL
+actor character varying(255)
+action character varying(255)
+association_id integer
+principal_id integer
+record_id integer
+client_id integer
+msg character varying
+created timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.oauth2_record" [label="{<table_header> public.oauth2_record | <id> id  (integer) -FK- | <client_id> client_id (integer)  | <client_user_id> client_user_id (integer)  | <redirect_uri> redirect_uri (character varying(255))  | <state> state (character varying(255))  | <code_challenge> code_challenge (character varying(255))  | <code_challenge_method> code_challenge_method (character varying(255))  | <association_id> association_id  (integer) -FK- | <authorization_code> authorization_code (character varying(255))  | <access_token> access_token (character varying(255))  | <authorization_code_expires> authorization_code_expires (integer)  | <access_token_created> access_token_created (timestamp without time zone)  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <hostname> hostname (character varying(255))  | <pid> pid (character varying(16)) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.oauth2_record
+id integer NOT NULL
+client_id integer
+client_user_id integer
+redirect_uri character varying(255)
+state character varying(255)
+code_challenge character varying(255)
+code_challenge_method character varying(255)
+association_id integer
+authorization_code character varying(255)
+access_token character varying(255)
+authorization_code_expires integer
+access_token_created timestamp without time zone
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+hostname character varying(255)
+pid character varying(16)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.principal_top_role" [label="{<table_header> public.principal_top_role | <principal_id> principal_id  (integer) -FK- | <top_role> top_role (character varying)  | <roles> roles (text[]) }" fillcolor="#F8961E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.principal_top_role
+principal_id integer NOT NULL
+top_role character varying
+roles text[]
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.principalrole" [label="{<table_header> public.principalrole | <principal_id> principal_id  (integer) -FK- | <role_id> role_id  (integer) -FK-}" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.principalrole
+principal_id integer NOT NULL
+role_id integer NOT NULL
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.principalrole
+    ADD CONSTRAINT principalrole_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE;
+"]
+	"public.principals" [label="{<table_header> public.principals | <id> id  (integer) -FK- | <type> type (character varying(64))  | <name> name (character varying(255))  | <association> association (character varying(255))  | <product> product (character varying(255)) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.principals
+id integer NOT NULL
+type character varying(64)
+name character varying(255)
+association character varying(255)
+product character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.proctor_provider" [label="{<table_header> public.proctor_provider | <id> id  (integer) -FK- | <association_id> association_id  (integer) -FK- | <name> name (character varying(255))  | <username> username (character varying(255))  | <password> password (character varying(255))  | <host> host (character varying(255))  | <sso_url> sso_url (character varying(255))  | <client_id> client_id (character varying(255))  | <created> created (timestamp without time zone)  | <modified> modified (timestamp without time zone)  | <instructor_id> instructor_id (character varying(255)) }" fillcolor="#4D908E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.proctor_provider
+id integer NOT NULL
+association_id integer
+name character varying(255)
+username character varying(255)
+password character varying(255)
+host character varying(255)
+sso_url character varying(255)
+client_id character varying(255)
+created timestamp without time zone DEFAULT now()
+modified timestamp without time zone DEFAULT now()
+instructor_id character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;
+"]
+	"public.relations" [label="{<table_header> public.relations | <source_id> source_id  (integer) -FK- | <target_id> target_id  (integer) -FK- | <relationship> relationship (character varying(128)) }" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.relations
+source_id integer NOT NULL
+target_id integer NOT NULL
+relationship character varying(128) NOT NULL
+
+ALTER TABLE ONLY public.relations
+    ADD CONSTRAINT relations_source_id_fkey FOREIGN KEY (source_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.relations
+    ADD CONSTRAINT relations_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+"]
+	"public.roles" [label="{<table_header> public.roles | <id> id  (integer) -FK- | <name> name (character varying(255))  | <association> association (character varying(255))  | <product> product (character varying(255)) }" fillcolor="#277DA1" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.roles
+id integer NOT NULL
+name character varying(255)
+association character varying(255)
+product character varying(255)
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.sso" [label="{<table_header> public.sso | <id> id  (integer) -FK- | <secret> secret (bytea) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.sso
+id integer NOT NULL
+secret bytea
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.usergroup" [label="{<table_header> public.usergroup | <principal_id> principal_id  (integer) -FK- | <group_id> group_id  (integer) -FK-}" fillcolor="#F94144" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.usergroup
+principal_id integer NOT NULL
+group_id integer NOT NULL
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.users" [label="{<table_header> public.users | <id> id  (integer) -FK- | <login> login (character varying(255))  | <password_hash> password_hash (character varying(48))  | <password_salt> password_salt (character varying(48))  | <password_hashtype> password_hashtype (character varying(8)) }" fillcolor="#2A9D8F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.users
+id integer NOT NULL
+login character varying(255)
+password_hash character varying(48)
+password_salt character varying(48)
+password_hashtype character varying(8) DEFAULT 'MD5'::character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.vproperties" [label="{<table_header> public.vproperties | <id> id  (integer) -FK- | <type> type (character varying(20))  | <key> key (character varying(20))  | <strval> strval (text)  | <datetimeval> datetimeval (timestamp without time zone)  | <boolval> boolval (boolean)  | <intval> intval (integer)  | <floatval> floatval (double precision) }" fillcolor="#577590" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.vproperties
+id integer NOT NULL
+type character varying(20)
+key character varying(20) NOT NULL
+strval text
+datetimeval timestamp without time zone
+boolval boolean
+intval integer
+floatval double precision
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+"]
+	"public.vw_player_listing" [label="{<table_header> public.vw_player_listing | <id> id  (integer) -FK- | <player_id> player_id  (character varying) -FK- | <firstname> firstname (character varying)  | <lastname> lastname (character varying)  | <email> email (character varying)  | <principal_id> principal_id  (character varying) -FK- | <login_id> login_id (character varying)  | <top_role> top_role (character varying)  | <roles> roles (character varying)  | <products> products (character varying)  | <franchises> franchises (character varying)  | <activationState> activationState (character varying) }" fillcolor="#F9844A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.vw_player_listing
+id integer NOT NULL
+player_id character varying
+firstname character varying
+lastname character varying
+email character varying
+principal_id character varying
+login_id character varying
+top_role character varying
+roles character varying
+products character varying
+franchises character varying
+\"activationState\" character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;
+"]
+	"public.vw_franchise_players_summary" [label="{<table_header> public.vw_franchise_players_summary | <franchise_id> franchise_id  (integer) -FK- | <id> id  (integer) -FK- | <assoc_id> assoc_id (integer)  | <player_id> player_id  (character varying) -FK- | <login_id> login_id (character varying)  | <firstname> firstname (character varying)  | <lastname> lastname (character varying)  | <email> email (character varying)  | <roles> roles (character varying)  | <role> role (character varying)  | <account_state> account_state (character varying)  | <license_titles> license_titles (character varying) }" fillcolor="#264653" fontcolor=white fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.vw_franchise_players_summary
+franchise_id integer
+id integer NOT NULL
+assoc_id integer
+player_id character varying
+login_id character varying
+firstname character varying
+lastname character varying
+email character varying
+roles character varying
+role character varying
+account_state character varying
+license_titles character varying
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_id_fkey FOREIGN KEY (id) REFERENCES public.players(id);
+
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+"]
+	"public.vw_quest_avail_players" [label="{<table_header> public.vw_quest_avail_players | <firstname> firstname (character varying)  | <lastname> lastname (character varying)  | <email> email (character varying)  | <roles> roles (character varying)  | <top_role> top_role (character varying)  | <player_id> player_id  (character varying) -FK- | <quest_id> quest_id  (integer) -FK- | <franchise_id> franchise_id  (integer) -FK- | <assoc_id> assoc_id (integer)  | <missing_products> missing_products (character varying)  | <other_quests> other_quests (character varying) }" fillcolor="#F9C74F" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.vw_quest_avail_players
+firstname character varying
+lastname character varying
+email character varying
+roles character varying
+top_role character varying
+player_id character varying NOT NULL
+quest_id integer
+franchise_id integer
+assoc_id integer
+missing_products character varying
+other_quests character varying
+
+ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);
+
+
+ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);
+"]
+	"public.workflow_entry" [label="{<table_header> public.workflow_entry | <wfe_id> wfe_id (integer)  | <wf_id> wf_id  (integer) -FK- | <action> action (character varying(64))  | <review_state> review_state (character varying(64))  | <actor> actor (character varying(255))  | <comments> comments (text)  | <time> time (timestamp without time zone) }" fillcolor="#4D908E" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.workflow_entry
+wfe_id integer NOT NULL
+wf_id integer NOT NULL
+action character varying(64)
+review_state character varying(64)
+actor character varying(255)
+comments text DEFAULT ''::text
+\"time\" timestamp without time zone DEFAULT now()
+
+ALTER TABLE ONLY public.workflow_entry
+    ADD CONSTRAINT workflow_entry_wf_id_fkey FOREIGN KEY (wf_id) REFERENCES public.workflowhistory(wf_id) ON DELETE CASCADE;
+"]
+	"public.workflowhistory" [label="{<table_header> public.workflowhistory | <wf_id> wf_id  (integer) -FK- | <content_id> content_id  (integer) -FK- | <name> name (character varying(128)) }" fillcolor="#A1D76A" fontcolor=black fontsize=25 shape=Mrecord style="filled, rounded" tooltip="public.workflowhistory
+wf_id integer NOT NULL
+content_id integer NOT NULL
+name character varying(128) DEFAULT ''::character varying
+
+ALTER TABLE ONLY public.workflow_entry
+    ADD CONSTRAINT workflow_entry_wf_id_fkey FOREIGN KEY (wf_id) REFERENCES public.workflowhistory(wf_id) ON DELETE CASCADE;
+
+
+ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;
+"]
+	"public.activation_states":<id> -> "public.activation_details":<activation_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F94144:#577590" dir=both fillcolor="#F94144" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.activation_states":<id> -> "public.activation_details":<activation_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F94144:#577590" dir=both fillcolor="#F94144" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.players":<id> -> "public.activation_details":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#577590" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.activation_details
+    ADD CONSTRAINT activation_details_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.activation_details
+    ADD CONSTRAINT activation_details_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.assoc_course_types":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.assoc_course_types
+    ADD CONSTRAINT assoc_course_types_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.assoc_course_types
+    ADD CONSTRAINT assoc_course_types_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" weight=2.5]
+	"public.associations":<id> -> "public.assoc_franchise_gp_map":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchise_gp":<id> -> "public.assoc_franchise_gp_map":<gp_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.assoc_franchise_gp_map
+    ADD CONSTRAINT assoc_franchise_gp_map_gp_id_fkey FOREIGN KEY (gp_id) REFERENCES public.franchise_gp(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.assoc_franchise_gp_map
+    ADD CONSTRAINT assoc_franchise_gp_map_gp_id_fkey FOREIGN KEY (gp_id) REFERENCES public.franchise_gp(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.assoc_franchise_type_map":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F94144" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchise_type":<id> -> "public.assoc_franchise_type_map":<type_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#264653:#F94144" dir=both fillcolor="#264653" headtooltip="ALTER TABLE ONLY public.assoc_franchise_type_map
+    ADD CONSTRAINT assoc_franchise_type_map_type_id_fkey FOREIGN KEY (type_id) REFERENCES public.franchise_type(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.assoc_franchise_type_map
+    ADD CONSTRAINT assoc_franchise_type_map_type_id_fkey FOREIGN KEY (type_id) REFERENCES public.franchise_type(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.assoc_quest_types":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F9844A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.assoc_quest_types
+    ADD CONSTRAINT assoc_quest_types_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.assoc_quest_types
+    ADD CONSTRAINT assoc_quest_types_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" weight=2.5]
+	"public.associations":<id> -> "public.association_map":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F94144" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.product_login_sequence":<id> -> "public.association_map":<login_sequence_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F9C74F:#F94144" dir=both fillcolor="#F9C74F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.players":<id> -> "public.association_map":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F94144" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.association_map":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F94144" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.association_map":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F94144" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.quests":<id> -> "public.association_map":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F94144" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.association_map
+    ADD CONSTRAINT association_map_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.association_map
+    ADD CONSTRAINT association_map_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.ceu_container":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#A1D76A" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.ceu_container":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.ceu_container
+    ADD CONSTRAINT ceu_container_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.ceu_container
+    ADD CONSTRAINT ceu_container_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.ceu_container":<id> -> "public.ceu":<parent_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#A1D76A:#F94144" dir=both fillcolor="#A1D76A" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.associations":<id> -> "public.ceu_provider_assoc_map":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F9C74F" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.ceu_provider":<id> -> "public.ceu_provider_assoc_map":<provider_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F9C74F" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.ceu_provider_assoc_map
+    ADD CONSTRAINT ceu_provider_assoc_map_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.ceu_provider_assoc_map
+    ADD CONSTRAINT ceu_provider_assoc_map_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" weight=2.5]
+	"public.ceu_provider":<id> -> "public.ceu":<provider_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F94144" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.ceu
+    ADD CONSTRAINT ceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.ceu
+    ADD CONSTRAINT ceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.ecommerce":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#277DA1" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.ecommerce":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#277DA1" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.ecommerce
+    ADD CONSTRAINT ecommerce_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.ecommerce
+    ADD CONSTRAINT ecommerce_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.gp_log":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F9C74F" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.gp_log":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F9C74F" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.gp_log":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F9C74F" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.gp_log
+    ADD CONSTRAINT gp_log_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.gp_log
+    ADD CONSTRAINT gp_log_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.history":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#4D908E" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.history":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#4D908E" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.quests":<id> -> "public.history":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#4D908E" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.history
+    ADD CONSTRAINT history_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.history
+    ADD CONSTRAINT history_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.crm_log":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F3722C" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.crm_payload":<id> -> "public.crm_log":<payload_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F3722C" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.quests":<id> -> "public.crm_log":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F3722C" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.crm_log
+    ADD CONSTRAINT crm_log_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.crm_log
+    ADD CONSTRAINT crm_log_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" weight=2.5]
+	"public.associations":<id> -> "public.marketing_tiles":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.marketing_tiles
+    ADD CONSTRAINT marketing_tiles_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.marketing_tiles
+    ADD CONSTRAINT marketing_tiles_association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" weight=2.5]
+	"public.ceu_container":<id> -> "public.mceu":<parent_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#A1D76A:#F9C74F" dir=both fillcolor="#A1D76A" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.ceu_provider":<id> -> "public.mceu":<provider_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F9C74F" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.mceu
+    ADD CONSTRAINT mceu_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.ceu_provider(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.player_details":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F94144" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.player_details
+    ADD CONSTRAINT player_details_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.player_details
+    ADD CONSTRAINT player_details_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.player_emails_history":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F8961E" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.player_emails_history
+    ADD CONSTRAINT player_emails_history_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.player_emails_history
+    ADD CONSTRAINT player_emails_history_player_id_fkey FOREIGN KEY (player_id) REFERENCES public.players(id) ON DELETE CASCADE;" weight=2.5]
+	"public.product_login_sequence_step":<name> -> "public.player_login_sequence":<login_sequence_name> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#E9C46A" dir=both fillcolor="#577590" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.players":<id> -> "public.player_login_sequence":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#E9C46A" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.player_login_sequence":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#E9C46A" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.player_login_sequence
+    ADD CONSTRAINT player_login_sequence_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.player_login_sequence
+    ADD CONSTRAINT player_login_sequence_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.player_franchise_contact":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F3722C" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.player_franchise_contact":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F3722C" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.player_franchise_contact":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F3722C" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.player_franchise_contact
+    ADD CONSTRAINT player_franchise_contact_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.player_franchise_contact
+    ADD CONSTRAINT player_franchise_contact_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.player_franchise_rank":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F9844A" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.players":<id> -> "public.player_franchise_rank":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F9844A" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.player_franchise_rank":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F9844A" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.player_franchise_rank
+    ADD CONSTRAINT player_franchise_rank_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.player_franchise_rank
+    ADD CONSTRAINT player_franchise_rank_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.players_licenses":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#43AA8B" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.players_licenses":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#43AA8B" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.players_licenses":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#43AA8B" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.players_licenses
+    ADD CONSTRAINT players_licenses_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.players_licenses
+    ADD CONSTRAINT players_licenses_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" weight=2.5]
+	"public.users":<id> -> "public.players":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#277DA1" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" weight=2.5]
+	"public.principals":<id> -> "public.players":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#277DA1" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" weight=2.5]
+	"public.franchises":<id> -> "public.orders":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F94144" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.orders":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F94144" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.orders
+    ADD CONSTRAINT orders_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" weight=2.5]
+	"public.franchises":<id> -> "public.franchise_courses":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F94144" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.franchise_courses":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F94144" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.franchise_courses
+    ADD CONSTRAINT franchise_courses_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.franchise_courses
+    ADD CONSTRAINT franchise_courses_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" weight=2.5]
+	"public.franchises":<id> -> "public.franchise_gp":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#43AA8B" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.franchise_gp
+    ADD CONSTRAINT franchise_gp_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.franchise_gp
+    ADD CONSTRAINT franchise_gp_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) ON DELETE CASCADE;" weight=2.5]
+	"public.franchises":<id> -> "public.franchise_product_map":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#90BE6D" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.franchise_product_map":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#90BE6D" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.franchise_product_map
+    ADD CONSTRAINT franchise_product_map_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.franchise_product_map
+    ADD CONSTRAINT franchise_product_map_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" weight=2.5]
+	"public.principals":<id> -> "public.franchise_type":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#264653" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.franchise_type
+    ADD CONSTRAINT franchise_type_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.franchise_type
+    ADD CONSTRAINT franchise_type_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" weight=2.5]
+	"public.franchise_type":<id> -> "public.franchises":<franchise_type> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#264653:#2A9D8F" dir=both fillcolor="#264653" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.principals":<id> -> "public.franchises":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#2A9D8F" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.franchises
+    ADD CONSTRAINT franchises_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.franchises
+    ADD CONSTRAINT franchises_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id);" weight=2.5]
+	"public.players":<id> -> "public.proctor_log":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#90BE6D" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.proctor":<id> -> "public.proctor_log":<proctor_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#90BE6D:#90BE6D" dir=both fillcolor="#90BE6D" headtooltip="ALTER TABLE ONLY public.proctor_log
+    ADD CONSTRAINT proctor_log_proctor_id_fkey FOREIGN KEY (proctor_id) REFERENCES public.proctor(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.proctor_log
+    ADD CONSTRAINT proctor_log_proctor_id_fkey FOREIGN KEY (proctor_id) REFERENCES public.proctor(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.proctor":<player_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#90BE6D" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.quests":<id> -> "public.proctor":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#90BE6D" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.proctor
+    ADD CONSTRAINT proctor_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.products":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#43AA8B" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.product_code_map":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#577590" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.product_code_map
+    ADD CONSTRAINT product_code_map_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.product_code_map
+    ADD CONSTRAINT product_code_map_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);" weight=2.5]
+	"public.products":<id> -> "public.product_kits":<kit_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#2A9D8F" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.product_kits":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#2A9D8F" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.product_kits
+    ADD CONSTRAINT product_kits_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.product_kits
+    ADD CONSTRAINT product_kits_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.product_login_sequence":<id> -> "public.product_login_sequence_step":<login_sequence_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F9C74F:#577590" dir=both fillcolor="#F9C74F" headtooltip="ALTER TABLE ONLY public.product_login_sequence_step
+    ADD CONSTRAINT product_login_sequence_step_login_sequence_id_fkey FOREIGN KEY (login_sequence_id) REFERENCES public.product_login_sequence(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.product_login_sequence_step
+    ADD CONSTRAINT product_login_sequence_step_login_sequence_id_fkey FOREIGN KEY (login_sequence_id) REFERENCES public.product_login_sequence(id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.products":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#43AA8B" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.course_types":<id> -> "public.quests":<course_type> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#A1D76A:#577590" dir=both fillcolor="#A1D76A" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.quests":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#577590" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.principals":<id> -> "public.quests":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#577590" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.quests_req_lics":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#264653" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.quests_req_lics":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#264653" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.quests":<id> -> "public.quests_req_lics":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#264653" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.quests_req_lics
+    ADD CONSTRAINT quests_req_lics_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.quests_req_lics
+    ADD CONSTRAINT quests_req_lics_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" weight=2.5]
+	"public.quest_types":<id> -> "public.quests":<quest_type> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#577590" dir=both fillcolor="#577590" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.associations":<id> -> "public.quests":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#577590" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.quests
+    ADD CONSTRAINT association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.quests
+    ADD CONSTRAINT association_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id);" weight=2.5]
+	"public.associations":<id> -> "public.products":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#43AA8B" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.content":<content_id> -> "public.content":<container_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F3722C" dir=both fillcolor="#F3722C" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.content":<content_id> -> "public.content":<translation_source> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F3722C" dir=both fillcolor="#F3722C" headtooltip="ALTER TABLE ONLY public.content
+    ADD CONSTRAINT content_translation_source_fkey FOREIGN KEY (translation_source) REFERENCES public.content(content_id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.content
+    ADD CONSTRAINT content_translation_source_fkey FOREIGN KEY (translation_source) REFERENCES public.content(content_id);" weight=2.5]
+	"public.credentials":<id> -> "public.credentials_assoc":<credentials_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#A1D76A:#F9C74F" dir=both fillcolor="#A1D76A" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.mailinglist":<id> -> "public.credentials_assoc":<mailinglist_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F8961E:#F9C74F" dir=both fillcolor="#F8961E" headtooltip="ALTER TABLE ONLY public.credentials_assoc
+    ADD CONSTRAINT credentials_assoc_mailinglist_id_fkey FOREIGN KEY (mailinglist_id) REFERENCES public.mailinglist(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.credentials_assoc
+    ADD CONSTRAINT credentials_assoc_mailinglist_id_fkey FOREIGN KEY (mailinglist_id) REFERENCES public.mailinglist(id);" weight=2.5]
+	"public.associations":<id> -> "public.customer_care_contact":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#A1D76A" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.users":<id> -> "public.customer_care_contact":<created_by> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#A1D76A" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.users":<id> -> "public.customer_care_contact":<modified_by> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#A1D76A" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_modified_by_fkey FOREIGN KEY (modified_by) REFERENCES public.users(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.customer_care_contact
+    ADD CONSTRAINT customer_care_contact_modified_by_fkey FOREIGN KEY (modified_by) REFERENCES public.users(id);" weight=2.5]
+	"public.products":<id> -> "public.products":<dsf_parent_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#43AA8B" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.products
+    ADD CONSTRAINT dsf_parent_idx FOREIGN KEY (dsf_parent_id) REFERENCES public.products(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.products
+    ADD CONSTRAINT dsf_parent_idx FOREIGN KEY (dsf_parent_id) REFERENCES public.products(id);" weight=2.5]
+	"public.eula":<id> -> "public.eula_history":<eula_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#90BE6D:#264653" dir=both fillcolor="#90BE6D" headtooltip="ALTER TABLE ONLY public.eula_history
+    ADD CONSTRAINT eula_hist_id FOREIGN KEY (eula_id) REFERENCES public.eula(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.eula_history
+    ADD CONSTRAINT eula_hist_id FOREIGN KEY (eula_id) REFERENCES public.eula(id) ON DELETE CASCADE;" weight=2.5]
+	"public.content":<content_id> -> "public.files":<content_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F94144" dir=both fillcolor="#F3722C" headtooltip="ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.mailinglist":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F8961E" dir=both fillcolor="#43AA8B" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.mailinglist_history":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#F3722C" dir=both fillcolor="#2A9D8F" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.products":<id> -> "public.mailinglist_history":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F3722C" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.mailinglist_history
+    ADD CONSTRAINT mailinglist_history_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.mailinglist_history
+    ADD CONSTRAINT mailinglist_history_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.products":<id> -> "public.mailinglist":<product_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#F8961E" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.mailinglist
+    ADD CONSTRAINT mailinglist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;" weight=2.5]
+	"public.content":<content_id> -> "public.media":<content_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F9C74F" dir=both fillcolor="#F3722C" headtooltip="ALTER TABLE ONLY public.media
+    ADD CONSTRAINT media_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.media
+    ADD CONSTRAINT media_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.playerdata":<id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#2A9D8F" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.playerdata
+    ADD CONSTRAINT playerdata_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.playerdata
+    ADD CONSTRAINT playerdata_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" weight=2.5]
+	"public.associations":<id> -> "public.proctor_provider":<association_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#43AA8B:#4D908E" dir=both fillcolor="#43AA8B" headtooltip="ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.proctor_provider
+    ADD CONSTRAINT ppasc_id_fkey FOREIGN KEY (association_id) REFERENCES public.associations(id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.principalrole":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F9C74F" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.roles":<id> -> "public.principalrole":<role_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F9C74F" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.principalrole
+    ADD CONSTRAINT principalrole_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.principalrole
+    ADD CONSTRAINT principalrole_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id) ON DELETE CASCADE;" weight=2.5]
+	"public.content":<content_id> -> "public.relations":<source_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F94144" dir=both fillcolor="#F3722C" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.content":<content_id> -> "public.relations":<target_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#F94144" dir=both fillcolor="#F3722C" headtooltip="ALTER TABLE ONLY public.relations
+    ADD CONSTRAINT relations_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.relations
+    ADD CONSTRAINT relations_target_id_fkey FOREIGN KEY (target_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.usergroup":<group_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F94144" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.principals":<id> -> "public.usergroup":<principal_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#F94144" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.usergroup
+    ADD CONSTRAINT usergroup_principal_id_fkey FOREIGN KEY (principal_id) REFERENCES public.principals(id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.users":<id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#2A9D8F" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" weight=2.5]
+	"public.principals":<id> -> "public.vproperties":<id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#577590" dir=both fillcolor="#277DA1" headtooltip="ALTER TABLE ONLY public.vproperties
+    ADD CONSTRAINT vproperties_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.vproperties
+    ADD CONSTRAINT vproperties_id_fkey FOREIGN KEY (id) REFERENCES public.principals(id) ON DELETE CASCADE;" weight=2.5]
+	"public.players":<id> -> "public.vw_franchise_players_summary":<id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#277DA1:#264653" dir=both fillcolor="#277DA1" headtooltip="" penwidth=5 style=solid tooltip="" weight=2.5]
+	"public.franchises":<id> -> "public.vw_franchise_players_summary":<franchise_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#2A9D8F:#264653" dir=both fillcolor="#2A9D8F" headtooltip="ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.vw_franchise_players_summary
+    ADD CONSTRAINT vw_franchise_players_summary_franchise_id_fkey FOREIGN KEY (franchise_id) REFERENCES public.franchises(id);" weight=2.5]
+	"public.quests":<id> -> "public.vw_quest_avail_players":<quest_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#577590:#F9C74F" dir=both fillcolor="#577590" headtooltip="ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.vw_quest_avail_players
+    ADD CONSTRAINT vw_quest_avail_players_quest_id_fkey FOREIGN KEY (quest_id) REFERENCES public.quests(id);" weight=2.5]
+	"public.workflowhistory":<wf_id> -> "public.workflow_entry":<wf_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#A1D76A:#4D908E" dir=both fillcolor="#A1D76A" headtooltip="ALTER TABLE ONLY public.workflow_entry
+    ADD CONSTRAINT workflow_entry_wf_id_fkey FOREIGN KEY (wf_id) REFERENCES public.workflowhistory(wf_id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.workflow_entry
+    ADD CONSTRAINT workflow_entry_wf_id_fkey FOREIGN KEY (wf_id) REFERENCES public.workflowhistory(wf_id) ON DELETE CASCADE;" weight=2.5]
+	"public.content":<content_id> -> "public.workflowhistory":<content_id> [arrowhead=normal arrowsize=3 arrowtail=diamond color="#F3722C:#A1D76A" dir=both fillcolor="#F3722C" headtooltip="ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" penwidth=5 style=solid tooltip="ALTER TABLE ONLY public.workflowhistory
+    ADD CONSTRAINT workflowhistory_content_id_fkey FOREIGN KEY (content_id) REFERENCES public.content(content_id) ON DELETE CASCADE;" weight=2.5]
+}

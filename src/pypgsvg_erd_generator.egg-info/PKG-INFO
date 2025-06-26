@@ -1,15 +1,82 @@
-# Python Postgres ERD Generator
+Metadata-Version: 2.4
+Name: pypgsvg-erd-generator
+Version: 1.0.0
+Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dumps
+Home-page: https://github.com/yourusername/pypgsvg
+Author: Daniel Blackburn
+Author-email: Daniel Blackburn <your.email@example.com>
+License: MIT License
+        
+        Copyright (c) 2025 blackburnd
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/yourusername/pypgsvg
+Project-URL: Bug Reports, https://github.com/yourusername/pypgsvg/issues
+Project-URL: Source Code, https://github.com/yourusername/pypgsvg
+Project-URL: Documentation, https://github.com/yourusername/pypgsvg#readme
+Keywords: postgresql,database,erd,diagram,svg,graphviz,schema,visualization
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Database
+Classifier: Topic :: Documentation
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Utilities
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: graphviz>=0.20.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: flake8>=4.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0.0; extra == "test"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
 
-Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres schema dump file.
+# Python ERD Generator
+
+A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
 
 ## Features
 
-- Parse PostgreSQL schema dump file to extract table definitions and relationships
+- Parse PostgreSQL dump files to extract table definitions and relationships
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette
 - Support for complex SQL structures including foreign keys, constraints, and various data types
 - Table filtering to exclude temporary/utility tables
-- MouseOver for extra information on paths, and entities.
 - Comprehensive test suite with >90% code coverage
 
 ## Installation
@@ -32,32 +99,25 @@ pip install .
 Generate an ERD from your SQL dump file:
 
 ```bash
-pg_dump -h 192.168.1.xxx --format=plain -d universe_db -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
-
-pypgsvg schema.dump
+pypgsvg your_database.sql
 ```
 
 This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
 
 ### Example Output
 
-Here are examples of generated ERDs from different database schemas:
+Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
 
-<img src="sample_schema_erd.png" alt="Sample ERD" width="300"> <img src="schema_erd.svg" alt="Complex Schema ERD" width="300">
+![Sample ERD](sample_schema_erd.svg)
 
-*Left: Simple blog schema (users, posts, comments) | Right: Complex enterprise schema with 90+ tables*
-
-*Note: The tool generates SVG files, but PNG is shown for the simple example for better README compatibility. You can [view the original SVG files](sample_schema_erd.svg) for interactive features.*
-
-The diagrams show:
+The diagram shows:
 
 - **Tables** as nodes with their column definitions
 - **Foreign key relationships** as directed edges between tables
 - **Automatic color coding** for visual distinction
 - **Accessible color palette** with proper contrast for readability
-- **Scalability** from simple 3-table schemas to complex 90+ table enterprise databases
 
-The simple example demonstrates a typical blog schema where:
+This example demonstrates a typical blog schema where:
 
 - Users can create multiple posts
 - Posts can have multiple comments
@@ -68,15 +128,13 @@ The simple example demonstrates a typical blog schema where:
 Specify a custom output filename:
 
 ```bash
-pg_dump -h 192.168.1.xxx --format=plain -d universe_db -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
-
-pypgsvg schema.dump --output custom_diagram.svg
+pypgsvg your_database.sql --output custom_diagram.svg
 ```
 
 View the diagram immediately after generation:
 
 ```bash
-pypgsvg schema.dump --view
+pypgsvg your_database.sql --view
 ```
 
 ### Python API Usage
@@ -87,7 +145,7 @@ For programmatic use:
 from src.create_graph import parse_sql_dump, generate_erd_with_graphviz
 
 # Load SQL dump
-with open("schema.dump", "r", encoding='utf-8') as file:
+with open("your_database.sql", "r", encoding='utf-8') as file:
     sql_content = file.read()
 
 # Parse tables and relationships
@@ -150,6 +208,7 @@ The application automatically excludes tables matching certain patterns (defined
 - Match tables (`matches`)
 - Version logs (`versionlog`)
 - Old tables (`old`)
+- IFMA tables (`ifma`)
 - Member data (`memberdata`)
 
 ### Color Palette

@@ -1,4 +1,13 @@
+#!/usr/bin/env python3
+"""
+pypgsvg - PostgreSQL Database Schema to SVG ERD Generator
+
+This module generates Entity Relationship Diagrams (ERDs) from PostgreSQL 
+database dump files using Graphviz to create SVG output.
+"""
+
 import re
+import sys
 from graphviz import Digraph
 from random import choice
 
@@ -45,7 +54,7 @@ def should_exclude_table(table_name):
     """
     Check if a table should be excluded based on specific patterns
     """
-    exclude_patterns = ['vw_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
+    exclude_patterns = [ 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old',  'memberdata',]
     return any(pattern in table_name.lower() for pattern in exclude_patterns)
 
 def generate_erd_with_graphviz(tables, foreign_keys, output_file):
@@ -224,14 +233,23 @@ def parse_sql_dump(sql_dump):
 
     return tables, foreign_keys, parsing_errors
 
-# Example usage
-if __name__ == "__main__":
-    # Load SQL dump
-    sql_file_path = "schema_am5_stag.dump"  # Replace with your file path
+def main():
+    """Main entry point for the pypgsvg ERD generator."""
+    # Check for command line argument
+    if len(sys.argv) != 2:
+        print("Usage: pypgsvg <sql_dump_file>")
+        print("Example: pypgsvg schema.dump")
+        sys.exit(1)
+    
+    # Load SQL dump from command line argument
+    sql_file_path = sys.argv[1]
 
     try:
         with open(sql_file_path, "r", encoding='utf-8') as file:
             sql_dump_content = file.read()
+    except FileNotFoundError:
+        print(f"Error: File '{sql_file_path}' not found.")
+        sys.exit(1)
     except UnicodeDecodeError as e:
         print(f"Encoding error reading the file: {e}")
         print("Attempting to read with error handling...")
@@ -256,3 +274,7 @@ if __name__ == "__main__":
         generate_erd_with_graphviz(tables, foreign_keys, output_erd_file)
     else:
         print("ERD generation skipped due to parsing errors.")
+
+# Example usage
+if __name__ == "__main__":
+    main()
