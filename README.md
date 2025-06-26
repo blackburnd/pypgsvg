@@ -64,24 +64,18 @@ The diagram shows:
 - **Automatic color coding** for visual distinction
 - **Accessible color palette** with proper contrast for readability
 
-This example demonstrates a typical blog schema where:
-
-- Users can create multiple posts
-- Posts can have multiple comments
-- Comments belong to both a post and a user
-
-### Advanced Usage
+### Usage
 
 Specify a custom output filename:
 
 ```bash
-pypgsvg your_database.sql --output custom_diagram.svg
+pypgsvg your_database_dump.sql --output custom_diagram.svg
 ```
 
 View the diagram immediately after generation:
 
 ```bash
-pypgsvg your_database.sql --view
+pypgsvg your_database_dump.sql --view
 ```
 
 ### Python API Usage
@@ -89,10 +83,10 @@ pypgsvg your_database.sql --view
 For programmatic use:
 
 ```python
-from src.create_graph import parse_sql_dump, generate_erd_with_graphviz
+from src.pypgsvg import parse_sql_dump, generate_erd_with_graphviz
 
 # Load SQL dump
-with open("your_database.sql", "r", encoding='utf-8') as file:
+with open("your_database_dump.sql", "r", encoding='utf-8') as file:
     sql_content = file.read()
 
 # Parse tables and relationships
@@ -155,7 +149,6 @@ The application automatically excludes tables matching certain patterns (defined
 - Match tables (`matches`)
 - Version logs (`versionlog`)
 - Old tables (`old`)
-- IFMA tables (`ifma`)
 - Member data (`memberdata`)
 
 ### Color Palette
