@@ -84,6 +84,9 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file):
              ranksep='2.5',
              pathsep='2.5',
              concentrate='true',
+             size='20,20',  # Set maximum size
+             ratio='auto',  # Auto ratio for better fit
+             dpi='72'       # Set DPI for consistent sizing
              )
     table_colors = {table_name: choice(color_palette) for table_name in filtered_tables}
     for table_name, _columns in filtered_tables.items():
@@ -166,6 +169,33 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file):
         )
 
     dot.render(output_file, view=True)
+    
+    # Post-process the SVG to ensure proper zoom-out behavior
+    svg_file = f"{output_file}.svg"
+    try:
+        with open(svg_file, 'r') as f:
+            svg_content = f.read()
+        
+        # Ensure the SVG has proper viewport settings for zoom-out
+        if '<svg' in svg_content:
+            # Add CSS for initial zoom behavior
+            css_style = '''<style type="text/css">
+svg {
+    max-width: 100%;
+    max-height: 100vh;
+    object-fit: contain;
+}
+</style>'''
+            
+            # Insert CSS after the SVG opening tag
+            svg_content = svg_content.replace('<svg', css_style + '\n<svg', 1)
+            
+            with open(svg_file, 'w') as f:
+                f.write(svg_content)
+                    
+    except Exception as e:
+        print(f"Warning: Could not modify SVG for zoom control: {e}")
+    
     print(f"ERD saved to {output_file}.svg")
 
 def parse_sql_dump(sql_dump):
