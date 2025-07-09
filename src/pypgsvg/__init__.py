@@ -75,18 +75,18 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file):
 
 
     dot = Digraph(comment='Database ERD', format='svg')
-    dot.attr(nodesep='5',
+    dot.attr(nodesep='8',      # Increased spacing between nodes
              pack='true', 
              packmode='array',
              rank='BT',
-             esep='4.5',
+             esep='6',         # Increased edge separation
              normalize='true',
-             ranksep='2.5',
+             ranksep='3.0',    # Increased rank separation
              pathsep='2.5',
              concentrate='true',
-             size='20,20',  # Set maximum size
-             ratio='auto',  # Auto ratio for better fit
-             dpi='72'       # Set DPI for consistent sizing
+             size='20,20',     # Set maximum size
+             ratio='auto',     # Auto ratio for better fit
+             dpi='72'          # Set DPI for consistent sizing
              )
     table_colors = {table_name: choice(color_palette) for table_name in filtered_tables}
     for table_name, _columns in filtered_tables.items():
@@ -114,17 +114,31 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file):
             else:
                 fields.append(f"<{col_name}> {col_name} ({col['type']}) ")
 
-        label = f"{{<table_header> {table_name} | {' | '.join(fields)}}}"
+        # Create professional table layout with larger header and left-aligned columns
+        column_rows = []
+        for col in columns:
+            fk_indicator = "<I>FK</I>" if fks.get(col['name']) else ""
+            row = f'<TR><TD ALIGN="LEFT" BGCOLOR="white"><FONT POINT-SIZE="12">' \
+                  f'<{col["name"]}> {col["name"]} ({col["type"]}) {fk_indicator}</FONT></TD></TR>'
+            column_rows.append(row)
+        
+        label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8">' \
+               f'<TR><TD COLSPAN="{max(1, len(columns))}" BGCOLOR="{color}" ALIGN="CENTER">' \
+               f'<FONT COLOR="{text_color}" POINT-SIZE="22"><B>{table_name}</B></FONT></TD></TR>' \
+               f'{"".join(column_rows)}</TABLE>>'
 
         dot.node(
             table_name,
             tooltip=tabletooltip,
             label=label,
-            shape='Mrecord',
-            style='filled, rounded',
-            fillcolor=color,
-            fontcolor=text_color,
-            fontsize='25',
+            shape='plaintext',  # Use plaintext for HTML-like tables
+            style='filled',
+            fillcolor='white',  # Background color for the entire node
+            fontcolor='black',
+            fontsize='12',
+            margin='0.2,0.1',  # Add margin for better spacing
+            width='3.0',       # Minimum width to make tables wider
+            height='1.0'       # Minimum height
         )
 
     fks = dict([(x[0],x) for x in foreign_keys])
