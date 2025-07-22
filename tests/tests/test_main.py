@@ -6,6 +6,7 @@ import sys
 import os
 import tempfile
 from unittest.mock import Mock, patch, mock_open
+from typing import List, Tuple, Any, Dict, Union, Optional
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

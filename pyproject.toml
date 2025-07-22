@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypgsvg"
-version = "1.0.5"
+version = "1.0.6"
 authors = [
     {name = "Daniel Blackburn", email = "daniel@example.com"},
 ]
@@ -33,6 +33,7 @@ classifiers = [
 keywords = ["postgresql", "database", "erd", "diagram", "svg", "graphviz", "schema", "visualization"]
 dependencies = [
     "graphviz>=0.20.0",
+    "cairosvg>=2.8.0",
 ]
 
 [project.optional-dependencies]

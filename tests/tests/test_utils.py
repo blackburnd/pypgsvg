@@ -11,8 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from create_graph import (
     get_contrasting_text_color,
     sanitize_label,
-    should_exclude_table
-)
+     should_exclude_table )
 
 
 @pytest.mark.unit

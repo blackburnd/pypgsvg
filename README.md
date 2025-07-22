@@ -2,8 +2,10 @@
 
 A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
 
-## Features
-
+## TODO, and Features
+- TODO: Allow all argument options for Diagraph..
+  - allow show/hide FK based on cascade type. 
+  - CSS facelift.
 - Parse PostgreSQL dump files to extract table definitions and relationships
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette

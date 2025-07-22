@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from graphviz import Digraph
 from random import choice
+from typing import List, Tuple, Any, Dict, Union, Optional
 
 # Predefined accessible colors
 color_palette = [
@@ -12,7 +13,25 @@ color_palette = [
     "#43AA8B", "#577590", "#277DA1", "#4D908E", "#F9844A",
     "#A1D76A", "#E9C46A", "#2A9D8F", "#264653"
 ]
-            
+
+def should_exclude_table(table_name: str) -> bool:
+    """
+    Check if a table should be excluded based on specific patterns
+    """
+    exclude_patterns = ['tmp_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
+    return any(pattern in table_name.lower() for pattern in exclude_patterns)
+
+
+def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str]]) -> bool:
+    """
+    Check if a table is standalone (has no foreign key relationships).
+    Returns True if the table has no incoming or outgoing foreign key relationships.
+    """
+    for fk_table, _, ref_table, _, _ in foreign_keys:
+        if table_name == fk_table or table_name == ref_table:
+            return False
+    return True
+
 
 def get_contrasting_text_color(bg_color):
     """
@@ -44,13 +63,6 @@ def sanitize_label(text):
     """Clean label text for Graphviz compatibility"""
     # Remove or escape special characters
     return re.sub(r'[^a-zA-Z0-9_]', '_', str(text))
-
-def should_exclude_table(table_name):
-    """
-    Check if a table should be excluded based on specific patterns
-    """
-    exclude_patterns = ['tmp_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
-    return any(pattern in table_name.lower() for pattern in exclude_patterns)
 
 def generate_erd_with_graphviz(tables, foreign_keys, output_file, view=True):
     """                                                                                                                                                                                                                                                                                                                                       

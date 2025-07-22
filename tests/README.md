@@ -12,6 +12,12 @@ Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres sche
 - MouseOver for extra information on paths, and entities.
 - Comprehensive test suite with >90% code coverage
 
+
+- Viewport minimized version generated with window view highlight.
+- 10% scaled minimized image.
+- Curent view area highlighted on minimized imagbe.
+
+
 ## Installation
 
 1. Install pypgsvg:
