@@ -21,6 +21,11 @@ def parse_sql_dump(sql_dump):
         re.S | re.I
     )
 
+    # Inline REFERENCES pattern
+    inline_fk_pattern = re.compile(
+        r'REFERENCES\s+([\w.]+)\s*\(([\w.]+)\)', re.I
+    )
+
     try:
         # Extract tables and their columns
         for match in table_pattern.finditer(sql_dump):
@@ -36,17 +41,13 @@ def parse_sql_dump(sql_dump):
                     if len(parts) >= 2:
                         column_name = parts[0].strip('"')
                         # Handle complex column types better
-                        # Split the line to get everything after the column name
                         remainder = _line.split(None, 1)[1] if len(_line.split(None, 1)) > 1 else ''
-                        
-                        # Extract column type (everything before keywords like DEFAULT, NOT, UNIQUE, etc.)
-                        # This pattern handles types with parentheses and multi-word types
+                        # Extract column type
                         type_pattern = r'^(\w+(?:\([^)]*\))?(?:\s+with\s+\w+(?:\s+\w+)*)?)\s*(?:NOT\s+NULL|DEFAULT|UNIQUE|PRIMARY|REFERENCES|CHECK|$)'
                         type_match = re.match(type_pattern, remainder, re.I)
                         if type_match:
                             column_type = type_match.group(1).strip()
                         else:
-                            # Fallback: extract words until we hit a constraint keyword
                             words = remainder.split()
                             type_words = []
                             for word in words:
@@ -54,10 +55,17 @@ def parse_sql_dump(sql_dump):
                                     break
                                 type_words.append(word)
                             column_type = ' '.join(type_words) if type_words else parts[1].strip('"')
-                        
                         columns.append({"name": column_name,
                                         'type': column_type,
                                         'line': _line})
+
+                        # --- NEW: Detect inline REFERENCES ---
+                        fk_match = inline_fk_pattern.search(_line)
+                        if fk_match:
+                            ref_table = fk_match.group(1)
+                            ref_column = fk_match.group(2)
+                            # Add to foreign_keys: (table_name, column_name, ref_table, ref_column, line)
+                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line))
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)

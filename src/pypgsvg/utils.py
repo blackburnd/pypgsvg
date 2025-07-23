@@ -40,8 +40,9 @@ def should_exclude_table(table_name: str) -> bool:
     """
     Check if a table should be excluded based on specific patterns
     """
+    name = table_name.lower()
     exclude_patterns = ['tmp_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
-    return any(pattern in table_name.lower() for pattern in exclude_patterns)
+    return any(pattern in name for pattern in exclude_patterns)
 
 
 def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str]]) -> bool:

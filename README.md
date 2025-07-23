@@ -2,7 +2,11 @@
 
 A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
 
-## TODO, and Features
+ PYTHONPATH=src python -m pytest tests/tests/ 
+ 
+
+
+## BETA, TODO, and Features
 - TODO: Allow all argument options for Diagraph..
   - allow show/hide FK based on cascade type. 
   - CSS facelift.
