@@ -160,3 +160,42 @@ def test_parse_sql_dump(sample_sql):
             assert "users" in svg_content
             assert "posts" in svg_content
             assert "<svg" in svg_content
+
+            
+    def test_generate_erd_with_real_schema_dump():
+
+        """
+        Integration test: Parse a real PostgreSQL schema dump and generate an ERD SVG.
+        This exercises the parser and ERD generator on a large, realistic schema.
+        """
+        schema_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../Samples/schema.dump")
+        )
+        assert os.path.exists(schema_path), f"Schema dump not found: {schema_path}"
+    
+        with open(schema_path, "r", encoding="utf-8", errors="replace") as f:
+            sql_content = f.read()
+    
+        from pypgsvg.db_parser import parse_sql_dump
+        from pypgsvg.erd_generator import generate_erd_with_graphviz
+    
+        tables, foreign_keys, errors = parse_sql_dump(sql_content)
+        # Should parse some tables and not fail
+        assert isinstance(tables, dict)
+        assert len(tables) > 10  # Should find many tables
+        assert isinstance(foreign_keys, list)
+        # Accept errors, but should not be catastrophic
+    
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_schema_dump")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_path=schema_path)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as svgf:
+                svg_content = svgf.read()
+            # Spot check for some known tables and SVG structure
+            assert "<svg" in svg_content
+            assert "players" in svg_content or "users" in svg_content or "products" in svg_content
+            # Should contain metadata
+            assert "schema.dump" in svg_content or "filename" in svg_content
