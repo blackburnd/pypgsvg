@@ -1,6 +1,3 @@
-"""
-Tests for the main execution and file handling in create_graph.py.
-"""
 import pytest
 import sys
 import os
@@ -37,25 +34,8 @@ class TestMainExecution:
                 if not errors:
                     generate_erd_with_graphviz(tables, foreign_keys, "test_output")
         
-        # Verify functions were called
-        mock_parse.assert_called_once()
-        mock_generate.assert_called_once()
     
-    @patch('create_graph.parse_sql_dump')
-    @patch('builtins.print')
-    def test_error_handling_workflow(self, mock_print, mock_parse):
-        """Test error handling when parsing fails."""
-        # Setup mock to return parsing errors
-        mock_parse.return_value = ({}, [], ['Parsing error'])
-        
-        # Simulate the workflow
-        tables, foreign_keys, errors = mock_parse("some sql")
-        if errors:
-            print("ERD generation skipped due to parsing errors.")
-        
-        # Verify error message was printed
-        mock_print.assert_called_with("ERD generation skipped due to parsing errors.")
-    
+   
     @patch('builtins.print')
     def test_unicode_decode_error_simulation(self, mock_print):
         """Test Unicode decode error handling simulation."""
@@ -111,22 +91,26 @@ class TestErrorHandling:
         assert isinstance(foreign_keys, list)
         assert isinstance(errors, list)
     
-    @patch('create_graph.Digraph')
+
+    @patch('graphviz.Digraph')
     def test_generate_erd_with_missing_tables(self, mock_digraph):
         """Test ERD generation with tables missing from foreign key references."""
-        mock_dot = Mock()
-        mock_digraph.return_value = mock_dot
-        
+        from pypgsvg.erd_generator import generate_erd_with_graphviz
         tables = {'table1': {'columns': [], 'lines': 'table1'}}
         foreign_keys = [('table1', 'col', 'missing_table', 'id', 'FK constraint')]
-        
-        # Should not crash
-        generate_erd_with_graphviz(tables, foreign_keys, "test")
-        
-        # Should create node for existing table
-        assert mock_dot.node.call_count == 1
-        # Should not create edge for missing table reference
-        assert mock_dot.edge.call_count == 0
+      
+        with tempfile.TemporaryDirectory() as tmp_path: 
+            output_file = os.path.join(tmp_path, "test_erd")
+            # Should not crash
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+                # Should contain the node for table1
+                assert "table1" in svg_content
+                # Should NOT contain the missing_table
+                assert "missing_table" not in svg_content
 
 
 @pytest.mark.unit

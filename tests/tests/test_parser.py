@@ -1,6 +1,3 @@
-"""
-Unit tests for SQL parsing functionality in create_graph.py.
-"""
 import pytest
 import sys
 import os

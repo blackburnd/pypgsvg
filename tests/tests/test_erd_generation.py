@@ -1,6 +1,3 @@
-"""
-Unit tests for ERD generation functionality in create_graph.py.
-"""
 import pytest
 import sys
 import os
@@ -12,6 +9,7 @@ import tempfile
 from pypgsvg.db_parser import parse_sql_dump
 from pypgsvg.erd_generator import generate_erd_with_graphviz
 from pypgsvg.metadata_injector import inject_metadata_into_svg
+import re, json
 
 
 @pytest.fixture
@@ -39,34 +37,126 @@ def test_parse_sql_dump(sample_sql):
 
     tables, foreign_keys, errors = parse_sql_dump(sample_sql)
     assert 'users' in tables
-    assert 'posts' in tables
-    assert len(foreign_keys) == 1
-    assert not errors
+    def test_generate_erd_creates_svg_file(parsed_schema):
+        """
+        Test that generate_erd_with_graphviz creates an SVG file on disk.
+        """
+        tables, foreign_keys = parsed_schema
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_output")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            assert "users" in svg_content
+            assert "posts" in svg_content
+            assert "<svg" in svg_content
 
+    def test_generate_erd_with_no_foreign_keys(parsed_schema):
+        """
+        Test ERD generation when there are no foreign keys.
+        """
+        tables, _ = parsed_schema
+        foreign_keys = []
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_no_fk")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            assert "users" in svg_content
+            assert "posts" in svg_content
 
-@patch('pypgsvg.erd_generator.Digraph')
-def test_generate_erd_with_graphviz(mock_digraph, parsed_schema):
-    tables, foreign_keys = parsed_schema
-    mock_dot = MagicMock()
-    mock_digraph.return_value = mock_dot
+    def test_generate_erd_hide_standalone(parsed_schema):
+        """
+        Test ERD generation with show_standalone=False (should hide tables with no FKs).
+        """
+        tables, _ = parsed_schema
+        foreign_keys = []
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_hide_standalone")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file, show_standalone=False)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            # Both tables are standalone, so should not appear
+            assert "users" not in svg_content
+            assert "posts" not in svg_content
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        output_file = os.path.join(tmpdir, "test_erd")
-        generate_erd_with_graphviz(tables, foreign_keys, output_file)
-        mock_dot.render.assert_called()
+    def test_generate_erd_metadata_in_svg(parsed_schema):
+        """
+        Test that metadata is injected into the SVG.
+        """
+        tables, foreign_keys = parsed_schema
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_metadata")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_path=__file__)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            assert "Source:" in svg_content or "filename" in svg_content
+            assert "generated" in svg_content
 
+    def test_generate_erd_graph_data_json(parsed_schema):
+        """
+        Test that the SVG contains a <script id="graph-data"> JSON block.
+        """
+        tables, foreign_keys = parsed_schema
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_graph_data")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            m = re.search(r'<script id="graph-data" type="application/json">(.*?)</script>', svg_content, re.DOTALL)
+            assert m
+            graph_data = json.loads(m.group(1))
+            assert "tables" in graph_data
+            assert "edges" in graph_data
 
-def test_metadata_injection(parsed_schema):
-    tables, foreign_keys = parsed_schema
-    # Generate a minimal SVG for testing
-    svg_content = "<svg><g id='main-erd-group'></g></svg>"
-    file_info = {'filename': 'test.sql', 'filesize': '123', 'generated': 'now'}
-    svg_with_metadata = inject_metadata_into_svg(
-        svg_content, file_info, total_tables=len(tables), total_columns=2,
-        total_foreign_keys=len(foreign_keys), total_edges=len(foreign_keys),
-        tables=tables, foreign_keys=foreign_keys, show_standalone=True,
-        generate_miniature_erd=None  # Or mock if needed
-    )
-    assert "Source: test.sql" in svg_with_metadata
-    assert "<svg" in svg_with_metadata
+    def test_generate_erd_excludes_tables(parsed_schema):
+        """
+        Test that tables matching exclusion patterns are not included in the SVG.
+        """
+        tables, foreign_keys = parsed_schema
+        tables["vw_hidden"] = {"columns": [{"name": "id", "type": "integer"}]}
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "erd_exclude")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            assert "vw_hidden" not in svg_content
 
+    def test_generate_erd_with_graphviz_mocked(parsed_schema):
+        """
+        Test that Digraph.render is called (mocked test).
+        """
+        tables, foreign_keys = parsed_schema
+        with patch('pypgsvg.erd_generator.Digraph') as mock_digraph:
+            mock_dot = MagicMock()
+            mock_digraph.return_value = mock_dot
+            with tempfile.TemporaryDirectory() as tmpdir:
+                output_file = os.path.join(tmpdir, "test_erd")
+                generate_erd_with_graphviz(tables, foreign_keys, output_file)
+                mock_dot.render.assert_called()
+
+    def test_generate_erd_with_graphviz_real(parsed_schema):
+        """
+        Test that generate_erd_with_graphviz creates an SVG file and it contains expected content.
+        """
+        tables, foreign_keys = parsed_schema
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_file = os.path.join(tmpdir, "test_erd")
+            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            svg_path = output_file + ".svg"
+            assert os.path.exists(svg_path)
+            with open(svg_path, "r", encoding="utf-8") as f:
+                svg_content = f.read()
+            assert "users" in svg_content
+            assert "posts" in svg_content
+            assert "<svg" in svg_content

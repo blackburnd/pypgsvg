@@ -2,8 +2,13 @@
 
 A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
 
+```
  PYTHONPATH=src python -m pytest tests/tests/ 
- 
+ python -m src.pypgsvg Samples/schema.dump --output=test
+```
+
+
+
 
 
 ## BETA, TODO, and Features

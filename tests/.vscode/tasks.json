@@ -100,7 +100,7 @@
 			"type": "shell",
 			"command": "/Users/danielblackburn/Documents/pypgsvg/tests/.venv/bin/python",
 			"args": [
-				"src/create_graph.py"
+				"src/pypgsvg.py"
 			],
 			"group": "build",
 			"problemMatcher": ["$python"]

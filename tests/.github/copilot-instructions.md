@@ -19,7 +19,6 @@ This project contains a Python application that parses SQL dump files and genera
 - Test error conditions and exception handling
 
 ## Project Structure
-- Main code in `create_graph.py`
 - Tests in `tests/` directory
 - Use pytest fixtures for common test data
 - Separate unit tests and integration tests

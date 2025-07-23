@@ -1,6 +1,3 @@
-"""
-Unit tests for create_graph.py color and utility functions.
-"""
 import pytest
 import sys
 import os

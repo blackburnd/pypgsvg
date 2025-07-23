@@ -1,6 +1,3 @@
-"""
-Test fixtures and sample data for create_graph tests.
-"""
 import pytest
 
 
