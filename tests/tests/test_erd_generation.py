@@ -36,6 +36,7 @@ def parsed_schema(sample_sql):
 
 
 def test_parse_sql_dump(sample_sql):
+
     tables, foreign_keys, errors = parse_sql_dump(sample_sql)
     assert 'users' in tables
     assert 'posts' in tables
@@ -69,4 +70,3 @@ def test_metadata_injection(parsed_schema):
     assert "Source: test.sql" in svg_with_metadata
     assert "<svg" in svg_with_metadata
 
-# Add more tests as needed for edge cases, error handling, etc.

@@ -91,7 +91,7 @@ class TestColorPalette:
     def test_color_palette_accessibility(self):
         """Test that all palette colors work with contrast function."""
         for color in colors.color_palette:
-            result = colors.get_contrasting_text_color(color)
+            result = get_contrasting_text_color(color)
             assert result in ['black', 'white']
 
 

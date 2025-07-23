@@ -1,8 +1,6 @@
 import re
 from typing import List, Tuple, Dict
 
-
-
 def parse_sql_dump(sql_dump):
     """
     Parse an SQL dump to extract tables and foreign key relationships, handling variations in SQL formatting.
@@ -35,11 +33,31 @@ def parse_sql_dump(sql_dump):
                 if line and not re.match(r'^(PRIMARY\s+KEY|FOREIGN\s+KEY)', line, re.I):
                     _line = line.strip()
                     parts = _line.split()
-                    column_name = parts[0].strip('"')
-                    column_type = parts[1].strip('"')
-                    columns.append({"name": column_name,
-                                    'type': column_type,
-                                    'line': _line})
+                    if len(parts) >= 2:
+                        column_name = parts[0].strip('"')
+                        # Handle complex column types better
+                        # Split the line to get everything after the column name
+                        remainder = _line.split(None, 1)[1] if len(_line.split(None, 1)) > 1 else ''
+                        
+                        # Extract column type (everything before keywords like DEFAULT, NOT, UNIQUE, etc.)
+                        # This pattern handles types with parentheses and multi-word types
+                        type_pattern = r'^(\w+(?:\([^)]*\))?(?:\s+with\s+\w+(?:\s+\w+)*)?)\s*(?:NOT\s+NULL|DEFAULT|UNIQUE|PRIMARY|REFERENCES|CHECK|$)'
+                        type_match = re.match(type_pattern, remainder, re.I)
+                        if type_match:
+                            column_type = type_match.group(1).strip()
+                        else:
+                            # Fallback: extract words until we hit a constraint keyword
+                            words = remainder.split()
+                            type_words = []
+                            for word in words:
+                                if word.upper() in ['NOT', 'DEFAULT', 'UNIQUE', 'PRIMARY', 'REFERENCES', 'CHECK']:
+                                    break
+                                type_words.append(word)
+                            column_type = ' '.join(type_words) if type_words else parts[1].strip('"')
+                        
+                        columns.append({"name": column_name,
+                                        'type': column_type,
+                                        'line': _line})
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
@@ -68,18 +86,17 @@ def parse_sql_dump(sql_dump):
 
     return tables, foreign_keys, parsing_errors
 
+
 def extract_constraint_info(foreign_keys, table_name):
     """
     Extract and clean constraint information for a table.
     Remove SQL action syntax and keep only the constraint definitions.
     """
-    constraints = []
-    
+    constraints = []  
     for ltbl, col, rtbl, rcol, _line in foreign_keys:
         if ltbl == table_name:
             # Clean up the constraint line by removing ALTER TABLE syntax
-            constraint_line = _line.strip()
-            
+            constraint_line = _line.strip()         
             # Extract just the constraint definition part
             if "ADD CONSTRAINT" in constraint_line:
                 # Find the constraint name and definition
@@ -91,6 +108,5 @@ def extract_constraint_info(foreign_keys, table_name):
                     constraint_def = re.sub(r'\s+NOT VALID.*$', '', constraint_def)
                     constraint_def = re.sub(r'\s+ON DELETE.*$', '', constraint_def)
                     constraints.append(constraint_def.strip())
-    
+  
     return constraints
-

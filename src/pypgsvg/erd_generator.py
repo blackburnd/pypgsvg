@@ -185,8 +185,6 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
     graph_data_script = f'<script id="graph-data" type="application/json">{graph_data_json}</script>';
     svg_content = svg_content.replace('</svg>', f'{graph_data_script}\n</svg>')
 
-    # Add id and pointer-events to main group (already handled by wrap_main_erd_content)
-    import pdb; pdb.set_trace()
     wrapped_svg = wrap_main_erd_content(svg_content)
 
     svg_content = inject_metadata_into_svg(
