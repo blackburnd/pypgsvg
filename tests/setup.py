@@ -19,7 +19,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'pypgsvg=src.create_graph:main',
+            'pypgsvg=pypgsvg:main',
         ],
     },
     classifiers=[

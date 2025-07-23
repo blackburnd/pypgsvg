@@ -5,13 +5,9 @@ import pytest
 import sys
 import os
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from create_graph import (
-    get_contrasting_text_color,
-    sanitize_label,
-     should_exclude_table )
+from pypgsvg.utils import should_exclude_table, get_contrasting_text_color, sanitize_label
+from pypgsvg.db_parser import parse_sql_dump    
 
 
 @pytest.mark.unit

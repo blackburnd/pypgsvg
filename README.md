@@ -1,4 +1,4 @@
-# Python ERD Generator
+# Python ERD Generator from Postgres schema dump file
 
 A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
 
@@ -108,7 +108,8 @@ Run the complete test suite with coverage:
 
 ```bash
 # Run all tests with coverage
-pytest
+PYTHONPATH=src python -m pytest tests/tests/
+
 
 # Run specific test categories
 pytest -m unit          # Unit tests only

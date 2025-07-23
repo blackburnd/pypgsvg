@@ -7,10 +7,10 @@ import os
 import tempfile
 from unittest.mock import patch, Mock
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from create_graph import parse_sql_dump, generate_erd_with_graphviz
+from pypgsvg.db_parser import parse_sql_dump
+from pypgsvg.erd_generator import generate_erd_with_graphviz
+from pypgsvg.metadata_injector import inject_metadata_into_svg
 
 
 @pytest.mark.integration

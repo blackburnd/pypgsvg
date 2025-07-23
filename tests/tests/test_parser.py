@@ -8,7 +8,8 @@ import os
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from create_graph import parse_sql_dump
+
+from pypgsvg.db_parser import parse_sql_dump
 
 
 @pytest.mark.unit

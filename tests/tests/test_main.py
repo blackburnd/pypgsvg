@@ -8,18 +8,21 @@ import tempfile
 from unittest.mock import Mock, patch, mock_open
 from typing import List, Tuple, Any, Dict, Union, Optional
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import create_graph
+from pypgsvg.db_parser import parse_sql_dump
+from pypgsvg.erd_generator import generate_erd_with_graphviz
+from pypgsvg.metadata_injector import inject_metadata_into_svg
+from pypgsvg import colors
+from pypgsvg.utils import should_exclude_table, get_contrasting_text_color, sanitize_label
+
 
 
 @pytest.mark.unit
 class TestMainExecution:
     """Test the main execution workflow and file handling."""
     
-    @patch('create_graph.generate_erd_with_graphviz')
-    @patch('create_graph.parse_sql_dump')
+    @patch('pypgsvg.erd_generator.generate_erd_with_graphviz')
+    @patch('pypgsvg.db_parser.parse_sql_dump')
     @patch('builtins.open', new_callable=mock_open, read_data="CREATE TABLE test (id integer);")
     def test_file_reading_workflow(self, mock_file, mock_parse, mock_generate):
         """Test file reading and processing workflow."""
@@ -30,9 +33,9 @@ class TestMainExecution:
         with patch('builtins.open', mock_file):
             with mock_file.return_value as file:
                 sql_content = file.read()
-                tables, foreign_keys, errors = create_graph.parse_sql_dump(sql_content)
+                tables, foreign_keys, errors = parse_sql_dump(sql_content)
                 if not errors:
-                    create_graph.generate_erd_with_graphviz(tables, foreign_keys, "test_output")
+                    generate_erd_with_graphviz(tables, foreign_keys, "test_output")
         
         # Verify functions were called
         mock_parse.assert_called_once()
@@ -75,11 +78,11 @@ class TestColorPalette:
     
     def test_color_palette_exists(self):
         """Test that color palette is defined and accessible."""
-        assert hasattr(create_graph, 'color_palette')
-        assert len(create_graph.color_palette) > 0
+        assert hasattr(colors, 'color_palette')
+        assert len(colors.color_palette) > 0
         
         # Verify all colors are valid hex colors
-        for color in create_graph.color_palette:
+        for color in colors.color_palette:
             assert color.startswith('#')
             assert len(color) == 7
             # Verify it's a valid hex color
@@ -87,8 +90,8 @@ class TestColorPalette:
     
     def test_color_palette_accessibility(self):
         """Test that all palette colors work with contrast function."""
-        for color in create_graph.color_palette:
-            result = create_graph.get_contrasting_text_color(color)
+        for color in colors.color_palette:
+            result = colors.get_contrasting_text_color(color)
             assert result in ['black', 'white']
 
 
@@ -101,7 +104,7 @@ class TestErrorHandling:
         # This should trigger the general exception handler
         malformed_sql = "CREATE TABLE test (\nid integer\n"  # Unclosed parenthesis
         
-        tables, foreign_keys, errors = create_graph.parse_sql_dump(malformed_sql)
+        tables, foreign_keys, errors = parse_sql_dump(malformed_sql)
         
         # Should handle gracefully
         assert isinstance(tables, dict)
@@ -118,7 +121,7 @@ class TestErrorHandling:
         foreign_keys = [('table1', 'col', 'missing_table', 'id', 'FK constraint')]
         
         # Should not crash
-        create_graph.generate_erd_with_graphviz(tables, foreign_keys, "test")
+        generate_erd_with_graphviz(tables, foreign_keys, "test")
         
         # Should create node for existing table
         assert mock_dot.node.call_count == 1
@@ -141,7 +144,7 @@ class TestRegexPatterns:
         ]
         
         for sql in test_cases:
-            tables, _, _ = create_graph.parse_sql_dump(sql)
+            tables, _, _ = parse_sql_dump(sql)
             assert len(tables) >= 1
     
     def test_foreign_key_pattern_matching(self):
@@ -153,7 +156,7 @@ class TestRegexPatterns:
         ALTER TABLE ONLY child ADD CONSTRAINT fk2 FOREIGN KEY (parent_id) REFERENCES parent(id) NOT VALID;
         """
         
-        tables, foreign_keys, errors = create_graph.parse_sql_dump(sql)
+        tables, foreign_keys, errors = parse_sql_dump(sql)
         
         assert len(foreign_keys) >= 1
         assert any('child' in fk and 'parent' in fk for fk in foreign_keys)
