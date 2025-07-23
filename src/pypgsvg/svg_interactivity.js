@@ -469,5 +469,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const centerX = mainBounds.x + mainBounds.width / 2;
         const centerY = mainBounds.y + mainBounds.height / 2;
         zoomToPoint(centerX, centerY, initZoomOut);
+        endPan();
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
+        svg.focus && svg.focus(); // Optionally focus the SVG or document
     });
 });
