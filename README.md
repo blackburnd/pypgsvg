@@ -1,13 +1,19 @@
 # Python ERD Generator from Postgres schema dump file
 
-A Python application that parses SQL dump files and generates Entity Relationship Diagrams (ERDs) using Graphviz.
+pypgsvg is an open source Python application that parses postgresql schema SQL dump files and generates 
+Directed Entity Relationship Diagrams (Diagraph, ERDs) using Graphviz.  In a past life I had been tasked
+with showing what the normalized postgresql database looks like for employers who do not want to pay for 
+postgres tools that have the graphical tools. There are some free ones out there but requires the installation of Java, 
+and does work well for what I needed it for, so admittedly this started as an academic excersise. By no 
+means is this even an alledgedly full throated tool, but is being adapted to take all diagraph  args shortly as to 
+offer some options for best display of the ERD. Some versions of this saved me hours of time in explainations, 
+now easier to share.
+
 
 ```
  PYTHONPATH=src python -m pytest tests/tests/ 
  python -m src.pypgsvg Samples/schema.dump --output=test
 ```
-
-
 
 
 

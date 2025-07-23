@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoomIntensity = 0.1;
     const maxZoomOut = 0.1; // Can zoom out to 20%
     const maxZoomIn = 5;   // Can zoom in to 500%
-
+    const initZoomOut = 0.7; // Initial zoom out to 50%
 
     // Handle mouse wheel for zooming
     svg.addEventListener('wheel', (event) => {
@@ -468,6 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainBounds = getMainERDBounds();
         const centerX = mainBounds.x + mainBounds.width / 2;
         const centerY = mainBounds.y + mainBounds.height / 2;
-        zoomToPoint(centerX, centerY, maxZoomOut);
+        zoomToPoint(centerX, centerY, initZoomOut);
     });
 });
