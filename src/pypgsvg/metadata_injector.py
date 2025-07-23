@@ -199,6 +199,10 @@ def inject_metadata_into_svg(
                 transition: all 0.1s ease;
                 box-sizing: border-box;
                 cursor: grab;
+                user-select: none;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
             }
             .viewport-indicator.dragging {
                 cursor: grabbing;

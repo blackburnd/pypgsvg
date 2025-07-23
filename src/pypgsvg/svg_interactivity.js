@@ -290,7 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle dragging the viewport indicator
     if (viewportIndicator) {
         viewportIndicator.addEventListener('mousedown', (event) => {
-            event.stopPropagation(); // Prevent main canvas panning
+            event.preventDefault(); // <--- Add this line!
+            event.stopPropagation();
             isDraggingIndicator = true;
             indicatorStartX = event.clientX;
             indicatorStartY = event.clientY;
