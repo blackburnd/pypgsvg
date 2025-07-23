@@ -142,16 +142,15 @@ def inject_metadata_into_svg(
                 font-family: system-ui, -apple-system, sans-serif;
                 z-index: 9999;
             }
-            .metadata-box, .miniature-box, .instructions {
-                position: absolute;
+
+         .metadata-box, .miniature-box, .instructions {
                 z-index: 9999;
                 pointer-events: auto;
                 box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
                 border-radius: 4px;
             }
             .metadata-box {
-                top: 10px;
-                right: 20px;
+                transform: translate(0px,0px);
                 background: lightyellow;
                 border: 1px solid #000;
                 padding: 10px;
@@ -161,14 +160,13 @@ def inject_metadata_into_svg(
                 max-width: 300px;
             }
             .miniature-box {
-                position: absolute;
-                top: 10px;
-                left: 20px;
+                translate: (300px,0px);
                 background: white;
                 border: 1px solid #ccc;
                 padding: 10px;
                 z-index: 10000;
                 pointer-events: auto;
+                max-width: 20%
             }
             .miniature-title {
                 font-size: 12px;
@@ -181,7 +179,6 @@ def inject_metadata_into_svg(
                 position: relative;
                 cursor: crosshair;
                 border: 1px solid #ccc;
-                max-width: 100%;
                 max-height: 100%;
                 overflow: hidden;
             }
@@ -204,6 +201,7 @@ def inject_metadata_into_svg(
                 -moz-user-select: none;
                 -ms-user-select: none;
             }
+
             .viewport-indicator.dragging {
                 cursor: grabbing;
             }
@@ -221,6 +219,13 @@ def inject_metadata_into_svg(
             .node, .edge {
                 pointer-events: auto;
                 cursor: pointer;
+            }
+
+            .metadata-minimap-row {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 16px; /* Optional: space between metadata and minimap */
             }
         </style>
     </defs>
@@ -246,7 +251,14 @@ def inject_metadata_into_svg(
     </div>
     '''
 
-    all_overlays_html = metadata_html + minimap_html + instructions_html
+    all_overlays_html = f"""
+        {instructions_html}
+
+     <div class='metadata-minimap-row'>
+      {metadata_html}
+         {minimap_html}
+    </div>
+    """
 
     overlay_container_html = f'''
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">

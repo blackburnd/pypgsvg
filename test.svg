@@ -2890,16 +2890,15 @@
                 font-family: system-ui, -apple-system, sans-serif;
                 z-index: 9999;
             }
-            .metadata-box, .miniature-box, .instructions {
-                position: absolute;
+
+         .metadata-box, .miniature-box, .instructions {
                 z-index: 9999;
                 pointer-events: auto;
                 box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
                 border-radius: 4px;
             }
             .metadata-box {
-                top: 10px;
-                right: 20px;
+                transform: translate(0px,0px);
                 background: lightyellow;
                 border: 1px solid #000;
                 padding: 10px;
@@ -2909,14 +2908,13 @@
                 max-width: 300px;
             }
             .miniature-box {
-                position: absolute;
-                top: 10px;
-                left: 20px;
+                translate: (300px,0px);
                 background: white;
                 border: 1px solid #ccc;
                 padding: 10px;
                 z-index: 10000;
                 pointer-events: auto;
+                max-width: 20%
             }
             .miniature-title {
                 font-size: 12px;
@@ -2929,7 +2927,6 @@
                 position: relative;
                 cursor: crosshair;
                 border: 1px solid #ccc;
-                max-width: 100%;
                 max-height: 100%;
                 overflow: hidden;
             }
@@ -2952,6 +2949,7 @@
                 -moz-user-select: none;
                 -ms-user-select: none;
             }
+
             .viewport-indicator.dragging {
                 cursor: grabbing;
             }
@@ -2970,12 +2968,28 @@
                 pointer-events: auto;
                 cursor: pointer;
             }
+
+            .metadata-minimap-row {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 16px; /* Optional: space between metadata and minimap */
+            }
         </style>
     </defs>
     
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
-            <div class='metadata-box'><div>Source: schema.dump</div><div>File Size: 209,595 bytes</div><div>Generated: 2025-07-23 14:37:18</div><div>Tables: 80</div><div>Columns: 792</div><div>Foreign Keys: 107</div><div>Connections: 107</div></div>
+            
+        
+    <div class="instructions">
+        💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight • ESC/R to reset
+    </div>
+    
+
+     <div class='metadata-minimap-row'>
+      <div class='metadata-box'><div>Source: schema.dump</div><div>File Size: 209,595 bytes</div><div>Generated: 2025-07-23 16:09:52</div><div>Tables: 80</div><div>Columns: 792</div><div>Foreign Keys: 107</div><div>Connections: 107</div></div>
+         
         <div class="miniature-box">
             <div class="miniature-title">Overview</div>
             <div class="miniature-container" id="miniature-container">
@@ -2984,8 +2998,6 @@
             </div>
         </div>
         
-    <div class="instructions">
-        💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight • ESC/R to reset
     </div>
     
         </div>
@@ -3110,33 +3122,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- HIGHLIGHTING ---
     const setElementColor = (elem, color, isHighlighted = false) => {
-        if (!elem) {
-            return;
-        }
+        if (!elem) return;
 
         if (elem.classList && elem.classList.contains('node')) {
+            const nodeId = elem.id;
+            const connectedEdgeIds = tables[nodeId]?.edges || [];
+            // Pick first two connected edges, fallback to default color if not enough
+            const edge1 = edges[connectedEdgeIds[0]];
+            const edge2 = edges[connectedEdgeIds[1]];
+            const defaultColor = edge1 ? edge1.defaultColor : color;
+            const highlightColor = edge2 ? edge2.highlightColor : color;
+            const fillColor = defaultColor;
+            const strokeColor = highlightColor;
+
             const mainPath = elem.querySelector('path');
             if (mainPath) {
-                mainPath.setAttribute('fill', color);
-                if (isHighlighted) {
-                    mainPath.setAttribute('stroke-width', '6');
-                    mainPath.setAttribute('stroke', color);
-                } else {
-                    mainPath.setAttribute('stroke-width', '1');
-                    mainPath.setAttribute('stroke', 'black');
-                }
+                mainPath.setAttribute('fill', fillColor);
+                mainPath.setAttribute('stroke', strokeColor);
+                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             }
 
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                polygon.setAttribute('fill', color);
-                if (isHighlighted) {
-                    polygon.setAttribute('stroke-width', '6');
-                    polygon.setAttribute('stroke', color);
-                } else {
-                    polygon.setAttribute('stroke-width', '1');
-                    polygon.setAttribute('stroke', 'black');
-                }
+                polygon.setAttribute('fill', fillColor);
+                polygon.setAttribute('stroke', strokeColor);
+                polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             });
         }
 
@@ -3144,11 +3154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const edgePath = elem.querySelector('path');
             if (edgePath) {
                 edgePath.setAttribute('stroke', color);
-                if (isHighlighted) {
-                    edgePath.setAttribute('stroke-width', '6');
-                } else {
-                    edgePath.setAttribute('stroke-width', '3');
-                }
+                edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
             }
         }
     };

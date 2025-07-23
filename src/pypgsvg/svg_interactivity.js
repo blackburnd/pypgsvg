@@ -117,33 +117,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- HIGHLIGHTING ---
     const setElementColor = (elem, color, isHighlighted = false) => {
-        if (!elem) {
-            return;
-        }
+        if (!elem) return;
 
         if (elem.classList && elem.classList.contains('node')) {
+            const nodeId = elem.id;
+            const connectedEdgeIds = tables[nodeId]?.edges || [];
+            // Pick first two connected edges, fallback to default color if not enough
+            const edge1 = edges[connectedEdgeIds[0]];
+            const edge2 = edges[connectedEdgeIds[1]];
+            const defaultColor = edge1 ? edge1.defaultColor : color;
+            const highlightColor = edge2 ? edge2.highlightColor : color;
+            const fillColor = defaultColor;
+            const strokeColor = highlightColor;
+
             const mainPath = elem.querySelector('path');
             if (mainPath) {
-                mainPath.setAttribute('fill', color);
-                if (isHighlighted) {
-                    mainPath.setAttribute('stroke-width', '6');
-                    mainPath.setAttribute('stroke', color);
-                } else {
-                    mainPath.setAttribute('stroke-width', '1');
-                    mainPath.setAttribute('stroke', 'black');
-                }
+                mainPath.setAttribute('fill', fillColor);
+                mainPath.setAttribute('stroke', strokeColor);
+                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             }
 
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                polygon.setAttribute('fill', color);
-                if (isHighlighted) {
-                    polygon.setAttribute('stroke-width', '6');
-                    polygon.setAttribute('stroke', color);
-                } else {
-                    polygon.setAttribute('stroke-width', '1');
-                    polygon.setAttribute('stroke', 'black');
-                }
+                polygon.setAttribute('fill', fillColor);
+                polygon.setAttribute('stroke', strokeColor);
+                polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             });
         }
 
@@ -151,11 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const edgePath = elem.querySelector('path');
             if (edgePath) {
                 edgePath.setAttribute('stroke', color);
-                if (isHighlighted) {
-                    edgePath.setAttribute('stroke-width', '6');
-                } else {
-                    edgePath.setAttribute('stroke-width', '3');
-                }
+                edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
             }
         }
     };
