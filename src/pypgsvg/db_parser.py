@@ -17,7 +17,7 @@ def parse_sql_dump(sql_dump):
 
     # Foreign key definition in ALTER TABLE
     alter_fk_pattern = re.compile(
-        r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+([\w.]+)\s*\((.*?)\)(?:\s+NOT VALID)?(?:\s+ON DELETE [\w\s]+)?;",
+        r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+([\w.]+)\s*\((.*?)\)(?:\s+NOT VALID)?(?:\s+ON DELETE ([\w\s]+))?(?:\s+ON UPDATE ([\w\s]+))?;",
         re.S | re.I
     )
 
@@ -64,8 +64,8 @@ def parse_sql_dump(sql_dump):
                         if fk_match:
                             ref_table = fk_match.group(1)
                             ref_column = fk_match.group(2)
-                            # Add to foreign_keys: (table_name, column_name, ref_table, ref_column, line)
-                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line))
+                            # Add to foreign_keys: (table_name, column_name, ref_table, ref_column, _line)
+                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, None, None))
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
@@ -76,10 +76,12 @@ def parse_sql_dump(sql_dump):
             fk_column = match.group(2).strip()
             ref_table = match.group(3).strip()
             ref_column = match.group(4).strip()
+            on_delete = match.group(5).strip().upper() if match.group(5) else None
+            on_update = match.group(6).strip().upper() if match.group(6) else None
             _line = match.string[match.start():match.end()]
 
             if table_name in tables and ref_table in tables:
-                foreign_keys.append((table_name, fk_column, ref_table, ref_column, _line))
+                foreign_keys.append((table_name, fk_column, ref_table, ref_column, _line, on_delete, on_update))
             else:
                 parsing_errors.append(f"FK parsing issue: {match.group(0)}")
 

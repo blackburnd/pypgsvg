@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Get mouse position in the main group's coordinate system to zoom towards it
         const pt = svg.createSVGPoint();
-        pt.x = event.clientX;
+        pt.x = event.clientX
         pt.y = event.clientY;
         const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
 
@@ -457,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle window scroll and resize to keep UI fixed
     window.addEventListener('scroll', onViewportChange, { passive: true });
     window.addEventListener('resize', onViewportChange, { passive: true });
-
 
     requestAnimationFrame(() => {
         const mainBounds = getMainERDBounds();

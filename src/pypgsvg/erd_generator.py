@@ -117,7 +117,7 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
         }
 
     # Populate edge data and update table data with connected edges
-    for i, (ltbl, _, rtbl, _, _) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, _, rtbl, _, _, on_delete, on_update) in enumerate(filtered_foreign_keys):
         edge_id = f"edge-{i}"
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
@@ -127,6 +127,8 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
             "defaultColor": table_colors[ltbl],
             "highlightColor": saturate_color(table_colors[ltbl], saturation_factor=2.0),
             "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.1),
+            "onDelete": on_delete,
+            "onUpdate": on_update,
         }
 
         if safe_ltbl in graph_data["tables"]:
@@ -147,11 +149,14 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
 
         dot.node(safe_table_name, label=label, id=safe_table_name, shape='rect', style='filled')
 
-    for i, (ltbl, col, rtbl, rcol, _) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, col, rtbl, rcol, _line,  on_delete, on_update) in enumerate(filtered_foreign_keys):
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
         safe_col = sanitize_label(col)
         safe_rcol = sanitize_label(rcol)
+        safe_on_delet = sanitize_label(on_delete)
+        safe_on_update = sanitize_label(on_update)
+    
 
         dot.edge(f"{safe_ltbl}:{safe_col}:e", f"{safe_rtbl}:{safe_rcol}:w", id=f"edge-{i}")
 

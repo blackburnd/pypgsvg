@@ -64,7 +64,7 @@ def generate_miniature_erd(
     for table_name in tables:
         dot.node(table_name, shape='rect', style='filled', fillcolor='#e0e0e0', fontsize='10')
     for fk in foreign_keys:
-        ltbl, _, rtbl, _, _ = fk
+        ltbl, _, rtbl, _, _ , on_delete, on_update = fk
         dot.edge(ltbl, rtbl)
     with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp_svg:
         svg_output_path = tmp_svg.name
