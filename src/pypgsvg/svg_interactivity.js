@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isDraggingIndicator = false;
     let indicatorStartX = 0, indicatorStartY = 0;
+    let indicatorOffsetX = 0, indicatorOffsetY = 0; // Add these at the top with other state variables
 
     let highlightedElementId = null; // To track the currently highlighted table/edge
 
@@ -284,11 +285,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle dragging the viewport indicator
     if (viewportIndicator) {
         viewportIndicator.addEventListener('mousedown', (event) => {
-            event.preventDefault(); // <--- Add this line!
+            event.preventDefault();
             event.stopPropagation();
             isDraggingIndicator = true;
             indicatorStartX = event.clientX;
             indicatorStartY = event.clientY;
+
+            // Calculate offset between mouse and indicator's top-left
+            const rect = viewportIndicator.getBoundingClientRect();
+            indicatorOffsetX = event.clientX - rect.left;
+            indicatorOffsetY = event.clientY - rect.top;
+
             viewportIndicator.classList.add('dragging');
         });
     }
@@ -349,56 +356,45 @@ document.addEventListener('DOMContentLoaded', () => {
             applyTransform();
         } else if (isDraggingIndicator) {
             event.preventDefault();
-            const dx = event.clientX - indicatorStartX;
-            const dy = event.clientY - indicatorStartY;
 
             const miniRect = miniatureContainer.getBoundingClientRect();
             const mainBounds = getMainERDBounds();
 
-            if (miniRect.width > 0 && miniRect.height > 0) {
-                const panX = (dx / miniRect.width) * mainBounds.width;
-                const panY = (dy / miniRect.height) * mainBounds.height;
+            // Calculate where the indicator's top-left should be based on mouse position and offset
+            let indicatorLeft = event.clientX - miniRect.left - indicatorOffsetX;
+            let indicatorTop = event.clientY - miniRect.top - indicatorOffsetY;
 
-                // Calculate the visible area in main coordinates
-                const ctm = mainGroup.getScreenCTM();
-                if (!ctm) return;
-                const invCtm = ctm.inverse();
+            // Clamp to minimap bounds
+            indicatorLeft = Math.max(0, Math.min(miniRect.width - viewportIndicator.offsetWidth, indicatorLeft));
+            indicatorTop = Math.max(0, Math.min(miniRect.height - viewportIndicator.offsetHeight, indicatorTop));
 
-                const pt1 = svg.createSVGPoint();
-                pt1.x = 0;
-                pt1.y = 0;
-                const svgPt1 = pt1.matrixTransform(invCtm);
+            // Calculate the relative position
+            const relLeft = indicatorLeft / miniRect.width;
+            const relTop = indicatorTop / miniRect.height;
 
-                const pt2 = svg.createSVGPoint();
-                pt2.x = window.innerWidth;
-                pt2.y = window.innerHeight;
-                const svgPt2 = pt2.matrixTransform(invCtm);
+            // Move the main view accordingly
+            const ctm = mainGroup.getScreenCTM();
+            if (!ctm) return;
+            const invCtm = ctm.inverse();
 
-                const visibleWidth = svgPt2.x - svgPt1.x;
-                const visibleHeight = svgPt2.y - svgPt1.y;
+            const pt1 = svg.createSVGPoint();
+            pt1.x = 0;
+            pt1.y = 0;
+            const svgPt1 = pt1.matrixTransform(invCtm);
 
-                // Clamp so the viewport indicator stays inside the minimap
-                let newUserTx = userTx - panX / initialS;
-                let newUserTy = userTy - panY / initialS;
+            const pt2 = svg.createSVGPoint();
+            pt2.x = window.innerWidth;
+            pt2.y = window.innerHeight;
+            const svgPt2 = pt2.matrixTransform(invCtm);
 
-                // Calculate the min/max allowed pan so the viewport stays inside
-                const minTx = -(svgPt1.x - mainBounds.x) / initialS;
-                const maxTx = (mainBounds.width - visibleWidth - (svgPt1.x - mainBounds.x)) / initialS;
-                const minTy = -(svgPt1.y - mainBounds.y) / initialS;
-                const maxTy = (mainBounds.height - visibleHeight - (svgPt1.y - mainBounds.y)) / initialS;
+            const visibleWidth = svgPt2.x - svgPt1.x;
+            const visibleHeight = svgPt2.y - svgPt1.y;
 
-                // Clamp the new values
-                newUserTx = Math.max(minTx, Math.min(maxTx, newUserTx));
-                newUserTy = Math.max(minTy, Math.min(maxTy, newUserTy));
+            // Set userTx and userTy so that the viewport aligns with the indicator
+            userTx = ((mainBounds.x + relLeft * mainBounds.width) - svgPt1.x) / initialS;
+            userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
 
-                userTx = newUserTx;
-                userTy = newUserTy;
-
-                applyTransform();
-            }
-
-            indicatorStartX = event.clientX;
-            indicatorStartY = event.clientY;
+            applyTransform();
         }
     });
 
@@ -469,4 +465,105 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         svg.focus && svg.focus(); // Optionally focus the SVG or document
     });
+
+    // --- DRAGGING AND RESIZING WINDOWS ---
+
+    function makeDraggable(container, handleSelector = null) {
+        let isDragging = false;
+        let offsetX = 0, offsetY = 0;
+
+        const handle = handleSelector ? container.querySelector(handleSelector) : container;
+        if (!handle) return;
+
+        handle.style.cursor = 'move';
+
+        handle.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isDragging = true;
+            const rect = miniatureContainer.getBoundingClientRect();
+            offsetX = e.clientX;
+            offsetY = e.clientY;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        function onMouseMove(e) {
+            if (!isDragging) return;
+            // Keep the mouse at the same offset inside the window
+            container.style.left = (e.clientX - offsetX) + 'px';
+            container.style.top = (e.clientY - offsetY) + 'px';
+            // Recalculate viewport indicator after moving
+            requestAnimationFrame(updateViewportIndicator);
+        }
+        function onMouseUp() {
+            requestAnimationFrame(updateViewportIndicator);
+            isDragging = false;
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+
+    // Make metadata window draggable
+    const metadataBox = document.querySelector('.metadata-box');
+    if (metadataBox) {
+        // If you have a header, use '.header', else null for whole box
+        makeDraggable(metadataBox, '.header');
+    }
+
+    // Make minimap window draggable
+    const miniatureBox = document.querySelector('.miniature-box') || document.getElementById('miniature-container');
+    if (miniatureBox) {
+        makeDraggable(miniatureBox, '.header'); // Or null for whole box
+    }
+
+    // --- RESIZABLE MINIMAP ---
+
+    function makeResizable(container, handleSelector = '.resize-handle', minWidth = 100, minHeight = 100, maxWidth = 800, maxHeight = 800) {
+        const handle = container.querySelector(handleSelector);
+        if (!handle) return;
+
+        let isResizing = false;
+        let startX, startY, startW, startH;
+
+        handle.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = miniatureContainer.getBoundingClientRect();
+            startW = rect.width;
+            startH = rect.height;
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        function onMouseMove(e) {
+            if (!isResizing) return;
+            let newW = Math.max(minWidth, Math.min(maxWidth, startW + (e.clientX - startX)));
+            let newH = Math.max(minHeight, Math.min(maxHeight, startH + (e.clientY - startY)));
+            container.style.width = newW + 'px';
+            container.style.height = newH + 'px';
+            // If your minimap SVG needs to resize, do it here:
+            const miniSvg = container.querySelector('svg');
+            if (miniSvg) {
+                miniSvg.setAttribute('width', newW);
+                miniSvg.setAttribute('height', newH);
+            }
+            // Update indicator, etc.
+            requestAnimationFrame(updateViewportIndicator);
+        }
+        function onMouseUp() {
+            isResizing = false;
+            requestAnimationFrame(updateViewportIndicator);
+
+        }
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+
+    if (miniatureBox) {
+        makeResizable(miniatureBox, '.resize-handle');
+    }
 });

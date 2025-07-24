@@ -201,16 +201,16 @@ def inject_metadata_into_svg(
                 font-size: 14px;
                 line-height: 1.5;
                 max-width: 300px;
+                position: absolute;
             }
             .miniature-box {
+                position: absolute;
                 translate: (300px,0px);
                 background: white;
                 border: 1px solid #ccc;
                 padding: 10px;
                 z-index: 10000;
                 pointer-events: auto;
-                max-width: 20%
-                max-height: 30%;
             }
             .miniature-title {
                 font-size: 12px;
@@ -269,7 +269,15 @@ def inject_metadata_into_svg(
                 display: flex;
                 flex-direction: row;
                 align-items: flex-start;
-                gap: 16px; /* Optional: space between metadata and minimap */
+                gap: 16px;
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                z-index: 9999;
+            }
+            .metadata-box, .miniature-box {
+                position: relative;
+                /* Remove absolute here */
             }
         </style>
     </defs>
@@ -280,12 +288,13 @@ def inject_metadata_into_svg(
     minimap_html = ''
     if miniature_png_b64:
         minimap_html = f'''
-        <div class="miniature-box">
-            <div class="miniature-title">Overview</div>
-            <div class="miniature-container" id="miniature-container">
-                <img id="miniature-erd" src="data:image/png;base64,{miniature_png_b64}" width="{miniature_width}" height="{miniature_height}" />
-                <div id="viewport-indicator" class="viewport-indicator"></div>
-            </div>
+        <div id="miniature-container" class="miniature-box">
+          <div class="header">Overview</div>
+          <div class="miniature-container" id="miniature-container">
+            <img id="miniature-erd" src="data:image/png;base64,{miniature_png_b64}" width="{miniature_width}" height="{miniature_height}" />
+            <div id="viewport-indicator" class="viewport-indicator"></div>
+          </div>
+          <div class="resize-handle" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
         </div>
         '''
 
