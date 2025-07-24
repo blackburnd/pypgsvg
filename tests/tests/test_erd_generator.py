@@ -23,7 +23,7 @@ def simple_schema():
         }
     }
     foreign_keys = [
-        ("posts", "user_id", "users", "id", "FOREIGN KEY (user_id) REFERENCES users(id)")
+        ("posts", "user_id", "users", "id", "FOREIGN KEY (user_id) REFERENCES users(id) on DELETE CASCADE", "CASCADE", "CASCADE")
     ]
     return tables, foreign_keys
 

@@ -36,7 +36,7 @@ def test_main_success(tmp_path, fake_sql):
     # Normal run, all options, --view, --hide-standalone
     out = io.StringIO()
     with patch("sys.stdout", out):
-        for extra in ([], ["--view"], ["--hide-standalone"], ["--view", "--hide-standalone"]):
+        for extra in ([], ["--view"], ["--hide-standalone", "true"], ["--view", "--hide-standalone", "true"]):
             args = [str(tmp_path/"schema.sql"), "-o", str(tmp_path/"out")] + extra
             with run_main_with_args(args, mock_file_content=fake_sql) as (mfile, mparse, mgen, mweb):
                 mainmod.main()
