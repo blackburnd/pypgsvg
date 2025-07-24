@@ -59,13 +59,40 @@ def generate_miniature_erd(
         miniature_height = int(miniature_height * scale_factor)
 
     dot = Digraph(comment='Mini ERD', format='svg')
-    dot.attr(nodesep='8', pack='true', packmode='array', rankdir='TB', esep='6', normalize='true',
-             ranksep='3.0', pathsep='2.5', concentrate='true', margin='0.1', pad='0.1')
+    dot.attr(
+        nodesep='8',
+        pack='true',
+        packmode='array',
+        rankdir='TB',
+        esep='6',
+        normalize='true',
+        ranksep='3.0',
+        pathsep='2.5',
+        concentrate='true',
+        margin='0.05',   # <<--- Make margin very small
+        pad='0.05',      # <<--- Make pad very small
+        # size=f"{miniature_width/96},{miniature_height/96}!",  # Optional: force size
+    )
+    # Make tables more visible
     for table_name in tables:
-        dot.node(table_name, shape='rect', style='filled', fillcolor='#e0e0e0', fontsize='10')
+        dot.node(
+            table_name,
+            shape='rect',
+            style='filled',
+            fillcolor='#e0e0e0',
+            color='#444444',         # Darker border
+            fontcolor='#222222',     # Darker text
+            fontsize='12',
+            penwidth='2'             # Thicker border
+        )
+    # Make edges more visible
     for fk in foreign_keys:
-        ltbl, _, rtbl, _, _ , on_delete, on_update = fk
-        dot.edge(ltbl, rtbl)
+        ltbl, _, rtbl, _, _, on_delete, on_update = fk
+        dot.edge(
+            ltbl, rtbl,
+            color='#444444',         # Darker edge
+            penwidth='2.5'           # Thicker edge
+        )
     with tempfile.NamedTemporaryFile(suffix='.svg', delete=False) as tmp_svg:
         svg_output_path = tmp_svg.name
         try:
@@ -88,7 +115,11 @@ def generate_miniature_erd(
 
 def inject_metadata_into_svg(
     svg_content, file_info, total_tables, total_columns, total_foreign_keys, total_edges,
-    tables=None, foreign_keys=None, show_standalone=True, generate_miniature_erd=None
+    tables=None, foreign_keys=None, show_standalone=True, generate_miniature_erd=None,
+    packmode='array', rankdir='TB', esep='8', fontname='Arial', fontsize=18,
+        node_fontsize='14', edge_fontsize='12',
+        node_style='filled', node_shape='rect',
+        node_sep='0.5', rank_sep='0.5'
 ):
     """
     Inject metadata and miniature ERD (as PNG) directly into the SVG using a single foreignObject for fixed positioning.
@@ -102,7 +133,19 @@ def inject_metadata_into_svg(
         f"Tables: {total_tables}",
         f"Columns: {total_columns}",
         f"Foreign Keys: {total_foreign_keys}",
-        f"Connections: {total_edges}"
+        f"Connections: {total_edges}",
+        f"rankdir: {rankdir}",
+        f"packmode: {packmode}",
+        f"show_standalone: {show_standalone}",
+        f"esep: {esep}",
+        f"fontname: {fontname}",
+        f"fontsize: {fontsize}",
+        f"node_fontsize: {node_fontsize}",
+        f"edge_fontsize: {edge_fontsize}",
+        f"node_style: {node_style}",
+        f"node_shape: {node_shape}",
+        f"node_sep: {node_sep}",
+        f"rank_sep: {rank_sep}"
     ]
     miniature_png_b64 = ""
     miniature_width = 0
@@ -167,6 +210,7 @@ def inject_metadata_into_svg(
                 z-index: 10000;
                 pointer-events: auto;
                 max-width: 20%
+                max-height: 30%;
             }
             .miniature-title {
                 font-size: 12px;

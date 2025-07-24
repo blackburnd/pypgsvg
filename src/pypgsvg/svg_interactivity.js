@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mouseup', endPan);
     window.addEventListener('mouseleave', endPan);
     const zoomIntensity = 0.1;
-    const maxZoomOut = 0.1; // Can zoom out to 20%
+    const maxZoomOut = 0.01; 
     const maxZoomIn = 5;   // Can zoom in to 500%
     const initZoomOut = 0.7; // Initial zoom out to 50%
 

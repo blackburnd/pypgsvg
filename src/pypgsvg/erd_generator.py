@@ -19,7 +19,25 @@ log = logging.getLogger(__name__)
 def inject_edge_gradients(svg_content, graph_data):
     return svg_content
 
-def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_path=None, show_standalone=True):
+def generate_erd_with_graphviz(
+    tables,
+    foreign_keys,
+    output_file,
+    input_file_path=None,
+    show_standalone=True,
+    # Parameterized Graphviz attributes:
+    packmode='array',
+    rankdir='TB',
+    esep='6',
+    fontname='Sans-Serif',
+    fontsize=24,
+    node_fontsize=20,
+    edge_fontsize=16,
+    node_sep='0.5',
+    rank_sep='1.2',
+    node_style='filled',
+    node_shape='rect'
+):
     """
     Generate an ERD using Graphviz with explicit side connections.
 
@@ -29,6 +47,18 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
         output_file: Output file name (without extension)
         input_file_path: Path to input SQL file for metadata
         show_standalone: Whether to include standalone tables (tables with no FK relationships)
+        packmode: Graphviz 'packmode' (e.g., 'array', 'cluster', 'graph')
+        rankdir: Graphviz 'rankdir' (e.g., 'TB', 'LR', 'BT', 'RL')
+        esep: Graphviz 'esep' value
+        fontname: Font name for graph, nodes, and edges
+        fontsize: Font size for graph label
+        node_fontsize: Font size for node labels
+        edge_fontsize: Font size for edge labels
+        node_style: Node style (e.g., 'filled')
+        node_shape: Node shape (e.g., 'rect')
+        node_sep: Node separation distance
+        rank_sep: Rank separation distance
+
     """
 
     # Filter tables based on exclusion patterns and standalone option
@@ -67,32 +97,36 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
     file_info['generated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     dot = Digraph(comment='Database ERD', format='svg')
-    dot.attr(nodesep='8',      # Increased spacing between nodes
-             pack='true',
-             packmode='array',
-             rankdir='TB',     # Top to bottom layout
-             esep='6'               # Identical to main ERD
-             )
+    dot.attr(
+        nodesep=node_sep,
+        pack='true',
+        packmode=packmode,
+        rankdir=rankdir,
+        esep=esep
+    )
 
-    dot.attr('graph',
-             fontname='Sans-Serif',
-             fontsize='24',
-             ranksep='1.2',
-             labeljust='l',
-             )
+    dot.attr(
+        'graph',
+        fontname=fontname,
+        fontsize=str(fontsize),
+        ranksep=rank_sep,
+        labeljust='l',
+    )
 
-    dot.attr('node',
-             shape='rect',
-             style='filled',
-             fillcolor='white',
-             fontname='Sans-Serif',
-             fontsize='20',
-             )
+    dot.attr(
+        'node',
+        shape=node_shape,
+        style=node_style,
+        fillcolor='white',
+        fontname=fontname,
+        fontsize=str(node_fontsize),
+    )
 
-    dot.attr('edge',
-             fontname='Sans-Serif',
-             fontsize='16',
-             )
+    dot.attr(
+        'edge',
+        fontname=fontname,
+        fontsize=str(edge_fontsize),
+    )
 
     # Use deterministic color assignment based on table name
     sorted_tables = sorted(filtered_tables.keys())
@@ -158,7 +192,7 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
         safe_on_update = sanitize_label(on_update)
     
 
-        dot.edge(f"{safe_ltbl}:{safe_col}:e", f"{safe_rtbl}:{safe_rcol}:w", id=f"edge-{i}")
+        dot.edge(f"{safe_ltbl}:{safe_col}:e", f"{safe_rtbl}:{safe_rcol}:w", id=f"edge-{i}", on_delete=safe_on_delet, on_update=safe_on_update)
 
     actual_svg_path = output_file + ".svg"
     try:
@@ -196,7 +230,11 @@ def generate_erd_with_graphviz(tables, foreign_keys, output_file, input_file_pat
         wrapped_svg, file_info, total_tables, total_columns,
         total_foreign_keys, total_edges, tables=filtered_tables,
         foreign_keys=filtered_foreign_keys, show_standalone=show_standalone,
-        generate_miniature_erd=generate_miniature_erd
+        generate_miniature_erd=generate_miniature_erd, packmode=packmode, rankdir=rankdir,
+        esep=esep, fontname=fontname, fontsize=fontsize,
+        node_fontsize=node_fontsize, edge_fontsize=edge_fontsize,
+        node_style=node_style, node_shape=node_shape,
+        node_sep=node_sep, rank_sep=rank_sep
     )
 
     svg_content = inject_edge_gradients(svg_content, graph_data)
