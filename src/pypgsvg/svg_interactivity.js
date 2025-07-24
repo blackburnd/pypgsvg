@@ -480,9 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
         handle.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
             isDragging = true;
-            const rect = miniatureContainer.getBoundingClientRect();
-            offsetX = e.clientX;
-            offsetY = e.clientY;
+            // Get the current position of the container
+            const rect = container.getBoundingClientRect();
+            // Calculate offset between mouse and top-left corner of the window
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
             e.preventDefault();
             e.stopPropagation();
         });
@@ -490,9 +492,12 @@ document.addEventListener('DOMContentLoaded', () => {
         function onMouseMove(e) {
             if (!isDragging) return;
             // Keep the mouse at the same offset inside the window
+            // Recalculate viewport indicator after moving
+            left = container.style.left;
+            top = container.style.top;
+
             container.style.left = (e.clientX - offsetX) + 'px';
             container.style.top = (e.clientY - offsetY) + 'px';
-            // Recalculate viewport indicator after moving
             requestAnimationFrame(updateViewportIndicator);
         }
         function onMouseUp() {
