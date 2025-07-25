@@ -4,6 +4,7 @@ import json
 
 from datetime import datetime
 from graphviz import Digraph
+from typing import Dict, List, Optional
 from .utils import (
     should_exclude_table,
     is_standalone_table,
@@ -11,13 +12,68 @@ from .utils import (
     sanitize_label
 )
 from .colors import color_palette, saturate_color, desaturate_color
-from .metadata_injector import inject_metadata_into_svg, generate_miniature_erd
+from .metadata_injector import inject_metadata_into_svg
 import re
-from .svg_utils import wrap_main_erd_content, inject_edge_gradients
+from .svg_utils import wrap_main_erd_content
+from xml.etree import ElementTree as ET
 
 log = logging.getLogger(__name__)
+
+
 def inject_edge_gradients(svg_content, graph_data):
-    return svg_content
+    """
+    Injects linear gradients for each edge into the SVG <defs> and assigns them to edge paths.
+    The gradient transitions from the primary table color to the secondary table color,
+    with a striped effect.
+    """
+    # Parse SVG
+    ET.register_namespace('', "http://www.w3.org/2000/svg")
+    root = ET.fromstring(svg_content)
+    ns = {'svg': 'http://www.w3.org/2000/svg'}
+
+    # Find or create <defs>
+    defs = root.find('svg:defs', ns)
+    if defs is None:
+        defs = ET.Element('{http://www.w3.org/2000/svg}defs')
+        root.insert(0, defs)
+
+    # For each edge, create a gradient
+    for edge_id, edge_info in graph_data['edges'].items():
+        tbl1, tbl2 = edge_info['tables']
+        color1 = graph_data['tables'][tbl1]['defaultColor']
+        color2 = graph_data['tables'][tbl2]['defaultColor']
+
+        # Create striped stops
+        stops = []
+        for i in range(6):
+            offset = f"{i*20}%"
+            color = color1 if i % 2 == 0 else color2
+            stops.append((offset, color))
+
+        grad = ET.Element('{http://www.w3.org/2000/svg}linearGradient', {
+            'id': f'{edge_id}-gradient',
+            'x1': '0%', 'y1': '0%', 'x2': '100%', 'y2': '0%',
+        })
+        for offset, color in stops:
+            stop = ET.Element('{http://www.w3.org/2000/svg}stop', {
+                'offset': offset,
+                'stop-color': color,
+            })
+            grad.append(stop)
+        defs.append(grad)
+
+    # Assign gradients to edge paths
+    for g in root.findall('.//svg:g[@class="edge"]', ns):
+        edge_id = g.attrib.get('id')
+        if not edge_id or edge_id not in graph_data['edges']:
+            continue
+        for path in g.findall('.//svg:path', ns):
+            path.set('stroke', f'url(#{edge_id}-gradient)')
+            # Optionally, set stroke-width if needed
+
+    # Return modified SVG
+    return ET.tostring(root, encoding='unicode')
+
 
 def generate_erd_with_graphviz(
     tables,
@@ -25,14 +81,13 @@ def generate_erd_with_graphviz(
     output_file,
     input_file_path=None,
     show_standalone=True,
-    # Parameterized Graphviz attributes:
     packmode='array',
     rankdir='TB',
     esep='6',
     fontname='Sans-Serif',
-    fontsize=24,
-    node_fontsize=20,
-    edge_fontsize=16,
+    fontsize='24',
+    node_fontsize='20',
+    edge_fontsize='16',
     node_sep='0.5',
     rank_sep='1.2',
     node_style='filled',
@@ -226,17 +281,17 @@ def generate_erd_with_graphviz(
 
     wrapped_svg = wrap_main_erd_content(svg_content)
 
+    gen_min_erd = True
     svg_content = inject_metadata_into_svg(
         wrapped_svg, file_info, total_tables, total_columns,
         total_foreign_keys, total_edges, tables=filtered_tables,
         foreign_keys=filtered_foreign_keys, show_standalone=show_standalone,
-        generate_miniature_erd=generate_miniature_erd, packmode=packmode, rankdir=rankdir,
+        gen_min_erd=gen_min_erd, packmode=packmode, rankdir=rankdir,
         esep=esep, fontname=fontname, fontsize=fontsize,
         node_fontsize=node_fontsize, edge_fontsize=edge_fontsize,
         node_style=node_style, node_shape=node_shape,
         node_sep=node_sep, rank_sep=rank_sep
     )
-
     svg_content = inject_edge_gradients(svg_content, graph_data)
 
     with open(actual_svg_path, 'w', encoding='utf-8') as f:

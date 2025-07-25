@@ -1,0 +1,124 @@
+#main-svg {
+    overflow: visible;
+}
+
+#overlay-container-div {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    font-family: system-ui, -apple-system, sans-serif;
+    z-index: 9999;
+}
+
+.metadata-box,
+.miniature-box,
+.instructions {
+    z-index: 9999;
+    pointer-events: auto;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.metadata-box {
+    transform: translate(0px, 0px);
+    background: lightyellow;
+    border: 1px solid #000;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 300px;
+    position: absolute;
+}
+
+.miniature-box {
+    position: absolute;
+    translate: (300px, 0px);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+.miniature-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+    color: #333;
+}
+
+.miniature-container {
+    position: relative;
+    cursor: crosshair;
+    border: 1px solid #ccc;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.miniature-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.viewport-indicator {
+    position: absolute;
+    border: 2px solid red;
+    background-color: rgba(255, 0, 0, 0.2);
+    pointer-events: auto;
+    opacity: 0.8;
+    transition: all 0.1s ease;
+    box-sizing: border-box;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.viewport-indicator.dragging {
+    cursor: grabbing;
+}
+
+.instructions {
+    bottom: 10px;
+    right: 20px;
+    font-size: 11px;
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 3px 6px;
+}
+
+#main-svg.grabbing {
+    cursor: grabbing;
+}
+
+.node,
+.edge {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.metadata-minimap-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+}
+
+.metadata-box,
+.miniature-box {
+    position: relative;
+    /* Remove absolute here */
+}
+
+</style></defs>

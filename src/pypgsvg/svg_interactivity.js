@@ -1,22 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const svg = document.getElementById('main-svg');
+    const svg = document.children[0]
     const mainGroup = document.getElementById('main-erd-group');
     const miniatureContainer = document.getElementById('miniature-container');
     const viewportIndicator = document.getElementById('viewport-indicator');
     const overlayContainer = document.getElementById('overlay-container');
     const graphDataElement = document.getElementById('graph-data');
 
-    if (!svg || !mainGroup || !overlayContainer || !graphDataElement) {
-        return;
-    }
-
-    if (!miniatureContainer || !viewportIndicator) {
-
-    }
-
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
+
 
     // --- State variables
     let initialTx = 0, initialTy = 0, initialS = 1; // Transform from Graphviz
@@ -203,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightedElementId = null;
     };
 
-    // --- USER ACTIONS ---
+
 
     // Reset pan and zoom to the initial state
     const resetZoom = () => {
@@ -213,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllHighlights(); // Also clear highlights on reset
         applyTransform();
     };
+
     const zoomToPoint = (targetX, targetY, zoomLevel = userS) => {
         userS = zoomLevel;
         const finalS = userS * initialS;
@@ -229,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- EVENT LISTENERS ---
+    alert(svg);
 
     svg.addEventListener('click', (event) => {
         let clickedElement = event.target;
@@ -414,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('mouseup', endPan);
     window.addEventListener('mouseleave', endPan);
+
     const zoomIntensity = 0.1;
     const maxZoomOut = 0.01; 
     const maxZoomIn = 5;   // Can zoom in to 500%
@@ -468,107 +464,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DRAGGING AND RESIZING WINDOWS ---
 
-    function makeDraggable(container, handleSelector = null) {
-        let isDragging = false;
-        let offsetX = 0, offsetY = 0;
 
-        const handle = handleSelector ? container.querySelector(handleSelector) : container;
-        if (!handle) return;
-
-        handle.style.cursor = 'move';
-
-        handle.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            isDragging = true;
-            // Get the current position of the container
-            const rect = container.getBoundingClientRect();
-            // Calculate offset between mouse and top-left corner of the window
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        function onMouseMove(e) {
-            if (!isDragging) return;
-            // Keep the mouse at the same offset inside the window
-            // Recalculate viewport indicator after moving
-            left = container.style.left;
-            top = container.style.top;
-
-            container.style.left = (e.clientX - offsetX) + 'px';
-            container.style.top = (e.clientY - offsetY) + 'px';
-            requestAnimationFrame(updateViewportIndicator);
-        }
-        function onMouseUp() {
-            requestAnimationFrame(updateViewportIndicator);
-            isDragging = false;
-        }
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-    }
-
-    // Make metadata window draggable
-    const metadataBox = document.querySelector('.metadata-box');
-    if (metadataBox) {
-        // If you have a header, use '.header', else null for whole box
-        makeDraggable(metadataBox, '.header');
-    }
-
-    // Make minimap window draggable
-    const miniatureBox = document.querySelector('.miniature-box') || document.getElementById('miniature-container');
-    if (miniatureBox) {
-        makeDraggable(miniatureBox, '.header'); // Or null for whole box
-    }
-
-    // --- RESIZABLE MINIMAP ---
-
-    function makeResizable(container, handleSelector = '.resize-handle', minWidth = 100, minHeight = 100, maxWidth = 800, maxHeight = 800) {
-        const handle = container.querySelector(handleSelector);
-        if (!handle) return;
-
-        let isResizing = false;
-        let startX, startY, startW, startH;
-
-        handle.addEventListener('mousedown', (e) => {
-            if (e.button !== 0) return;
-            isResizing = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            const rect = miniatureContainer.getBoundingClientRect();
-            startW = rect.width;
-            startH = rect.height;
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        function onMouseMove(e) {
-            if (!isResizing) return;
-            let newW = Math.max(minWidth, Math.min(maxWidth, startW + (e.clientX - startX)));
-            let newH = Math.max(minHeight, Math.min(maxHeight, startH + (e.clientY - startY)));
-            container.style.width = newW + 'px';
-            container.style.height = newH + 'px';
-            // If your minimap SVG needs to resize, do it here:
-            const miniSvg = container.querySelector('svg');
-            if (miniSvg) {
-                miniSvg.setAttribute('width', newW);
-                miniSvg.setAttribute('height', newH);
-            }
-            // Update indicator, etc.
-            requestAnimationFrame(updateViewportIndicator);
-        }
-        function onMouseUp() {
-            isResizing = false;
-            requestAnimationFrame(updateViewportIndicator);
-
-        }
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-    }
-
-    if (miniatureBox) {
-        makeResizable(miniatureBox, '.resize-handle');
-    }
 });

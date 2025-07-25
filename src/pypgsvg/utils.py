@@ -45,12 +45,12 @@ def should_exclude_table(table_name: str) -> bool:
     return any(pattern in name for pattern in exclude_patterns)
 
 
-def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str]]) -> bool:
+def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str, str, str]]) -> bool:
     """
     Check if a table is standalone (has no foreign key relationships).
     Returns True if the table has no incoming or outgoing foreign key relationships.
     """
-    for fk_table, _, ref_table, _, _ in foreign_keys:
+    for fk_table, _, ref_table, _, _, on_delete, on_update in foreign_keys:
         if table_name == fk_table or table_name == ref_table:
             return False
     return True
