@@ -113,64 +113,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const setElementColor = (elem, color, isHighlighted = false) => {
         if (!elem) return;
         miniElem = null;
+        const nodeId = elem.id;
+        if (nodeId.indexOf('mini-') == -1) {
+            const miniNodeId = 'mini-' + nodeId;
+            const miniElem = document.getElementById(miniNodeId);
+            if (miniElem) {
+                setElementColor(miniElem, color, isHighlighted);
+            }
+        }
+
         if (elem.classList && elem.classList.contains('node')) {
-            const nodeId = elem.id;
-            if (nodeId.indexOf('mini-') == -1) {
-                const miniNodeId = 'mini-' + nodeId;
-                const miniElem = document.getElementById(miniNodeId);
-                if (miniElem) {
-                    setElementColor(miniElem, color, isHighlighted);
-                }
-            }
-        
-        const connectedEdgeIds = tables[nodeId]?.edges || [];
-        // Pick first two connected edges, fallback to default color if not enough
-        const edge1 = edges[connectedEdgeIds[0]];
-        const edge2 = edges[connectedEdgeIds[1]];
-        const defaultColor = edge1 ? edge1.defaultColor : color;
-        const highlightColor = edge2 ? edge2.highlightColor : color;
-        const fillColor = defaultColor;
-        const strokeColor = highlightColor;
+            const connectedEdgeIds = tables[nodeId]?.edges || [];
+            const edge1 = edges[connectedEdgeIds[0]];
+            const edge2 = edges[connectedEdgeIds[1]];
+            const defaultColor = edge1 ? edge1.defaultColor : color;
+            const highlightColor = edge2 ? edge2.highlightColor : color;
+            const fillColor = defaultColor;
+            const strokeColor = highlightColor;
 
-        if (miniElem != null) {
-            const miniPath = miniElem.querySelector('path');
-            if (miniPath) {
-                miniPath.setAttribute('fill', fillColor);
-                miniPath.setAttribute('stroke', strokeColor);
-                miniPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+            const mainPath = elem.querySelector('path');
+            if (mainPath) {
+                mainPath.setAttribute('fill', fillColor);
+                mainPath.setAttribute('stroke', strokeColor);
+                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             }
 
-            const polygons = miniElem.querySelectorAll('polygon');
+            const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 polygon.setAttribute('fill', fillColor);
                 polygon.setAttribute('stroke', strokeColor);
                 polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             });
-
-            if (miniElem.classList && miniElem.classList.contains('edge')) {
-                const edgePath = miniElem.querySelector('path');
-                if (edgePath) {
-                    edgePath.setAttribute('stroke', color);
-                    edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
-                }
-            }
         }
 
-        const mainPath = elem.querySelector('path');
-        if (mainPath) {
-            mainPath.setAttribute('fill', fillColor);
-            mainPath.setAttribute('stroke', strokeColor);
-            mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
-        }
-
-        const polygons = elem.querySelectorAll('polygon');
-        polygons.forEach(polygon => {
-            polygon.setAttribute('fill', fillColor);
-            polygon.setAttribute('stroke', strokeColor);
-            polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
-        });
-
-
+        // --- FIX: Edge highlighting should be outside the node block ---
         if (elem.classList && elem.classList.contains('edge')) {
             const edgePath = elem.querySelector('path');
             if (edgePath) {
@@ -179,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-    }
+
+
     const highlightElements = (tableIds, edgeIds) => {
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);

@@ -2633,7 +2633,7 @@
     <html:div class="metadata-box">
       <html:div class="header">Metadata</html:div>
       <html:ul>
-        <html:li>Source: schema.dump</html:li><html:li>File Size: 209,595 bytes</html:li><html:li>Generated: 2025-07-25 16:37:27</html:li><html:li>Tables: 64</html:li><html:li>Columns: 664</html:li><html:li>Foreign Keys: 107</html:li><html:li>Connections: 107</html:li><html:li>rankdir: TB</html:li><html:li>packmode: array</html:li><html:li>show_standalone: False</html:li><html:li>esep: 8</html:li><html:li>fontname: Arial</html:li><html:li>fontsize: 18</html:li><html:li>node_fontsize: 14</html:li><html:li>edge_fontsize: 12</html:li><html:li>node_style: rounded,filled</html:li><html:li>node_shape: ellipse</html:li><html:li>node_sep: 0.5</html:li><html:li>rank_sep: 1.2</html:li>
+        <html:li>Source: schema.dump</html:li><html:li>File Size: 209,595 bytes</html:li><html:li>Generated: 2025-07-25 18:18:26</html:li><html:li>Tables: 64</html:li><html:li>Columns: 664</html:li><html:li>Foreign Keys: 107</html:li><html:li>Connections: 107</html:li><html:li>rankdir: TB</html:li><html:li>packmode: array</html:li><html:li>show_standalone: False</html:li><html:li>esep: 8</html:li><html:li>fontname: Arial</html:li><html:li>fontsize: 18</html:li><html:li>node_fontsize: 14</html:li><html:li>edge_fontsize: 12</html:li><html:li>node_style: rounded,filled</html:li><html:li>node_shape: ellipse</html:li><html:li>node_sep: 0.5</html:li><html:li>rank_sep: 1.2</html:li>
       </html:ul>
     </html:div>
     
@@ -5262,64 +5262,40 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
     const setElementColor = (elem, color, isHighlighted = false) =&gt; {
         if (!elem) return;
         miniElem = null;
+        const nodeId = elem.id;
+        if (nodeId.indexOf('mini-') == -1) {
+            const miniNodeId = 'mini-' + nodeId;
+            const miniElem = document.getElementById(miniNodeId);
+            if (miniElem) {
+                setElementColor(miniElem, color, isHighlighted);
+            }
+        }
+
         if (elem.classList &amp;&amp; elem.classList.contains('node')) {
-            const nodeId = elem.id;
-            if (nodeId.indexOf('mini-') == -1) {
-                const miniNodeId = 'mini-' + nodeId;
-                const miniElem = document.getElementById(miniNodeId);
-                if (miniElem) {
-                    setElementColor(miniElem, color, isHighlighted);
-                }
-            }
-        
-        const connectedEdgeIds = tables[nodeId]?.edges || [];
-        // Pick first two connected edges, fallback to default color if not enough
-        const edge1 = edges[connectedEdgeIds[0]];
-        const edge2 = edges[connectedEdgeIds[1]];
-        const defaultColor = edge1 ? edge1.defaultColor : color;
-        const highlightColor = edge2 ? edge2.highlightColor : color;
-        const fillColor = defaultColor;
-        const strokeColor = highlightColor;
+            const connectedEdgeIds = tables[nodeId]?.edges || [];
+            const edge1 = edges[connectedEdgeIds[0]];
+            const edge2 = edges[connectedEdgeIds[1]];
+            const defaultColor = edge1 ? edge1.defaultColor : color;
+            const highlightColor = edge2 ? edge2.highlightColor : color;
+            const fillColor = defaultColor;
+            const strokeColor = highlightColor;
 
-        if (miniElem != null) {
-            const miniPath = miniElem.querySelector('path');
-            if (miniPath) {
-                miniPath.setAttribute('fill', fillColor);
-                miniPath.setAttribute('stroke', strokeColor);
-                miniPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+            const mainPath = elem.querySelector('path');
+            if (mainPath) {
+                mainPath.setAttribute('fill', fillColor);
+                mainPath.setAttribute('stroke', strokeColor);
+                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             }
 
-            const polygons = miniElem.querySelectorAll('polygon');
+            const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon =&gt; {
                 polygon.setAttribute('fill', fillColor);
                 polygon.setAttribute('stroke', strokeColor);
                 polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             });
-
-            if (miniElem.classList &amp;&amp; miniElem.classList.contains('edge')) {
-                const edgePath = miniElem.querySelector('path');
-                if (edgePath) {
-                    edgePath.setAttribute('stroke', color);
-                    edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
-                }
-            }
         }
 
-        const mainPath = elem.querySelector('path');
-        if (mainPath) {
-            mainPath.setAttribute('fill', fillColor);
-            mainPath.setAttribute('stroke', strokeColor);
-            mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
-        }
-
-        const polygons = elem.querySelectorAll('polygon');
-        polygons.forEach(polygon =&gt; {
-            polygon.setAttribute('fill', fillColor);
-            polygon.setAttribute('stroke', strokeColor);
-            polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
-        });
-
-
+        // --- FIX: Edge highlighting should be outside the node block ---
         if (elem.classList &amp;&amp; elem.classList.contains('edge')) {
             const edgePath = elem.querySelector('path');
             if (edgePath) {
@@ -5328,7 +5304,8 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
             }
         }
     };
-    }
+
+
     const highlightElements = (tableIds, edgeIds) =&gt; {
         tableIds.forEach(id =&gt; {
             const tableElement = document.getElementById(id);
