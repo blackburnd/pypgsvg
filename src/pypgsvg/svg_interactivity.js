@@ -24,6 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let indicatorStartX = 0, indicatorStartY = 0;
     let indicatorOffsetX = 0, indicatorOffsetY = 0; // Add these at the top with other state variables
 
+    let isDraggingMiniature = false;
+    let miniatureStartX = 0, miniatureStartY = 0;
+    let miniatureOffsetX = 0, miniatureOffsetY = 0;
+
     let highlightedElementId = null; // To track the currently highlighted table/edge
 
     // --- INITIALIZATION ---
@@ -319,6 +323,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             zoomToPoint(targetX, targetY);
         });
+
+        miniatureContainer.addEventListener('mousedown', (event) => {
+            // Only drag if clicking on the background, not indicator
+            if (event.target === viewportIndicator) return;
+            isDraggingMiniature = true;
+            miniatureStartX = event.clientX;
+            miniatureStartY = event.clientY;
+            const rect = miniatureContainer.getBoundingClientRect();
+            miniatureOffsetX = event.clientX - rect.left;
+            miniatureOffsetY = event.clientY - rect.top;
+            miniatureContainer.classList.add('dragging');
+            event.preventDefault();
+            event.stopPropagation();
+        });
     }
 
     svg.addEventListener('mousedown', (event) => {
@@ -398,6 +416,17 @@ document.addEventListener('DOMContentLoaded', () => {
             userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
 
             applyTransform();
+        } else if (isDraggingMiniature) {
+            event.preventDefault();
+            // Calculate new position
+            let newLeft = event.clientX - miniatureOffsetX;
+            let newTop = event.clientY - miniatureOffsetY;
+            // Optionally clamp to window bounds
+            newLeft = Math.max(0, Math.min(window.innerWidth - miniatureContainer.offsetWidth, newLeft));
+            newTop = Math.max(0, Math.min(window.innerHeight - miniatureContainer.offsetHeight, newTop));
+            miniatureContainer.style.position = 'fixed';
+            miniatureContainer.style.left = `${newLeft}px`;
+            miniatureContainer.style.top = `${newTop}px`;
         }
     });
 
@@ -409,6 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDraggingIndicator) {
             isDraggingIndicator = false;
             viewportIndicator.classList.remove('dragging');
+        }
+        if (isDraggingMiniature) {
+            isDraggingMiniature = false;
+            miniatureContainer.classList.remove('dragging');
         }
         // Reset mouse tracking variables
         mouseDownStartX = undefined;

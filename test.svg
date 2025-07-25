@@ -2633,7 +2633,7 @@
     <html:div class="metadata-box">
       <html:div class="header">Metadata</html:div>
       <html:ul>
-        <html:li>Source: schema.dump</html:li><html:li>File Size: 209,595 bytes</html:li><html:li>Generated: 2025-07-25 18:18:26</html:li><html:li>Tables: 64</html:li><html:li>Columns: 664</html:li><html:li>Foreign Keys: 107</html:li><html:li>Connections: 107</html:li><html:li>rankdir: TB</html:li><html:li>packmode: array</html:li><html:li>show_standalone: False</html:li><html:li>esep: 8</html:li><html:li>fontname: Arial</html:li><html:li>fontsize: 18</html:li><html:li>node_fontsize: 14</html:li><html:li>edge_fontsize: 12</html:li><html:li>node_style: rounded,filled</html:li><html:li>node_shape: ellipse</html:li><html:li>node_sep: 0.5</html:li><html:li>rank_sep: 1.2</html:li>
+        <html:li>Source: schema.dump</html:li><html:li>File Size: 209,595 bytes</html:li><html:li>Generated: 2025-07-25 18:21:23</html:li><html:li>Tables: 64</html:li><html:li>Columns: 664</html:li><html:li>Foreign Keys: 107</html:li><html:li>Connections: 107</html:li><html:li>rankdir: TB</html:li><html:li>packmode: array</html:li><html:li>show_standalone: False</html:li><html:li>esep: 8</html:li><html:li>fontname: Arial</html:li><html:li>fontsize: 18</html:li><html:li>node_fontsize: 14</html:li><html:li>edge_fontsize: 12</html:li><html:li>node_style: rounded,filled</html:li><html:li>node_shape: ellipse</html:li><html:li>node_sep: 0.5</html:li><html:li>rank_sep: 1.2</html:li>
       </html:ul>
     </html:div>
     
@@ -5173,6 +5173,10 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
     let indicatorStartX = 0, indicatorStartY = 0;
     let indicatorOffsetX = 0, indicatorOffsetY = 0; // Add these at the top with other state variables
 
+    let isDraggingMiniature = false;
+    let miniatureStartX = 0, miniatureStartY = 0;
+    let miniatureOffsetX = 0, miniatureOffsetY = 0;
+
     let highlightedElementId = null; // To track the currently highlighted table/edge
 
     // --- INITIALIZATION ---
@@ -5468,6 +5472,20 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
 
             zoomToPoint(targetX, targetY);
         });
+
+        miniatureContainer.addEventListener('mousedown', (event) =&gt; {
+            // Only drag if clicking on the background, not indicator
+            if (event.target === viewportIndicator) return;
+            isDraggingMiniature = true;
+            miniatureStartX = event.clientX;
+            miniatureStartY = event.clientY;
+            const rect = miniatureContainer.getBoundingClientRect();
+            miniatureOffsetX = event.clientX - rect.left;
+            miniatureOffsetY = event.clientY - rect.top;
+            miniatureContainer.classList.add('dragging');
+            event.preventDefault();
+            event.stopPropagation();
+        });
     }
 
     svg.addEventListener('mousedown', (event) =&gt; {
@@ -5547,6 +5565,17 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
             userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
 
             applyTransform();
+        } else if (isDraggingMiniature) {
+            event.preventDefault();
+            // Calculate new position
+            let newLeft = event.clientX - miniatureOffsetX;
+            let newTop = event.clientY - miniatureOffsetY;
+            // Optionally clamp to window bounds
+            newLeft = Math.max(0, Math.min(window.innerWidth - miniatureContainer.offsetWidth, newLeft));
+            newTop = Math.max(0, Math.min(window.innerHeight - miniatureContainer.offsetHeight, newTop));
+            miniatureContainer.style.position = 'fixed';
+            miniatureContainer.style.left = `${newLeft}px`;
+            miniatureContainer.style.top = `${newTop}px`;
         }
     });
 
@@ -5558,6 +5587,10 @@ document.addEventListener('DOMContentLoaded', () =&gt; {
         if (isDraggingIndicator) {
             isDraggingIndicator = false;
             viewportIndicator.classList.remove('dragging');
+        }
+        if (isDraggingMiniature) {
+            isDraggingMiniature = false;
+            miniatureContainer.classList.remove('dragging');
         }
         // Reset mouse tracking variables
         mouseDownStartX = undefined;
