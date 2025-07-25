@@ -6,3 +6,4 @@ database_diagram
 database_diagram.svg
 test.svg
 coverage.xml
+*.svg
