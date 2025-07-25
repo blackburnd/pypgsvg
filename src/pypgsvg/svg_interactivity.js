@@ -112,32 +112,64 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- HIGHLIGHTING ---
     const setElementColor = (elem, color, isHighlighted = false) => {
         if (!elem) return;
-
+        miniElem = null;
         if (elem.classList && elem.classList.contains('node')) {
             const nodeId = elem.id;
-            const connectedEdgeIds = tables[nodeId]?.edges || [];
-            // Pick first two connected edges, fallback to default color if not enough
-            const edge1 = edges[connectedEdgeIds[0]];
-            const edge2 = edges[connectedEdgeIds[1]];
-            const defaultColor = edge1 ? edge1.defaultColor : color;
-            const highlightColor = edge2 ? edge2.highlightColor : color;
-            const fillColor = defaultColor;
-            const strokeColor = highlightColor;
+            if (nodeId.indexOf('mini-') == -1) {
+                const miniNodeId = 'mini-' + nodeId;
+                const miniElem = document.getElementById(miniNodeId);
+                if (miniElem) {
+                    setElementColor(miniElem, color, isHighlighted);
+                }
+            }
+        
+        const connectedEdgeIds = tables[nodeId]?.edges || [];
+        // Pick first two connected edges, fallback to default color if not enough
+        const edge1 = edges[connectedEdgeIds[0]];
+        const edge2 = edges[connectedEdgeIds[1]];
+        const defaultColor = edge1 ? edge1.defaultColor : color;
+        const highlightColor = edge2 ? edge2.highlightColor : color;
+        const fillColor = defaultColor;
+        const strokeColor = highlightColor;
 
-            const mainPath = elem.querySelector('path');
-            if (mainPath) {
-                mainPath.setAttribute('fill', fillColor);
-                mainPath.setAttribute('stroke', strokeColor);
-                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+        if (miniElem != null) {
+            const miniPath = miniElem.querySelector('path');
+            if (miniPath) {
+                miniPath.setAttribute('fill', fillColor);
+                miniPath.setAttribute('stroke', strokeColor);
+                miniPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             }
 
-            const polygons = elem.querySelectorAll('polygon');
+            const polygons = miniElem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 polygon.setAttribute('fill', fillColor);
                 polygon.setAttribute('stroke', strokeColor);
                 polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
             });
+
+            if (miniElem.classList && miniElem.classList.contains('edge')) {
+                const edgePath = miniElem.querySelector('path');
+                if (edgePath) {
+                    edgePath.setAttribute('stroke', color);
+                    edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
+                }
+            }
         }
+
+        const mainPath = elem.querySelector('path');
+        if (mainPath) {
+            mainPath.setAttribute('fill', fillColor);
+            mainPath.setAttribute('stroke', strokeColor);
+            mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+        }
+
+        const polygons = elem.querySelectorAll('polygon');
+        polygons.forEach(polygon => {
+            polygon.setAttribute('fill', fillColor);
+            polygon.setAttribute('stroke', strokeColor);
+            polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+        });
+
 
         if (elem.classList && elem.classList.contains('edge')) {
             const edgePath = elem.querySelector('path');
@@ -147,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
-
+    }
     const highlightElements = (tableIds, edgeIds) => {
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
@@ -223,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- EVENT LISTENERS ---
-    alert(svg);
 
     svg.addEventListener('click', (event) => {
         let clickedElement = event.target;
@@ -411,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mouseleave', endPan);
 
     const zoomIntensity = 0.1;
-    const maxZoomOut = 0.01; 
+    const maxZoomOut = 0.01;
     const maxZoomIn = 5;   // Can zoom in to 500%
     const initZoomOut = 0.7; // Initial zoom out to 50%
 
