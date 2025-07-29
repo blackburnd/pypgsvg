@@ -4,47 +4,6 @@ import re
 import tempfile
 from graphviz import Digraph
 
-def convert_svg_to_png(svg_file_path, width=800, height=600):
-    """
-    Convert SVG to PNG using cairosvg if available, or fallback to other methods.
-    Returns PNG data as bytes, or None on failure.
-    """
-    try:
-        import cairosvg
-        with open(svg_file_path, 'r', encoding='utf-8') as f:
-            svg_content = f.read()
-        png_data = cairosvg.svg2png(bytestring=svg_content.encode('utf-8'), output_width=width, output_height=height)
-        return png_data
-    except ImportError:
-        print("cairosvg is not installed. Please install it to enable SVG to PNG conversion.")
-    except Exception as e:
-        print(f"Error converting SVG to PNG: {e}")
-    return None
-def get_svg_dimensions(svg_file_path):
-    """
-    Extract width and height from an SVG file.
-    Returns (width, height) as integers, or (0, 0) if not found.
-    """
-    import re
-    try:
-        with open(svg_file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        # Try to find width and height attributes
-        width_match = re.search(r'width="([0-9.]+)"', content)
-        height_match = re.search(r'height="([0-9.]+)"', content)
-        if width_match and height_match:
-            width = int(float(width_match.group(1)))
-            height = int(float(height_match.group(1)))
-            return width, height
-        # Fallback: try viewBox
-        viewbox_match = re.search(r'viewBox="[0-9.]+ [0-9.]+ ([0-9.]+) ([0-9.]+)"', content)
-        if viewbox_match:
-            width = int(float(viewbox_match.group(1)))
-            height = int(float(viewbox_match.group(2)))
-            return width, height
-    except Exception as e:
-        print(f"Warning: Could not parse SVG dimensions from file: {e}")
-    return 0, 0
 
 
 def wrap_main_erd_content(*args, **kwargs):

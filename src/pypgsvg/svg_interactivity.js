@@ -1,38 +1,76 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    const svg = document.children[0]
+    const svg = document.children[0];
     const mainGroup = document.getElementById('main-erd-group');
     const miniatureContainer = document.getElementById('miniature-container');
     const viewportIndicator = document.getElementById('viewport-indicator');
     const overlayContainer = document.getElementById('overlay-container');
     const graphDataElement = document.getElementById('graph-data');
-
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
 
-
-    // --- State variables
-    let initialTx = 0, initialTy = 0, initialS = 1; // Transform from Graphviz
-    let userTx = 0, userTy = 0, userS = 1; // User-applied transform (pan/zoom)
-
+    // --- State variables ---
+    let initialTx = 0, initialTy = 0, initialS = 1;
+    let userTx = 0, userTy = 0, userS = 1;
     let isPanning = false;
     let startX = 0, startY = 0;
     let mouseDownStartX = 0, mouseDownStartY = 0;
-    let dragThreshold = 5; // Pixel threshold before panning starts
+    let dragThreshold = 5;
+    let highlightedElementId = null;
+    let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null };
 
-    let isDraggingIndicator = false;
-    let indicatorStartX = 0, indicatorStartY = 0;
-    let indicatorOffsetX = 0, indicatorOffsetY = 0; // Add these at the top with other state variables
 
-    let isDraggingMiniature = false;
-    let miniatureStartX = 0, miniatureStartY = 0;
-    let miniatureOffsetX = 0, miniatureOffsetY = 0;
+        function addWindowControls(windowElem, options = {}) {
+        if (!windowElem) return;
+        let controls = windowElem.querySelector('.window-controls');
+        if (!controls) {
+            controls = document.createElement('div');
+            controls.className = 'window-controls';
+            controls.style.position = 'absolute';
+            controls.style.top = '2px';
+            controls.style.right = '2px';
+            controls.style.zIndex = '10001';
+            windowElem.appendChild(controls);
+        }
+        let minBtn = controls.querySelector('.minimize-btn');
+        if (!minBtn) {
+            minBtn = document.createElement('button');
+            minBtn.className = 'minimize-btn';
+            minBtn.title = 'Minimize';
+            minBtn.innerHTML = '–';
+            controls.appendChild(minBtn);
+        }
+        let closeBtn = controls.querySelector('.close-btn');
+        if (!closeBtn) {
+            closeBtn = document.createElement('button');
+            closeBtn.className = 'close-btn';
+            closeBtn.title = 'Close';
+            closeBtn.innerHTML = '×';
+            controls.appendChild(closeBtn);
+        }
+        minBtn.onclick = (e) => {
+            e.stopPropagation();
+            windowElem.classList.toggle('minimized');
+            const content = windowElem.querySelector('.window-content');
 
-    let highlightedElementId = null; // To track the currently highlighted table/edge
 
-    // --- INITIALIZATION ---
-
-    // Parse the initial transform applied by Graphviz to the main group
+            if (windowElem.classList.contains('minimized')) {
+                if (content) content.style.display = 'none';
+                minBtn.innerHTML = '+';
+            } else {
+                if (content) content.style.display = '';
+                minBtn.innerHTML = '–';
+            }
+            if (options.onMinimize) options.onMinimize(windowElem.classList.contains('minimized'));
+        };
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            windowElem.style.display = 'none';
+            if (options.onClose) options.onClose();
+        };
+        controls.addEventListener('mousedown', e => e.stopPropagation());
+        controls.addEventListener('click', e => e.stopPropagation());
+    }
+    // --- Initialization ---
     const parseTransform = (transform) => {
         const result = { tx: 0, ty: 0, s: 1 };
         if (!transform) return result;
@@ -47,115 +85,108 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return result;
     };
+    const initialTransform = parseTransform(mainGroup ? mainGroup.getAttribute('transform') : '');
+    initialTx = isNaN(initialTransform.tx) ? 0 : initialTransform.tx;
+    initialTy = isNaN(initialTransform.ty) ? 0 : initialTransform.ty;
+    initialS = isNaN(initialTransform.s) ? 1 : initialTransform.s;
 
-    const initialTransform = parseTransform(mainGroup.getAttribute('transform'));
-    initialTx = initialTransform.tx;
-    initialTy = initialTransform.ty;
-    initialS = initialTransform.s;
-
-    // --- CORE FUNCTIONS ---
-
-    // Get the untransformed bounding box of the main diagram content
-    const getMainERDBounds = () => {
-        return mainGroup.getBBox();
-    };
-
-    // Apply the combined (initial + user) transform to the main group
+    // --- Core Functions ---
+    const getMainERDBounds = () => mainGroup.getBBox();
     const applyTransform = () => {
         const finalS = userS * initialS;
         const finalTx = (userTx * initialS) + initialTx;
         const finalTy = (userTy * initialS) + initialTy;
         mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
-        // Update indicator after transform
         requestAnimationFrame(updateViewportIndicator);
     };
-
-    // Update the red box on the minimap to show the current viewport
+    
     const updateViewportIndicator = () => {
         if (!viewportIndicator) return;
-
         const mainBounds = getMainERDBounds();
         if (mainBounds.width === 0 || mainBounds.height === 0) return;
-
         const ctm = mainGroup.getScreenCTM();
         if (!ctm) return;
         const invCtm = ctm.inverse();
-
-        // Find viewport corners in the main group's coordinate system
         const pt1 = svg.createSVGPoint();
-        pt1.x = 0;
-        pt1.y = 0;
+        pt1.x = 0; pt1.y = 0;
         const svgPt1 = pt1.matrixTransform(invCtm);
-
         const pt2 = svg.createSVGPoint();
-        pt2.x = window.innerWidth;
-        pt2.y = window.innerHeight;
+        pt2.x = window.innerWidth; pt2.y = window.innerHeight;
         const svgPt2 = pt2.matrixTransform(invCtm);
-
         const visibleWidth = svgPt2.x - svgPt1.x;
         const visibleHeight = svgPt2.y - svgPt1.y;
-
-        // Calculate relative position and size
         const relLeft = (svgPt1.x - mainBounds.x) / mainBounds.width;
         const relTop = (svgPt1.y - mainBounds.y) / mainBounds.height;
         const relWidth = visibleWidth / mainBounds.width;
         const relHeight = visibleHeight / mainBounds.height;
-
-        // Apply and clamp values
         viewportIndicator.style.left = `${Math.max(0, Math.min(1, relLeft)) * 100}%`;
         viewportIndicator.style.top = `${Math.max(0, Math.min(1, relTop)) * 100}%`;
         viewportIndicator.style.width = `${Math.max(0, Math.min(1, relWidth)) * 100}%`;
         viewportIndicator.style.height = `${Math.max(0, Math.min(1, relHeight)) * 100}%`;
     };
+    const onViewportChange = () => requestAnimationFrame(updateViewportIndicator);
 
-    // Combined handler for any event that changes the viewport
-    const onViewportChange = () => {
-        requestAnimationFrame(updateViewportIndicator);
-    };
-
-    // --- HIGHLIGHTING ---
+    // --- Highlighting ---
     const setElementColor = (elem, color, isHighlighted = false) => {
         if (!elem) return;
-        miniElem = null;
+        let miniElem = null;
         const nodeId = elem.id;
         if (nodeId.indexOf('mini-') == -1) {
             const miniNodeId = 'mini-' + nodeId;
-            const miniElem = document.getElementById(miniNodeId);
+            miniElem = document.getElementById(miniNodeId);
             if (miniElem) {
                 setElementColor(miniElem, color, isHighlighted);
             }
         }
 
         if (elem.classList && elem.classList.contains('node')) {
+            // Node coloring logic unchanged
             const connectedEdgeIds = tables[nodeId]?.edges || [];
             const edge1 = edges[connectedEdgeIds[0]];
             const edge2 = edges[connectedEdgeIds[1]];
-            const defaultColor = edge1 ? edge1.defaultColor : color;
             const highlightColor = edge2 ? edge2.highlightColor : color;
-            const fillColor = defaultColor;
+            const defaultColor = edge1 ? edge1.defaultColor : color;
             const strokeColor = highlightColor;
 
             const mainPath = elem.querySelector('path');
             if (mainPath) {
-                mainPath.setAttribute('fill', fillColor);
                 mainPath.setAttribute('stroke', strokeColor);
-                mainPath.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+                mainPath.setAttribute('stroke-width', isHighlighted ? '4' : '2');
             }
 
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                polygon.setAttribute('fill', fillColor);
+                polygon.setAttribute('fill', defaultColor);
                 polygon.setAttribute('stroke', strokeColor);
-                polygon.setAttribute('stroke-width', isHighlighted ? '2' : '1');
+                polygon.setAttribute('stroke-width', isHighlighted ? '4' : '2');
             });
         }
 
-        // --- FIX: Edge highlighting should be outside the node block ---
+        // --- PATCH: Edge highlighting for parallel splines ---
         if (elem.classList && elem.classList.contains('edge')) {
-            const edgePath = elem.querySelector('path');
-            if (edgePath) {
-                edgePath.setAttribute('stroke', color);
-                edgePath.setAttribute('stroke-width', isHighlighted ? '20' : '1');
+            const edgeId = elem.id;
+            const connectedTables = edges[edgeId]?.tables || [];
+            console.log(`Highlighting edge ${edgeId} connecting tables:`, connectedTables);
+            const colorA = tables[connectedTables[0]]?.highlightColor || color;
+            const colorB = tables[connectedTables[1]]?.highlightColor || color;
+            const paths = elem.querySelectorAll('path');
+            // For parallel splines, set colorA for first path, colorB for second path
+            // To make both colors equally visible, set both paths to same stroke-width and opacity
+            if (paths.length > 0) {
+                paths[0].setAttribute('stroke', colorA);
+                paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '3');
+                paths[0].setAttribute('opacity', '1');
+            }
+            if (paths.length > 1) {
+                paths[1].setAttribute('stroke', colorB);
+                paths[1].setAttribute('stroke-width', isHighlighted ? '9' : '3');
+                paths[1].setAttribute('opacity', '1');
+            }
+            // If only one path, fallback to colorA
+            if (paths.length === 1) {
+                paths[0].setAttribute('stroke', colorA);
+                paths[0].setAttribute('stroke-width', isHighlighted ? '10' : '3');
+                paths[0].setAttribute('opacity', '1');
             }
         }
     };
@@ -165,13 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
-                setElementColor(tableElement, tables[id].highlightColor, true);
+                setElementColor(tableElement, tables[id].color, true);
             }
         });
         edgeIds.forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
-                setElementColor(edgeElement, edges[id].highlightColor, true);
+                setElementColor(edgeElement, edges[id].color, true);
             }
         });
 
@@ -209,8 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightedElementId = null;
     };
 
-
-
     // Reset pan and zoom to the initial state
     const resetZoom = () => {
         userTx = 0;
@@ -237,29 +266,221 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS ---
 
-    svg.addEventListener('click', (event) => {
-        let clickedElement = event.target;
-        let tableId = null;
-        let edgeId = null;
+    // --- DRAG HANDLERS ---
 
-        while (clickedElement && clickedElement !== svg) {
-            if (clickedElement.classList && clickedElement.classList.contains('node')) {
-                tableId = clickedElement.id;
-                break;
-            }
+    // 1. Miniature (overview window) drag
+    
+    const miniatureHeader = document.getElementById('miniature-header');
+    if (miniatureHeader) {
+        // --- Miniature drag mousedown ---
+        miniatureHeader.addEventListener('mousedown', (event) => {
+            dragState.type = 'miniature';
+            dragState.target = miniatureContainer;
+            dragState.offsetX = event.clientX;
+            dragState.offsetY = event.clientY;
+            dragState.target.classList.add('dragging');
+            event.preventDefault();
 
-            if (clickedElement.classList && clickedElement.classList.contains('edge')) {
-                edgeId = clickedElement.id;
-                break;
-            }
+            event.stopPropagation();
+        });
+        addWindowControls(miniatureContainer);
 
-            clickedElement = clickedElement.parentElement;
-        }
 
-        if (tableId && tables[tableId]) {
+
+
+
+        
+    }
+
+
+
+
+    // 2. Viewport indicator drag (inside minimap)
+    if (viewportIndicator) {
+        // --- Indicator drag mousedown ---
+        viewportIndicator.addEventListener('mousedown', (event) => {
+            dragState.type = 'indicator';
+            dragState.target = viewportIndicator;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            // Store initial indicator position
+            const style = window.getComputedStyle(viewportIndicator);
+            dragState.indicatorStartLeft = parseFloat(style.left);
+            dragState.indicatorStartTop = parseFloat(style.top);
+            viewportIndicator.classList.add('dragging');
+            event.preventDefault();
+        });
+    }
+
+    // 3. Metadata box drag
+    const metadataContainer = document.getElementById('metadata-box');
+    if (metadataContainer) {
+        addWindowControls(metadataContainer);
+        metadataContainer.addEventListener('mousedown', (event) => {
+            // Prevent drag if clicking on controls/buttons
+            if (
+                event.target.closest('.window-controls') ||
+                event.target.tagName === 'BUTTON'
+            ) return;
+            if (event.target !== metadataContainer) return;
+            dragState.type = 'metadata';
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.target = metadataContainer;
+            const rect = metadataContainer.getBoundingClientRect();
+            dragState.offsetX = event.clientX - rect.left;
+            dragState.offsetY = event.clientY - rect.top;
+            metadataContainer.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
+        });
+        addWindowControls(metadataContainer);
+    }
 
+    // 4. SVG panning (background drag)
+    svg.addEventListener('mousedown', (event) => {
+        if (event.button !== 0 ||
+            event.target.closest('.metadata-box, .miniature-box, .instructions') ||
+            event.target.id === 'overlay-container' ||
+            event.target.closest('.node') ||
+            event.target.closest('.edge')) {
+            return;
+        }
+        dragState.type = 'pan';
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        startX = event.clientX;
+        startY = event.clientY;
+        mouseDownStartX = event.clientX;
+        mouseDownStartY = event.clientY;
+        event.preventDefault();
+    });
+
+    // --- MOUSE MOVE HANDLER ---
+    window.addEventListener('mousemove', (event) => {
+        if (!dragState.type) return;
+
+        if (dragState.type === 'pan') {
+            // Check if we should start panning (after drag threshold)
+            if (!isPanning && mouseDownStartX !== undefined && mouseDownStartY !== undefined) {
+                const dx = Math.abs(event.clientX - mouseDownStartX);
+                const dy = Math.abs(event.clientY - mouseDownStartY);
+                if (dx > dragThreshold || dy > dragThreshold) {
+                    isPanning = true;
+                    svg.classList.add('grabbing');
+                }
+            }
+            //console.log('isPanning:', isPanning, 'isDraggingIndicator:', isDraggingIndicator, 'isDraggingMiniature:', isDraggingMiniature);
+            if (isPanning) {
+                event.preventDefault();
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                userTx += dx / (userS * initialS);
+                userTy += dy / (userS * initialS);
+                startX = event.clientX;
+                startY = event.clientY;
+                applyTransform();
+            }
+        } else if (dragState.type === 'miniature' || dragState.type === 'metadata') {
+            let newLeft = event.clientX - dragState.offsetX;
+            let newTop = event.clientY - dragState.offsetY;
+            dragState.target.style.left = `${newLeft}px`;
+            dragState.target.style.top = `${newTop}px`;
+        } else if (dragState.type === 'indicator') {
+            event.preventDefault();
+            const miniRect = miniatureContainer.getBoundingClientRect();
+            // Calculate new position based on drag start
+            let indicatorLeft = dragState.indicatorStartLeft + (event.clientX - dragState.startX);
+            let indicatorTop = dragState.indicatorStartTop + (event.clientY - dragState.startY);
+            indicatorLeft = Math.max(0, Math.min(miniRect.width - viewportIndicator.offsetWidth, indicatorLeft));
+            indicatorTop = Math.max(0, Math.min(miniRect.height - viewportIndicator.offsetHeight, indicatorTop));
+            // Update indicator position visually during drag
+            viewportIndicator.style.left = `${indicatorLeft}px`;
+            viewportIndicator.style.top = `${indicatorTop}px`;
+
+            // Calculate relative position and update main view
+            const relLeft = indicatorLeft / miniRect.width;
+            const relTop = indicatorTop / miniRect.height;
+            const mainBounds = getMainERDBounds();
+            const ctm = mainGroup.getScreenCTM();
+            if (!ctm) return;
+            const invCtm = ctm.inverse();
+            const pt1 = svg.createSVGPoint();
+            pt1.x = 0; pt1.y = 0;
+            const svgPt1 = pt1.matrixTransform(invCtm);
+            userTx = ((mainBounds.x + relLeft * mainBounds.width) - svgPt1.x) / initialS;
+            userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
+            applyTransform();
+        }
+    });
+
+    // --- MOUSE UP HANDLER ---
+    window.addEventListener('mouseup', () => {
+        if (!dragState.type) return;
+        if (dragState.target) dragState.target.classList.remove('dragging');
+        if (dragState.type === 'pan') {
+            svg.classList.remove('grabbing');
+            isPanning = false;
+        }
+        dragState.type = null;
+        dragState.target = null;
+        resizing = false;
+    });
+
+    // --- Other UI Events ---
+    svg.addEventListener('wheel', (event) => {
+        event.preventDefault();
+        const dir = event.deltaY < 0 ? 1 : -1;
+        const scaleAmount = 1 + dir * 0.1;
+        let newS = userS * scaleAmount;
+        newS = Math.max(0.01, Math.min(5, newS));
+        const pt = svg.createSVGPoint();
+        pt.x = event.clientX;
+        pt.y = event.clientY;
+        const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
+        userTx -= (svgP.x * (newS - userS)) / initialS;
+        userTy -= (svgP.y * (newS - userS)) / initialS;
+        userS = newS;
+        applyTransform();
+    }, { passive: false });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
+            userTx = 0; userTy = 0; userS = 1;
+            clearAllHighlights();
+            applyTransform();
+        }
+    });
+
+    window.addEventListener('scroll', onViewportChange, { passive: true });
+    window.addEventListener('resize', onViewportChange, { passive: true });
+
+    requestAnimationFrame(() => {
+        const mainBounds = getMainERDBounds();
+        const centerX = mainBounds.x + mainBounds.width;
+        const centerY = mainBounds.y + mainBounds.height;
+        zoomToPoint(centerX, centerY, 0.7);
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
+        svg.focus && svg.focus();
+    });
+
+    // --- Highlight click handler ---
+    svg.addEventListener('click', (event) => {
+        let clickedElement = event.target;
+        let tableId = null, edgeId = null;
+        while (clickedElement && clickedElement !== svg) {
+            if (clickedElement.classList && clickedElement.classList.contains('node')) {
+                tableId = clickedElement.id; break;
+            }
+            if (clickedElement.classList && clickedElement.classList.contains('edge')) {
+                edgeId = clickedElement.id; break;
+            }
+            clickedElement = clickedElement.parentElement;
+        }
+        if (tableId && tables[tableId]) {
+            event.preventDefault(); event.stopPropagation();
             if (highlightedElementId === tableId) {
                 clearAllHighlights();
             } else {
@@ -270,13 +491,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const uniqueTables = [...new Set(connectedTables)];
                 highlightElements(uniqueTables, connectedEdges);
             }
-            return;
         }
-
         if (edgeId && edges[edgeId]) {
-            event.preventDefault();
-            event.stopPropagation();
-
+            event.preventDefault(); event.stopPropagation();
             if (highlightedElementId === edgeId) {
                 clearAllHighlights();
             } else {
@@ -285,225 +502,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const connectedTables = edges[edgeId].tables;
                 highlightElements(connectedTables, [edgeId]);
             }
-            return;
         }
     });
 
-    // Handle dragging the viewport indicator
-    if (viewportIndicator) {
-        viewportIndicator.addEventListener('mousedown', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            isDraggingIndicator = true;
-            indicatorStartX = event.clientX;
-            indicatorStartY = event.clientY;
+    miniatureContainer.addEventListener('click', function(event) {
+        // Get click position relative to the minimap
+        const rect = miniatureContainer.getBoundingClientRect();
+        const relX = (event.clientX - rect.left) / rect.width;
+        const relY = (event.clientY - rect.top) / rect.height;
 
-            // Calculate offset between mouse and indicator's top-left
-            const rect = viewportIndicator.getBoundingClientRect();
-            indicatorOffsetX = event.clientX - rect.left;
-            indicatorOffsetY = event.clientY - rect.top;
-
-            viewportIndicator.classList.add('dragging');
-        });
-    }
-
-    // Handle minimap clicks for zoom-to-point
-    if (miniatureContainer) {
-        miniatureContainer.addEventListener('click', (event) => {
-            // prevent click if dragging the indicator
-            if (event.target === viewportIndicator) return;
-
-            const miniRect = miniatureContainer.getBoundingClientRect();
-            const clickX = event.clientX - miniRect.left;
-            const clickY = event.clientY - miniRect.top;
-
-            const mainBounds = getMainERDBounds();
-            const targetX = mainBounds.x + (clickX / miniRect.width) * mainBounds.width;
-            const targetY = mainBounds.y + (clickY / miniRect.height) * mainBounds.height;
-
-            zoomToPoint(targetX, targetY);
-        });
-
-        miniatureContainer.addEventListener('mousedown', (event) => {
-            // Only drag if clicking on the background, not indicator
-            if (event.target === viewportIndicator) return;
-            isDraggingMiniature = true;
-            miniatureStartX = event.clientX;
-            miniatureStartY = event.clientY;
-            const rect = miniatureContainer.getBoundingClientRect();
-            miniatureOffsetX = event.clientX - rect.left;
-            miniatureOffsetY = event.clientY - rect.top;
-            miniatureContainer.classList.add('dragging');
-            event.preventDefault();
-            event.stopPropagation();
-        });
-    }
-
-    svg.addEventListener('mousedown', (event) => {
-        if (event.button !== 0 ||
-            event.target.closest('.metadata-box, .miniature-box, .instructions') ||
-            event.target.id === 'overlay-container' ||
-            event.target.closest('.node') ||
-            event.target.closest('.edge')) {
-            return;
-        }
-        mouseDownStartX = event.clientX;
-        mouseDownStartY = event.clientY;
-        startX = event.clientX;
-        startY = event.clientY;
-        event.preventDefault();
-    });
-
-    // Global mouse move for both panning and indicator dragging
-    window.addEventListener('mousemove', (event) => {
-        // Check if we should start panning (after drag threshold)
-        if (!isPanning && mouseDownStartX !== undefined && mouseDownStartY !== undefined) {
-            const dx = Math.abs(event.clientX - mouseDownStartX);
-            const dy = Math.abs(event.clientY - mouseDownStartY);
-            if (dx > dragThreshold || dy > dragThreshold) {
-                isPanning = true;
-                svg.classList.add('grabbing');
-            }
-        }
-
-        if (isPanning) {
-            event.preventDefault();
-            const dx = event.clientX - startX;
-            const dy = event.clientY - startY;
-            userTx += dx / (userS * initialS);
-            userTy += dy / (userS * initialS);
-            startX = event.clientX;
-            startY = event.clientY;
-            applyTransform();
-        } else if (isDraggingIndicator) {
-            event.preventDefault();
-
-            const miniRect = miniatureContainer.getBoundingClientRect();
-            const mainBounds = getMainERDBounds();
-
-            // Calculate where the indicator's top-left should be based on mouse position and offset
-            let indicatorLeft = event.clientX - miniRect.left - indicatorOffsetX;
-            let indicatorTop = event.clientY - miniRect.top - indicatorOffsetY;
-
-            // Clamp to minimap bounds
-            indicatorLeft = Math.max(0, Math.min(miniRect.width - viewportIndicator.offsetWidth, indicatorLeft));
-            indicatorTop = Math.max(0, Math.min(miniRect.height - viewportIndicator.offsetHeight, indicatorTop));
-
-            // Calculate the relative position
-            const relLeft = indicatorLeft / miniRect.width;
-            const relTop = indicatorTop / miniRect.height;
-
-            // Move the main view accordingly
-            const ctm = mainGroup.getScreenCTM();
-            if (!ctm) return;
-            const invCtm = ctm.inverse();
-
-            const pt1 = svg.createSVGPoint();
-            pt1.x = 0;
-            pt1.y = 0;
-            const svgPt1 = pt1.matrixTransform(invCtm);
-
-            const pt2 = svg.createSVGPoint();
-            pt2.x = window.innerWidth;
-            pt2.y = window.innerHeight;
-            const svgPt2 = pt2.matrixTransform(invCtm);
-
-            const visibleWidth = svgPt2.x - svgPt1.x;
-            const visibleHeight = svgPt2.y - svgPt1.y;
-
-            // Set userTx and userTy so that the viewport aligns with the indicator
-            userTx = ((mainBounds.x + relLeft * mainBounds.width) - svgPt1.x) / initialS;
-            userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
-
-            applyTransform();
-        } else if (isDraggingMiniature) {
-            event.preventDefault();
-            // Calculate new position
-            let newLeft = event.clientX - miniatureOffsetX;
-            let newTop = event.clientY - miniatureOffsetY;
-            // Optionally clamp to window bounds
-            newLeft = Math.max(0, Math.min(window.innerWidth - miniatureContainer.offsetWidth, newLeft));
-            newTop = Math.max(0, Math.min(window.innerHeight - miniatureContainer.offsetHeight, newTop));
-            miniatureContainer.style.position = 'fixed';
-            miniatureContainer.style.left = `${newLeft}px`;
-            miniatureContainer.style.top = `${newTop}px`;
-        }
-    });
-
-    const endPan = () => {
-        if (isPanning) {
-            isPanning = false;
-            svg.classList.remove('grabbing');
-        }
-        if (isDraggingIndicator) {
-            isDraggingIndicator = false;
-            viewportIndicator.classList.remove('dragging');
-        }
-        if (isDraggingMiniature) {
-            isDraggingMiniature = false;
-            miniatureContainer.classList.remove('dragging');
-        }
-        // Reset mouse tracking variables
-        mouseDownStartX = undefined;
-        mouseDownStartY = undefined;
-    };
-
-    window.addEventListener('mouseup', endPan);
-    window.addEventListener('mouseleave', endPan);
-
-    const zoomIntensity = 0.1;
-    const maxZoomOut = 0.01;
-    const maxZoomIn = 5;   // Can zoom in to 500%
-    const initZoomOut = 0.7; // Initial zoom out to 50%
-
-    // Handle mouse wheel for zooming
-    svg.addEventListener('wheel', (event) => {
-        event.preventDefault();
-        const dir = event.deltaY < 0 ? 1 : -1;
-        const scaleAmount = 1 + dir * zoomIntensity;
-
-        let newS = userS * scaleAmount;
-        // Clamp the zoom level
-        newS = Math.max(maxZoomOut, Math.min(maxZoomIn, newS));
-
-        // Get mouse position in the main group's coordinate system to zoom towards it
-        const pt = svg.createSVGPoint();
-        pt.x = event.clientX
-        pt.y = event.clientY;
-        const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
-
-        // Update user transform to zoom towards the mouse pointer
-        userTx -= (svgP.x * (newS - userS)) / initialS;
-        userTy -= (svgP.y * (newS - userS)) / initialS;
-        userS = newS;
-
-        applyTransform();
-    }, { passive: false });
-
-    // Handle reset keys
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
-            resetZoom();
-        }
-    });
-
-    // Handle window scroll and resize to keep UI fixed
-    window.addEventListener('scroll', onViewportChange, { passive: true });
-    window.addEventListener('resize', onViewportChange, { passive: true });
-
-    requestAnimationFrame(() => {
+        // Get main SVG bounds
         const mainBounds = getMainERDBounds();
-        const centerX = mainBounds.x + mainBounds.width / 2;
-        const centerY = mainBounds.y + mainBounds.height / 2;
-        zoomToPoint(centerX, centerY, initZoomOut);
-        endPan();
-        if (document.activeElement && document.activeElement.blur) {
-            document.activeElement.blur();
-        }
-        svg.focus && svg.focus(); // Optionally focus the SVG or document
+        const targetX = mainBounds.x + relX * mainBounds.width;
+        const targetY = mainBounds.y + relY * mainBounds.height;
+
+        // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
+        zoomToPoint(targetX, targetY, 1);
+        event.stopPropagation();
     });
-
-    // --- DRAGGING AND RESIZING WINDOWS ---
-
-
 });
