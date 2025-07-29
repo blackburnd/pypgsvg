@@ -39,7 +39,7 @@ def main():
     parser.add_argument('--node-fontsize', type=int, default=14, help='Font size for node labels')
     parser.add_argument('--edge-fontsize', type=int, default=12, help='Font size for edge labels')
     parser.add_argument('--node-style', default='rounded,filled', help='Node style (e.g., "filled", "rounded,filled")')
-    parser.add_argument('--node-shape', default='ellipse', help='Node shape (e.g., "rect", "ellipse")')
+    parser.add_argument('--node-shape', default='rect', help='Node shape (e.g., "rect", "ellipse")')
     parser.add_argument('--node-sep', default='0.5', help='Node separation distance')
     parser.add_argument('--rank-sep', default='1.2', help='Rank separation distance')
 

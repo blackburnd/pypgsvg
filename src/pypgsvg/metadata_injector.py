@@ -239,6 +239,9 @@ def inject_metadata_into_svg(
     </foreignObject>
     '''
 
+    # Inject marker definitions for normal and large arrowheads/tails
+    svg_content = inject_marker_defs(svg_content)
+
     # Add custom CSS style for highlighted class
     css_styles = """
     <style>
@@ -265,3 +268,71 @@ def inject_metadata_into_svg(
 
     print("Metadata and interactivity injected into SVG successfully.")
     return svg_content
+
+def inject_marker_defs(svg_content):
+    """
+    Injects enlarged and normal arrowhead/tail marker definitions into the SVG <defs> section.
+    If <defs> does not exist, it will be created.
+    """
+    marker_defs = """
+    <marker id="arrowhead" markerWidth="2" markerHeight="7" refX="10" refY="3.5"
+      orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" />
+    </marker>
+   
+    """
+
+    # Find <defs> and inject, or create <defs> if not present
+    if '<defs>' in svg_content:
+        svg_content = re.sub(r'(<defs[^>]*>)', r'\1' + marker_defs, svg_content, count=1)
+    else:
+        # Insert <defs> after <svg ...>
+        svg_content = re.sub(r'(<svg[^>]*>)', r'\1\n<defs>' + marker_defs + '</defs>', svg_content, count=1)
+    return svg_content
+
+def inject_colored_arrowheads(svg_content, edge_color_map):
+    """
+    Injects per-edge colored arrowhead markers and updates edge paths to use them.
+    edge_color_map: dict mapping edge IDs (or unique SVG group IDs) to (color1, color2)
+    """
+    marker_defs = ""
+    for edge_id, (color1, color2) in edge_color_map.items():
+        # Create two markers for each edge (A and B)
+        marker_defs += f'''
+        <marker id="arrowhead-{edge_id}-A" markerWidth="1" markerHeight="3" refX="6" refY="2"
+          orient="auto" markerUnits="strokeWidth">
+          <polygon points="0 0, 1 3.5, 0 1" fill="{color1}"/>
+        </marker>
+        <marker id="arrowhead-{edge_id}-B" markerWidth="1" markerHeight="3" refX="10" refY="3.5"
+          orient="auto" markerUnits="strokeWidth"
+          <polygon points="0 0, 1 3.5, 0 1" fill="{color2}"/>
+        </marker>
+        '''
+    # Inject marker defs into <defs>
+    if '<defs>' in svg_content:
+        svg_content = re.sub(r'(<defs[^>]*>)', r'\1' + marker_defs, svg_content, count=1)
+    else:
+        svg_content = re.sub(r'(<svg[^>]*>)', r'\1\n<defs>' + marker_defs + '</defs>', svg_content, count=1)
+
+    # Update each edge path to use the correct marker
+    for edge_id, (color1, color2) in edge_color_map.items():
+        # Find <g id="edge-..."> block and add marker-end to <path>
+        svg_content = re.sub(
+            rf'(<g[^>]*id="{edge_id}"[^>]*>)(.*?)(</g>)',
+            lambda m: m.group(1) + re.sub(
+                r'(<path\b[^>]*)(/?>)',
+                rf'\1 marker-end="url(#arrowhead-{edge_id}-A)"\2',
+                m.group(2)
+            ) + m.group(3),
+            svg_content,
+            flags=re.DOTALL
+        )
+    return svg_content
+
+# Example usage in your pipeline (after SVG generation, before writing out):
+# edge_color_map = {
+#     "edge1": ("#00aaff", "#ffaa00"),
+#     "edge2": ("#aaff00", "#aa00ff"),
+#     ...
+# }
+# svg_content = inject_colored_arrowheads(svg_content, edge_color_map)

@@ -127,6 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const onViewportChange = () => requestAnimationFrame(updateViewportIndicator);
 
     // --- Highlighting ---
+    const GREY_COLOR = "#cccccc"; // color for non-highlighted elements
+
     const setElementColor = (elem, color, isHighlighted = false) => {
         if (!elem) return;
         let miniElem = null;
@@ -140,72 +142,80 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (elem.classList && elem.classList.contains('node')) {
-            // Node coloring logic unchanged
-            const connectedEdgeIds = tables[nodeId]?.edges || [];
-            const edge1 = edges[connectedEdgeIds[0]];
-            const edge2 = edges[connectedEdgeIds[1]];
-            const highlightColor = edge2 ? edge2.highlightColor : color;
-            const defaultColor = edge1 ? edge1.defaultColor : color;
-            const strokeColor = highlightColor;
-
-            const mainPath = elem.querySelector('path');
-            if (mainPath) {
-                mainPath.setAttribute('stroke', strokeColor);
-                mainPath.setAttribute('stroke-width', isHighlighted ? '4' : '2');
-            }
-
+           
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                polygon.setAttribute('fill', defaultColor);
-                polygon.setAttribute('stroke', strokeColor);
-                polygon.setAttribute('stroke-width', isHighlighted ? '4' : '2');
-            });
+                polygon.setAttribute('fill', isHighlighted ? color : 'white');
+            })
         }
 
-        // --- PATCH: Edge highlighting for parallel splines ---
         if (elem.classList && elem.classList.contains('edge')) {
             const edgeId = elem.id;
             const connectedTables = edges[edgeId]?.tables || [];
-            console.log(`Highlighting edge ${edgeId} connecting tables:`, connectedTables);
-            const colorA = tables[connectedTables[0]]?.highlightColor || color;
-            const colorB = tables[connectedTables[1]]?.highlightColor || color;
+            let colorA = tables[connectedTables[0]]?.highlightColor || color;
+            let colorB = tables[connectedTables[1]]?.highlightColor || color;
+
+            // Use grey for non-highlighted, table color for highlighted
+            if (!isHighlighted) {
+                colorA = GREY_COLOR;
+                colorB = GREY_COLOR;
+            }
+
             const paths = elem.querySelectorAll('path');
-            // For parallel splines, set colorA for first path, colorB for second path
-            // To make both colors equally visible, set both paths to same stroke-width and opacity
+            const markerStart = isHighlighted ? 'url(#arrowhead-large)' : 'url(#arrowhead)';
+            const markerEnd = isHighlighted ? 'url(#arrowtail-large)' : 'url(#arrowtail)';
+
             if (paths.length > 0) {
                 paths[0].setAttribute('stroke', colorA);
-                paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '3');
+                paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '1');
                 paths[0].setAttribute('opacity', '1');
+                paths[0].setAttribute('marker-start', markerStart);
+                paths[0].setAttribute('marker-end', markerEnd);
+
+                // Set marker shapes to thick stroke when highlighted
+                if (isHighlighted) {
+                    // Get marker elements by ID and set their stroke-width
+                    const svgDoc = svg.ownerDocument || document;
+                    let markerHead = svgDoc.getElementById(markerStart.replace('url(#','').replace(')',''));
+                    let markerTail = svgDoc.getElementById(markerEnd.replace('url(#','').replace(')',''));
+                    if (markerHead) markerHead.setAttribute('stroke-width', '16');
+                    if (markerTail) markerTail.setAttribute('stroke-width', '16');
+                }
             }
             if (paths.length > 1) {
                 paths[1].setAttribute('stroke', colorB);
-                paths[1].setAttribute('stroke-width', isHighlighted ? '9' : '3');
+                paths[1].setAttribute('stroke-width', isHighlighted ? '7' : '1');
                 paths[1].setAttribute('opacity', '1');
+                paths[1].setAttribute('marker-start', markerStart);
+                paths[1].setAttribute('marker-end', markerEnd);
             }
-            // If only one path, fallback to colorA
             if (paths.length === 1) {
                 paths[0].setAttribute('stroke', colorA);
-                paths[0].setAttribute('stroke-width', isHighlighted ? '10' : '3');
+                paths[0].setAttribute('stroke-width', isHighlighted ? '3' : '1');
                 paths[0].setAttribute('opacity', '1');
+                paths[0].setAttribute('marker-start', markerStart);
+                paths[0].setAttribute('marker-end', markerEnd);
             }
         }
     };
 
 
     const highlightElements = (tableIds, edgeIds) => {
+        // Highlight selected tables/edges
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
-                setElementColor(tableElement, tables[id].color, true);
+                setElementColor(tableElement, tables[id].highlightColor, true);
             }
         });
         edgeIds.forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
-                setElementColor(edgeElement, edges[id].color, true);
+                setElementColor(edgeElement, edges[id].highlightColor, true);
             }
         });
 
+        // Grey out everything else
         Object.keys(tables).forEach(id => {
             if (!tableIds.includes(id)) {
                 const tableElement = document.getElementById(id);
@@ -228,13 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(tables).forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
-                setElementColor(tableElement, tables[id].defaultColor, false);
+                setElementColor(tableElement, tables[id].desaturatedColor, false);
             }
         });
         Object.keys(edges).forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
-                setElementColor(edgeElement, edges[id].defaultColor, false);
+                setElementColor(edgeElement, edges[id].desaturatedColor, false);
             }
         });
         highlightedElementId = null;
@@ -415,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- MOUSE UP HANDLER ---
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', (event) => {
         if (!dragState.type) return;
         if (dragState.target) dragState.target.classList.remove('dragging');
         if (dragState.type === 'pan') {

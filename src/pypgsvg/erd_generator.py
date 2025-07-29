@@ -126,6 +126,7 @@ def generate_erd_with_graphviz(
     dot.attr(
         'edge',
         fontname=fontname,
+        penwidth='3',
         fontsize=str(edge_fontsize),
     )
 
@@ -172,12 +173,21 @@ def generate_erd_with_graphviz(
 
     for table_name, cols in filtered_tables.items():
         safe_table_name = sanitize_label(table_name)
+        header_color = graph_data["tables"][safe_table_name]["defaultColor"]
+        bg_color = graph_data["tables"][safe_table_name]["desaturatedColor"]
+        text_color = get_contrasting_text_color(header_color)
 
         label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">'
-        label += f'<TR><TD ALIGN="center" BGCOLOR="{graph_data["tables"][safe_table_name]["defaultColor"]}"><FONT COLOR="{get_contrasting_text_color(graph_data["tables"][safe_table_name]["defaultColor"])}" POINT-SIZE="24">{table_name}</FONT></TD></TR>'
-
+        # Table header row (full width, saturated color)
+        label += (
+            f'<TR><TD ALIGN="center" BGCOLOR="{header_color}">'
+            f'<FONT COLOR="{text_color}" POINT-SIZE="24">{table_name}</FONT></TD></TR>'
+        )
+        # Table background rows (desaturated color)
         for column in cols['columns']:
-            label += f'<TR><TD ALIGN="left" PORT="{sanitize_label(column["name"])}"><FONT POINT-SIZE="18">{column["name"]} ({column["type"]})</FONT></TD></TR>'
+            label += (
+                f'<TR><TD ALIGN="left" PORT="{sanitize_label(column["name"])}"><FONT POINT-SIZE="18">{column["name"]} ({column["type"]})</FONT></TD></TR>'
+            )
 
         label += '</TABLE>>'
 
@@ -214,6 +224,12 @@ def generate_erd_with_graphviz(
 
     with open(actual_svg_path, 'r', encoding='utf-8') as f:
         svg_content = f.read()
+
+    # Remove Graphviz background rects/paths (double border fix) for full-size SVG
+    svg_content = re.sub(r'<rect[^>]*fill="white"[^>]*/>', '', svg_content)
+    svg_content = re.sub(r'<path[^>]*fill="white"[^>]*stroke="#E8A8A8"[^>]*/>', '', svg_content)
+    # Additional cleanup for any other white-filled background paths
+    svg_content = re.sub(r'<path[^>]*fill="white"[^>]*/>', '', svg_content)
 
     # Add class="node" to all <g> elements with id matching a table name, only if class is not present
     for table_name in filtered_tables:
