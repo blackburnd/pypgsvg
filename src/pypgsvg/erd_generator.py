@@ -20,61 +20,6 @@ from xml.etree import ElementTree as ET
 log = logging.getLogger(__name__)
 
 
-def inject_edge_gradients(svg_content, graph_data):
-    """
-    Injects linear gradients for each edge into the SVG <defs> and assigns them to edge paths.
-    The gradient transitions from the primary table color to the secondary table color,
-    with a striped effect.
-    """
-    # Parse SVG
-    ET.register_namespace('', "http://www.w3.org/2000/svg")
-    root = ET.fromstring(svg_content)
-    ns = {'svg': 'http://www.w3.org/2000/svg'}
-
-    # Find or create <defs>
-    defs = root.find('svg:defs', ns)
-    if defs is None:
-        defs = ET.Element('{http://www.w3.org/2000/svg}defs')
-        root.insert(0, defs)
-
-    # For each edge, create a gradient
-    for edge_id, edge_info in graph_data['edges'].items():
-        tbl1, tbl2 = edge_info['tables']
-        color1 = graph_data['tables'][tbl1]['defaultColor']
-        color2 = graph_data['tables'][tbl2]['defaultColor']
-
-        # Create striped stops
-        stops = []
-        for i in range(6):
-            offset = f"{i*20}%"
-            color = color1 if i % 2 == 0 else color2
-            stops.append((offset, color))
-
-        grad = ET.Element('{http://www.w3.org/2000/svg}linearGradient', {
-            'id': f'{edge_id}-gradient',
-            'x1': '0%', 'y1': '0%', 'x2': '100%', 'y2': '0%',
-        })
-        for offset, color in stops:
-            stop = ET.Element('{http://www.w3.org/2000/svg}stop', {
-                'offset': offset,
-                'stop-color': color,
-            })
-            grad.append(stop)
-        defs.append(grad)
-
-    # Assign gradients to edge paths
-    for g in root.findall('.//svg:g[@class="edge"]', ns):
-        edge_id = g.attrib.get('id')
-        if not edge_id or edge_id not in graph_data['edges']:
-            continue
-        for path in g.findall('.//svg:path', ns):
-            path.set('stroke', f'url(#{edge_id}-gradient)')
-            # Optionally, set stroke-width if needed
-
-    # Return modified SVG
-    return ET.tostring(root, encoding='unicode')
-
-
 def generate_erd_with_graphviz(
     tables,
     foreign_keys,
@@ -154,6 +99,7 @@ def generate_erd_with_graphviz(
     dot = Digraph(comment='Database ERD', format='svg')
     dot.attr(
         nodesep=node_sep,
+        style=node_style,
         pack='true',
         packmode=packmode,
         rankdir=rankdir,
@@ -186,7 +132,6 @@ def generate_erd_with_graphviz(
     # Use deterministic color assignment based on table name
     sorted_tables = sorted(filtered_tables.keys())
     table_colors = {table_name: color_palette[i % len(color_palette)] for i, table_name in enumerate(sorted_tables)}
-
     # --- Data for JS Highlighting ---
     graph_data = {
         "tables": {},
@@ -200,7 +145,7 @@ def generate_erd_with_graphviz(
         safe_name = sanitize_label(table_name)
         graph_data["tables"][safe_name] = {
             "defaultColor": table_colors[table_name],
-            "highlightColor": saturate_color(table_colors[table_name], saturation_factor=2.0),
+            "highlightColor": saturate_color(table_colors[table_name], saturation_factor=4.0),
             "desaturatedColor": desaturate_color(table_colors[table_name], desaturation_factor=0.1),
             "edges": []
         }
@@ -215,7 +160,7 @@ def generate_erd_with_graphviz(
             "tables": [safe_ltbl, safe_rtbl],
             "defaultColor": table_colors[ltbl],
             "highlightColor": saturate_color(table_colors[ltbl], saturation_factor=2.0),
-            "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.1),
+            "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.5),
             "onDelete": on_delete,
             "onUpdate": on_update,
         }
@@ -236,8 +181,9 @@ def generate_erd_with_graphviz(
 
         label += '</TABLE>>'
 
-        dot.node(safe_table_name, label=label, id=safe_table_name, shape='rect', style='filled')
+        dot.node(safe_table_name, label=label, id=safe_table_name, shape=node_shape, style=node_style)
 
+    # --- Update edge creation to use parallel splines ---
     for i, (ltbl, col, rtbl, rcol, _line,  on_delete, on_update) in enumerate(filtered_foreign_keys):
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
@@ -245,9 +191,18 @@ def generate_erd_with_graphviz(
         safe_rcol = sanitize_label(rcol)
         safe_on_delet = sanitize_label(on_delete)
         safe_on_update = sanitize_label(on_update)
-    
 
-        dot.edge(f"{safe_ltbl}:{safe_col}:e", f"{safe_rtbl}:{safe_rcol}:w", id=f"edge-{i}", on_delete=safe_on_delet, on_update=safe_on_update)
+        # Use Graphviz's color="A:B" syntax for parallel splines
+        color1 = table_colors[ltbl]
+        color2 = table_colors[rtbl]
+        dot.edge(
+            f"{safe_ltbl}:{safe_col}:e",
+            f"{safe_rtbl}:{safe_rcol}:w",
+            id=f"edge-{i}",
+            on_delete=safe_on_delet,
+            on_update=safe_on_update,
+            color=f"{color1}:{color2}"
+        )
 
     actual_svg_path = output_file + ".svg"
     try:
@@ -292,7 +247,6 @@ def generate_erd_with_graphviz(
         node_style=node_style, node_shape=node_shape,
         node_sep=node_sep, rank_sep=rank_sep
     )
-    svg_content = inject_edge_gradients(svg_content, graph_data)
 
     with open(actual_svg_path, 'w', encoding='utf-8') as f:
         f.write(svg_content)

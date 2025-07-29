@@ -37,17 +37,6 @@ def extract_svg_dimensions_from_content(svg_content):
         return 800, 600
 
 
-def convert_svg_to_png(svg_file_path, width=800, height=600):
-    try:
-        import cairosvg
-        png_data = cairosvg.svg2png(url=svg_file_path, output_width=width, output_height=height)
-        return base64.b64encode(png_data).decode('utf-8')
-    except Exception as e:
-        print(f"Error converting SVG to PNG: {e}")
-        return ""
-
-
-
 def generate_miniature_erd(
     tables, foreign_keys, file_info, total_tables, total_columns,
     total_foreign_keys, total_edges, show_standalone=True,
@@ -200,30 +189,32 @@ def inject_metadata_into_svg(
         print("No tables or foreign_keys data provided for miniature")
 
     metadata_html = f"""
-    <div class='metadata-box'>
-      <div class='header'>Metadata</div>
-      <ul>
-        {''.join(f'<li>{line}</li>' for line in metadata_lines)}
-      </ul>
-    </div>
-    """
+<div class='metadata-box' id='metadata-box'>
+  <div class='window-controls'></div>
+  <div class='header'>Metadata</div>
+  <ul>
+    {''.join(f'<li>{line}</li>' for line in metadata_lines)}
+  </ul>
+</div>
+"""
 
     minimap_html = ''
     if miniature_svg:
         miniature_svg = prefix_svg_ids(miniature_svg, prefix='mini-')
         minimap_html = f'''
-        <div id="miniature-container" class="miniature-box">
-          <div class="header">Overview</div>
-          <div class="miniature-container" id="miniature-container">
-            {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
-            <div id="viewport-indicator" class="viewport-indicator"></div>
-          </div>
-          <div class="resize-handle resize-handle-nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-          <div class="resize-handle resize-handle-ne" style="position:absolute;right:2px;top:2px;width:16px;height:16px;cursor:nesw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-          <div class="resize-handle resize-handle-sw" style="position:absolute;left:2px;bottom:2px;width:16px;height:16px;cursor:nesw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-          <div class="resize-handle resize-handle-se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-        </div>
-        '''
+<div id="miniature-container" class="miniature-box">
+  <div class="header" id="miniature-header">Overview
+      <div class="window-controls"></div>
+  </div>
+  <div class="miniature-container" id="miniature-inner-container">
+
+    {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
+    <div id="viewport-indicator" class="viewport-indicator"></div>
+  </div>
+  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+</div>
+'''
 
     instructions_html = '''
     <div class="instructions">
@@ -269,33 +260,8 @@ def inject_metadata_into_svg(
     if xml_decl not in svg_content:
         svg_content = xml_decl + doctype + svg_content
 
+    # Wrap main ERD content in a group with ID "main-erd-group"
+    svg_content = re.sub(r'(<svg[^>]*>)\s*<g[^>]*id="main-erd-group"[^>]*transform="translate\(0 0\) scale\(1\)">\s*(.*?)\s*</g>', r'\1<g id="main-erd-group" transform="translate(0 0) scale(1)">\2</g>', svg_content, flags=re.DOTALL)
+
     print("Metadata and interactivity injected into SVG successfully.")
-    return svg_content
-
-def inject_edge_gradients(svg_content, graph_data):
-    """
-    Injects <linearGradient> definitions into the SVG for edges, allowing them
-    to be colored based on their connected tables.
-    """
-    if not graph_data or 'edges' not in graph_data or 'tables' not in graph_data:
-        return svg_content
-
-    defs_block = '<defs>\n'
-    for edge_id, edge_data in graph_data.get('edges', {}).items():
-        try:
-            table1_id, table2_id = edge_data['tables']
-            table1_color = graph_data['tables'][table1_id]['defaultColor']
-            table2_color = graph_data['tables'][table2_id]['defaultColor']
-            gradient_id = f"edge-gradient-{edge_id}"
-            defs_block += (
-                f'<linearGradient id="{gradient_id}" gradientUnits="userSpaceOnUse">\n'
-                f'  <stop offset="0%" stop-color="{table1_color}" />\n'
-                f'  <stop offset="100%" stop-color="{table2_color}" />\n'
-                '</linearGradient>\n')
-        except KeyError as e:           
-            print(f"Warning: Missing data for edge {edge_id}: {e}")
-            continue
-
-    defs_block += '</defs>\n'
-    svg_content = svg_content.replace('</svg>', f'{defs_block}\n</svg>')
     return svg_content

@@ -31,7 +31,6 @@
     font-size: 14px;
     line-height: 1.5;
     max-width: 300px;
-    position: absolute;
 }
 
 .miniature-box {
@@ -57,6 +56,8 @@
     cursor: crosshair;
     border: 1px solid #ccc;
     max-height: 100%;
+    min-width: 10px;
+    min-height: 10px;
     overflow: hidden;
 }
 
@@ -121,4 +122,37 @@
     /* Remove absolute here */
 }
 
-</style></defs>
+.window-controls {
+    display: flex;
+    gap: 2px;
+}
+.window-controls button {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.miniature-box.minimized,
+#metadata-box.minimized {
+    height: auto !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+}
+
+/* Add these rules for dragging cursor feedback */
+.miniature-box.dragging,
+.metadata-box.dragging {
+    cursor: grabbing !important;
+}
+
+/* Optionally, also make the header show grab when not dragging */
+#miniature-header,
+.metadata-box {
+    cursor: grab;
+}
