@@ -3174,7 +3174,7 @@
   <div class='window-controls'></div>
   <div class='header'>Metadata</div>
   <ul>
-    <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-07-29 16:40:58</li><li>Tables: 80</li><li>Columns: 792</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: array</li><li>show_standalone: True</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 2</li><li>rank_sep: 1.2</li>
+    <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-07-29 17:20:36</li><li>Tables: 80</li><li>Columns: 792</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: array</li><li>show_standalone: True</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 2</li><li>rank_sep: 1.2</li>
   </ul>
 </div>
 
@@ -6619,8 +6619,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dragState.type = null;
         dragState.target = null;
         resizing = false;
-        event.stopPropagation();
-        event.preventDefault();
     });
 
     // --- Other UI Events ---

@@ -27,7 +27,7 @@ def wrap_main_erd_content(*args, **kwargs):
 
     # Step 1: Set the ID to 'main-erd-group'
     if 'id=' in modified_g_tag:
-        modified_g_tag = re.sub(r'id="[^"]*"', 'id="main-erd-group"', modified_g_tag, 1, re.IGNORECASE)
+        modified_g_tag = re.sub(r'id="[^"]*"', 'id="main-erd-group"', modified_g_tag, count=1, flags=re.IGNORECASE)
     else:
         modified_g_tag = modified_g_tag.replace('<g', '<g id="main-erd-group"', 1)
 
