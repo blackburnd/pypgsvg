@@ -140,16 +140,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 setElementColor(miniElem, color, isHighlighted);
             }
         }
-
         if (elem.classList && elem.classList.contains('node')) {
-           
+            elem.setAttribute('opacity', isHighlighted ? '1' : '0.5');
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
+                if (polygon.type !== 'title'){
                 polygon.setAttribute('fill', isHighlighted ? color : 'white');
+                }
             })
+
         }
 
         if (elem.classList && elem.classList.contains('edge')) {
+            const polygons = elem.querySelectorAll('polygon');
+            polygons.forEach(polygon => {
+                polygon.setAttribute('stroke-width', isHighlighted ? '15' : '3');
+                polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
+            })
+
             const edgeId = elem.id;
             const connectedTables = edges[edgeId]?.tables || [];
             let colorA = tables[connectedTables[0]]?.highlightColor || color;
@@ -162,40 +170,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const paths = elem.querySelectorAll('path');
-            const markerStart = isHighlighted ? 'url(#arrowhead-large)' : 'url(#arrowhead)';
-            const markerEnd = isHighlighted ? 'url(#arrowtail-large)' : 'url(#arrowtail)';
 
             if (paths.length > 0) {
                 paths[0].setAttribute('stroke', colorA);
                 paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '1');
                 paths[0].setAttribute('opacity', '1');
-                paths[0].setAttribute('marker-start', markerStart);
-                paths[0].setAttribute('marker-end', markerEnd);
 
                 // Set marker shapes to thick stroke when highlighted
                 if (isHighlighted) {
                     // Get marker elements by ID and set their stroke-width
                     const svgDoc = svg.ownerDocument || document;
-                    let markerHead = svgDoc.getElementById(markerStart.replace('url(#','').replace(')',''));
-                    let markerTail = svgDoc.getElementById(markerEnd.replace('url(#','').replace(')',''));
-                    if (markerHead) markerHead.setAttribute('stroke-width', '16');
-                    if (markerTail) markerTail.setAttribute('stroke-width', '16');
                 }
             }
             if (paths.length > 1) {
                 paths[1].setAttribute('stroke', colorB);
                 paths[1].setAttribute('stroke-width', isHighlighted ? '7' : '1');
                 paths[1].setAttribute('opacity', '1');
-                paths[1].setAttribute('marker-start', markerStart);
-                paths[1].setAttribute('marker-end', markerEnd);
             }
             if (paths.length === 1) {
                 paths[0].setAttribute('stroke', colorA);
                 paths[0].setAttribute('stroke-width', isHighlighted ? '3' : '1');
                 paths[0].setAttribute('opacity', '1');
-                paths[0].setAttribute('marker-start', markerStart);
-                paths[0].setAttribute('marker-end', markerEnd);
             }
+            
         }
     };
 
@@ -506,8 +503,11 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault(); event.stopPropagation();
             if (highlightedElementId === edgeId) {
                 clearAllHighlights();
+               
             } else {
-                clearAllHighlights();
+                    console.log('Edge clicked:', edgeId);
+
+                clearAllHighlights()
                 highlightedElementId = edgeId;
                 const connectedTables = edges[edgeId].tables;
                 highlightElements(connectedTables, [edgeId]);

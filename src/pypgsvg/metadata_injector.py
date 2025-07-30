@@ -275,11 +275,14 @@ def inject_marker_defs(svg_content):
     If <defs> does not exist, it will be created.
     """
     marker_defs = """
-    <marker id="arrowhead" markerWidth="2" markerHeight="7" refX="10" refY="3.5"
+    <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2"
       orient="auto" markerUnits="strokeWidth">
-      <polygon points="0 0, 10 3.5, 0 7" />
+      <polygon points="0 0, 6 2, 0 4" />
     </marker>
-   
+    <marker id="arrowhead-large" markerWidth="12" markerHeight="8" refX="12" refY="4"
+      orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 12 4, 0 8" />
+    </marker>
     """
 
     # Find <defs> and inject, or create <defs> if not present
@@ -299,13 +302,13 @@ def inject_colored_arrowheads(svg_content, edge_color_map):
     for edge_id, (color1, color2) in edge_color_map.items():
         # Create two markers for each edge (A and B)
         marker_defs += f'''
-        <marker id="arrowhead-{edge_id}-A" markerWidth="1" markerHeight="3" refX="6" refY="2"
+        <marker id="arrowhead-{edge_id}-A" markerWidth="2" markerHeight="5" refX="6" refY="2"
           orient="auto" markerUnits="strokeWidth">
           <polygon points="0 0, 1 3.5, 0 1" fill="{color1}"/>
         </marker>
-        <marker id="arrowhead-{edge_id}-B" markerWidth="1" markerHeight="3" refX="10" refY="3.5"
+        <marker id="arrowhead-{edge_id}-B" markerWidth="2" markerHeight="5" refX="10" refY="3.5"
           orient="auto" markerUnits="strokeWidth"
-          <polygon points="0 0, 1 3.5, 0 1" fill="{color2}"/>
+          <polygon points="0 0, 2 6.5, 0 3" fill="{color2}"/>
         </marker>
         '''
     # Inject marker defs into <defs>
