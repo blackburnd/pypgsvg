@@ -3,10 +3,11 @@ from typing import List, Tuple, Dict
 
 def parse_sql_dump(sql_dump):
     """
-    Parse an SQL dump to extract tables and foreign key relationships, handling variations in SQL formatting.
+    Parse an SQL dump to extract tables, foreign key relationships, and triggers.
     """
     tables = {}
     foreign_keys = []
+    triggers = {}
     parsing_errors = []
 
     # Table creation pattern
@@ -24,6 +25,24 @@ def parse_sql_dump(sql_dump):
     # Inline REFERENCES pattern
     inline_fk_pattern = re.compile(
         r'REFERENCES\s+([\w.]+)\s*\(([\w.]+)\)', re.I
+    )
+
+    # Trigger pattern
+    trigger_pattern = re.compile(
+        r'CREATE\s+TRIGGER\s+([\w."]+)\s+'
+        r'((?:BEFORE|AFTER|INSTEAD OF)\s+(?:INSERT|UPDATE|DELETE|TRUNCATE|OR\s+INSERT|OR\s+UPDATE|OR\s+DELETE|OR\s+TRUNCATE)+)\s+'
+        r'ON\s+([\w."]+)\s+'
+        r'FOR\s+EACH\s+ROW\s+EXECUTE\s+FUNCTION\s+([\w."]+)\s*\((.*?)\);',
+        re.I | re.S
+    )
+
+    # Also match triggers without arguments (most common)
+    trigger_pattern_noargs = re.compile(
+        r'CREATE\s+TRIGGER\s+([\w."]+)\s+'
+        r'((?:BEFORE|AFTER|INSTEAD OF)\s+(?:INSERT|UPDATE|DELETE|TRUNCATE|OR\s+INSERT|OR\s+UPDATE|OR\s+DELETE|OR\s+TRUNCATE)+)\s+'
+        r'ON\s+([\w."]+)\s+'
+        r'FOR\s+EACH\s+ROW\s+EXECUTE\s+FUNCTION\s+([\w."]+)\s*;',
+        re.I | re.S
     )
 
     try:
@@ -59,18 +78,18 @@ def parse_sql_dump(sql_dump):
                                         'type': column_type,
                                         'line': _line})
 
-                        # --- NEW: Detect inline REFERENCES ---
+                        # --- Detect inline REFERENCES ---
                         fk_match = inline_fk_pattern.search(_line)
                         if fk_match:
                             ref_table = fk_match.group(1)
                             ref_column = fk_match.group(2)
-                            # Add to foreign_keys: (table_name, column_name, ref_table, ref_column, _line)
                             foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, None, None))
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
             tables[table_name]['columns'] = columns
 
+        # Extract foreign keys from ALTER TABLE
         for match in alter_fk_pattern.finditer(sql_dump):
             table_name = match.group(1)
             fk_column = match.group(2).strip()
@@ -85,16 +104,49 @@ def parse_sql_dump(sql_dump):
             else:
                 parsing_errors.append(f"FK parsing issue: {match.group(0)}")
 
+        # Extract triggers (with and without args)
+        for match in trigger_pattern.finditer(sql_dump):
+            trigger_name = match.group(1).strip('"')
+            event = match.group(2).replace('\n', ' ').strip()
+            table_name = match.group(3).strip('"')
+            function_name = match.group(4).strip('"')
+            function_args = match.group(5).strip()
+            full_line = match.string[match.start():match.end()]
+            trigger_info = {
+                "trigger_name": trigger_name,
+                "event": event,
+                "function": function_name,
+                "function_args": function_args,
+                "full_line": full_line
+            }
+            triggers.setdefault(table_name, []).append(trigger_info)
+
+        # Also match triggers without arguments
+        for match in trigger_pattern_noargs.finditer(sql_dump):
+            trigger_name = match.group(1).strip('"')
+            event = match.group(2).replace('\n', ' ').strip()
+            table_name = match.group(3).strip('"')
+            function_name = match.group(4).strip('"')
+            function_args = None
+            full_line = match.string[match.start():match.end()]
+            trigger_info = {
+                "trigger_name": trigger_name,
+                "event": event,
+                "function": function_name,
+                "function_args": function_args,
+                "full_line": full_line
+            }
+            triggers.setdefault(table_name, []).append(trigger_info)
+
     except Exception as e:
         parsing_errors.append(f"Parsing error: {str(e)}")
 
-    # Debug output for missing keys or parsing issues
     if parsing_errors:
         print("Parsing Errors Detected:")
         for error in parsing_errors:
             print(error)
 
-    return tables, foreign_keys, parsing_errors
+    return tables, foreign_keys, triggers, parsing_errors
 
 
 def extract_constraint_info(foreign_keys, table_name):

@@ -12,7 +12,7 @@ now easier to share.
 
 ```
  PYTHONPATH=src python -m pytest tests/tests/ 
-python -m src.pypgsvg Samples/schema.dump  --hide-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
+python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
  python -m src.pypgsvg Samples/schema.dump --output=test
 ```
 

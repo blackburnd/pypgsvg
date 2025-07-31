@@ -46,7 +46,7 @@ def generate_erd_with_graphviz(
         foreign_keys: List of foreign key relationships
         output_file: Output file name (without extension)
         input_file_path: Path to input SQL file for metadata
-        show_standalone: Whether to include standalone tables (tables with no FK relationships)
+        show_standalone: (tables with no FK relationships)
         packmode: Graphviz 'packmode' (e.g., 'array', 'cluster', 'graph')
         rankdir: Graphviz 'rankdir' (e.g., 'TB', 'LR', 'BT', 'RL')
         esep: Graphviz 'esep' value

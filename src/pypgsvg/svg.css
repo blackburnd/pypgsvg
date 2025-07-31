@@ -72,7 +72,7 @@
     border: 2px solid red;
     background-color: rgba(255, 0, 0, 0.2);
     pointer-events: auto;
-    opacity: 0.8;
+    opacity: 0.5;
     transition: all 0.1s ease;
     box-sizing: border-box;
     cursor: grab;
@@ -137,6 +137,7 @@
     padding: 0;
     line-height: 1;
 }
+
 .miniature-box.minimized,
 #metadata-box.minimized {
     height: auto !important;
@@ -155,4 +156,9 @@
 #miniature-header,
 .metadata-box {
     cursor: grab;
+}
+
+#miniature-container, #viewport-indicator {
+  z-index: 10000;
+  pointer-events: auto;
 }

@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null };
 
 
-        function addWindowControls(windowElem, options = {}) {
+    function addWindowControls(windowElem, options = {}) {
         if (!windowElem) return;
         let controls = windowElem.querySelector('.window-controls');
         if (!controls) {
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
         requestAnimationFrame(updateViewportIndicator);
     };
-    
+
     const updateViewportIndicator = () => {
         if (!viewportIndicator) return;
         const mainBounds = getMainERDBounds();
@@ -144,35 +144,27 @@ document.addEventListener('DOMContentLoaded', () => {
             elem.setAttribute('opacity', isHighlighted ? '1' : '0.5');
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                if (polygon.type !== 'title'){
-                polygon.setAttribute('fill', isHighlighted ? color : 'white');
+                if (polygon.type !== 'title') {
+                    //polygon.setAttribute('fill', isHighlighted ? color : 'white');
                 }
             })
-
         }
 
         if (elem.classList && elem.classList.contains('edge')) {
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 polygon.setAttribute('stroke-width', isHighlighted ? '15' : '3');
-                polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
+                //polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
             })
 
             const edgeId = elem.id;
             const connectedTables = edges[edgeId]?.tables || [];
-            let colorA = tables[connectedTables[0]]?.highlightColor || color;
-            let colorB = tables[connectedTables[1]]?.highlightColor || color;
 
-            // Use grey for non-highlighted, table color for highlighted
-            if (!isHighlighted) {
-                colorA = GREY_COLOR;
-                colorB = GREY_COLOR;
-            }
 
             const paths = elem.querySelectorAll('path');
 
             if (paths.length > 0) {
-                paths[0].setAttribute('stroke', colorA);
+                //paths[0].setAttribute('stroke', colorA);
                 paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '1');
                 paths[0].setAttribute('opacity', '1');
 
@@ -183,16 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (paths.length > 1) {
-                paths[1].setAttribute('stroke', colorB);
+                //paths[1].setAttribute('stroke', colorB);
                 paths[1].setAttribute('stroke-width', isHighlighted ? '7' : '1');
                 paths[1].setAttribute('opacity', '1');
             }
             if (paths.length === 1) {
-                paths[0].setAttribute('stroke', colorA);
+                //paths[0].setAttribute('stroke', colorA);
                 paths[0].setAttribute('stroke-width', isHighlighted ? '3' : '1');
                 paths[0].setAttribute('opacity', '1');
             }
-            
+
         }
     };
 
@@ -202,22 +194,41 @@ document.addEventListener('DOMContentLoaded', () => {
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
+                tableElement.setAttribute('opacity', '1');
+                tableElement.classList.add('highlighted');
                 setElementColor(tableElement, tables[id].highlightColor, true);
             }
         });
+
         edgeIds.forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
-                setElementColor(edgeElement, edges[id].highlightColor, true);
+
+                edgeElement.classList.add('highlighted');
+                edgeElement.setAttribute('opacity', '1');
+                const paths = edgeElement.querySelectorAll('path');
+                if (paths.length > 0) {
+                    paths[0].setAttribute('stroke-width', '16');
+                }
+                if (paths.length > 1) {
+                    paths[1].setAttribute('stroke-width', '7');
+                    paths[1].setAttribute('opacity', '1');
+                }
+                if (paths.length === 1) {
+                    paths[0].setAttribute('stroke-width', '3');
+                    paths[0].setAttribute('opacity', '1');
+                }
             }
         });
-
         // Grey out everything else
         Object.keys(tables).forEach(id => {
             if (!tableIds.includes(id)) {
                 const tableElement = document.getElementById(id);
                 if (tableElement) {
                     setElementColor(tableElement, tables[id].desaturatedColor, false);
+                      if ('highlighted' in tableElement.classList) {
+                        tableElement.classList.remove('highlighted');
+                    }
                 }
             }
         });
@@ -225,7 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!edgeIds.includes(id)) {
                 const edgeElement = document.getElementById(id);
                 if (edgeElement) {
-                    setElementColor(edgeElement, edges[id].desaturatedColor, false);
+                    if ('highlighted' in edgeElement.classList) {
+                        edgeElement.classList.remove('highlighted');
+                    }
                 }
             }
         });
@@ -235,16 +248,22 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(tables).forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
+                    if ('highlighted' in tableElement.classList) {
+                        tableElement.classList.remove('highlighted');
+                    }
                 setElementColor(tableElement, tables[id].desaturatedColor, false);
             }
         });
         Object.keys(edges).forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
+                    if ('highlighted' in edgeElement.classList) {
+                        edgeElement.classList.remove('highlighted');
+                    }
                 setElementColor(edgeElement, edges[id].desaturatedColor, false);
             }
         });
-        highlightedElementId = null;
+      
     };
 
     // Reset pan and zoom to the initial state
@@ -276,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DRAG HANDLERS ---
 
     // 1. Miniature (overview window) drag
-    
+
     const miniatureHeader = document.getElementById('miniature-header');
     if (miniatureHeader) {
         // --- Miniature drag mousedown ---
@@ -291,12 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
             event.stopPropagation();
         });
         addWindowControls(miniatureContainer);
-
-
-
-
-
-        
     }
 
 
@@ -351,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.target.id === 'overlay-container' ||
             event.target.closest('.node') ||
             event.target.closest('.edge')) {
+            // Ignore right-clicks and clicks on controls, nodes, edges, or overlays        
             return;
         }
         dragState.type = 'pan';
@@ -503,9 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault(); event.stopPropagation();
             if (highlightedElementId === edgeId) {
                 clearAllHighlights();
-               
+
             } else {
-                    console.log('Edge clicked:', edgeId);
+                console.log('Edge clicked:', edgeId);
 
                 clearAllHighlights()
                 highlightedElementId = edgeId;
@@ -515,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    miniatureContainer.addEventListener('click', function(event) {
+    miniatureContainer.addEventListener('click', function (event) {
         // Get click position relative to the minimap
         const rect = miniatureContainer.getBoundingClientRect();
         const relX = (event.clientX - rect.left) / rect.width;

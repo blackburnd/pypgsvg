@@ -242,20 +242,11 @@ def inject_metadata_into_svg(
     # Inject marker definitions for normal and large arrowheads/tails
     svg_content = inject_marker_defs(svg_content)
 
-    # Add custom CSS style for highlighted class
-    css_styles = """
-    <style>
-    .highlighted {
-        stroke: #ff0000 !important;
-        stroke-width: 4 !important;
-        filter: drop-shadow(0 0 6px #ff0000);
-    }
-    </style>
-    """
+   
 # JavaScript for interactivity (copy from your original __init__.py, use triple braces for JS blocks)
     javascript_code = SVG_INTERACTIVITY_SCRIPT
     svg_css = SVG_CSS_STYLE
-    all_injected_elements = svg_css + css_styles + overlay_container_html + javascript_code
+    all_injected_elements = svg_css + overlay_container_html + javascript_code
     svg_content = svg_content.replace('</svg>', f'{all_injected_elements}\n</svg>')
     # Ensure XML declaration and DOCTYPE are at the very top
     
