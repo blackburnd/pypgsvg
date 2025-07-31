@@ -222,12 +222,27 @@ def inject_metadata_into_svg(
     </div>
     '''
 
+    selection_html = f'''
+<div id="selection-container" class="selection-box" style="display:none">
+  <div class="header" id="selection-header">Selection   
+      <div class="window-controls"></div>
+  </div>
+  <div class="selection-container" id="selection-inner-container">
+    <div id="viewport-indicator" class="viewport-indicator"></div>
+  </div>
+  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+</div>
+'''
+
+
     all_overlays_html = f"""
         {instructions_html}
 
      <div class='metadata-minimap-row'>
       {metadata_html}
-         {minimap_html}
+      {minimap_html}
+      {selection_html}
     </div>
     """
 

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null };
 
-
+    // --- Window Controls ---
     function addWindowControls(windowElem, options = {}) {
         if (!windowElem) return;
         let controls = windowElem.querySelector('.window-controls');
@@ -51,8 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             windowElem.classList.toggle('minimized');
             const content = windowElem.querySelector('.window-content');
-
-
             if (windowElem.classList.contains('minimized')) {
                 if (content) content.style.display = 'none';
                 minBtn.innerHTML = '+';
@@ -70,6 +68,24 @@ document.addEventListener('DOMContentLoaded', () => {
         controls.addEventListener('mousedown', e => e.stopPropagation());
         controls.addEventListener('click', e => e.stopPropagation());
     }
+
+    function makeResizable(windowElem) {
+        const handle = windowElem.querySelector('.resize-handle');
+        if (!handle) return;
+        handle.addEventListener('mousedown', function (event) {
+            dragState.type = 'resize';
+            dragState.target = windowElem;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            const style = window.getComputedStyle(windowElem);
+            dragState.startWidth = parseInt(style.width, 10);
+            dragState.startHeight = parseInt(style.height, 10);
+            windowElem.classList.add('resizing');
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+
     // --- Initialization ---
     const parseTransform = (transform) => {
         const result = { tx: 0, ty: 0, s: 1 };
@@ -226,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tableElement = document.getElementById(id);
                 if (tableElement) {
                     setElementColor(tableElement, tables[id].desaturatedColor, false);
-                      if ('highlighted' in tableElement.classList) {
+                    if ('highlighted' in tableElement.classList) {
                         tableElement.classList.remove('highlighted');
                     }
                 }
@@ -242,28 +258,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+        showSelectionWindow(tableIds, edgeIds);
     };
+
+
+
+    function showSelectionWindow(selectedTables, selectedEdges) {
+        const selectionContainer = document.getElementById('selection-container');
+        if (!selectionContainer) return;
+        selectionContainer.style.display = 'block';
+        const inner = selectionContainer.querySelector('#selection-inner-container');
+        if (!inner) return;
+
+
+        let html = '';
+        if (selectedTables.length) {
+            html += '<div><b>Tables:</b> ' + selectedTables.join('<br/>') + '</div>';
+        }
+        if (selectedEdges.length) {
+            html += '<div><b>Foreign Keys:</b><ul>';
+            for (const edgeId of selectedEdges) {
+                const edge = graphData.edges[edgeId];
+                if (edge && edge.fkText) {
+                    html += `<li><pre>${edge.fkText}</pre></li>`;
+                } else {
+                    html += `<li>${edgeId}</li>`;
+                }
+            }
+            html += '</ul></div>';
+        }
+        inner.innerHTML = html;
+    }
+
+    function hideSelectionWindow() {
+        const selectionContainer = document.getElementById('selection-container');
+        if (selectionContainer) {
+            selectionContainer.style.display = 'none';
+            const inner = selectionContainer.querySelector('#selection-inner-container');
+            if (inner) inner.innerHTML = '';
+        }
+    }
 
     const clearAllHighlights = () => {
         Object.keys(tables).forEach(id => {
             const tableElement = document.getElementById(id);
             if (tableElement) {
-                    if ('highlighted' in tableElement.classList) {
-                        tableElement.classList.remove('highlighted');
-                    }
+                if ('highlighted' in tableElement.classList) {
+                    tableElement.classList.remove('highlighted');
+                }
                 setElementColor(tableElement, tables[id].desaturatedColor, false);
             }
         });
         Object.keys(edges).forEach(id => {
             const edgeElement = document.getElementById(id);
             if (edgeElement) {
-                    if ('highlighted' in edgeElement.classList) {
-                        edgeElement.classList.remove('highlighted');
-                    }
+                if ('highlighted' in edgeElement.classList) {
+                    edgeElement.classList.remove('highlighted');
+                }
                 setElementColor(edgeElement, edges[id].desaturatedColor, false);
             }
         });
-      
+        hideSelectionWindow();
     };
 
     // Reset pan and zoom to the initial state
@@ -293,12 +348,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EVENT LISTENERS ---
 
     // --- DRAG HANDLERS ---
-
-    // 1. Miniature (overview window) drag
-
+    // Miniature drag
     const miniatureHeader = document.getElementById('miniature-header');
     if (miniatureHeader) {
-        // --- Miniature drag mousedown ---
         miniatureHeader.addEventListener('mousedown', (event) => {
             dragState.type = 'miniature';
             dragState.target = miniatureContainer;
@@ -306,24 +358,19 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.offsetY = event.clientY;
             dragState.target.classList.add('dragging');
             event.preventDefault();
-
             event.stopPropagation();
         });
         addWindowControls(miniatureContainer);
     }
 
 
-
-
-    // 2. Viewport indicator drag (inside minimap)
+    // Viewport indicator drag
     if (viewportIndicator) {
-        // --- Indicator drag mousedown ---
         viewportIndicator.addEventListener('mousedown', (event) => {
             dragState.type = 'indicator';
             dragState.target = viewportIndicator;
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
-            // Store initial indicator position
             const style = window.getComputedStyle(viewportIndicator);
             dragState.indicatorStartLeft = parseFloat(style.left);
             dragState.indicatorStartTop = parseFloat(style.top);
@@ -332,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Metadata box drag
+    // Metadata box drag (whole container)
     const metadataContainer = document.getElementById('metadata-box');
     if (metadataContainer) {
         addWindowControls(metadataContainer);
@@ -342,10 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.target.closest('.window-controls') ||
                 event.target.tagName === 'BUTTON'
             ) return;
-            if (event.target !== metadataContainer) return;
             dragState.type = 'metadata';
-            dragState.startX = event.clientX;
-            dragState.startY = event.clientY;
             dragState.target = metadataContainer;
             const rect = metadataContainer.getBoundingClientRect();
             dragState.offsetX = event.clientX - rect.left;
@@ -354,17 +398,79 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
         });
-        addWindowControls(metadataContainer);
     }
 
-    // 4. SVG panning (background drag)
+    // Selection window drag (whole container)
+    const selectionContainer = document.getElementById('selection-container');
+    const selectionInner = document.getElementById('selection-inner-container');
+    if (selectionContainer) {
+        addWindowControls(selectionContainer);
+        selectionContainer.addEventListener('mousedown', (event) => {
+            // Prevent drag if clicking on controls/buttons
+            if (
+                event.target.closest('.window-controls') ||
+                event.target.tagName === 'BUTTON'
+            ) return;
+
+            dragState.type = 'selection';
+            dragState.target = selectionContainer;
+            const rect = selectionContainer.getBoundingClientRect();
+            dragState.offsetX = event.clientX ;
+            dragState.offsetY = event.clientY ;
+            selectionContainer.classList.add('dragging');
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+
+    // Add after DOMContentLoaded and selectionInner is defined:
+    if (selectionInner) {
+        selectionInner.addEventListener('click', function (event) {
+            if (selectionInner.querySelector('textarea')) return;
+
+            let text = selectionInner.innerText || selectionInner.textContent || '';
+            const rect = selectionInner.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            const XHTML_NS = "http://www.w3.org/1999/xhtml";
+            const textarea = document.createElementNS(XHTML_NS, 'textarea');
+            textarea.value = text;
+            textarea.setAttribute('aria-label', 'Copy selection details');
+            textarea.setAttribute('style',
+                `width:${width}px;height:${height}px;box-sizing:border-box;font-family:inherit;font-size:inherit;resize:vertical;`
+            );
+
+            selectionInner.innerHTML = '';
+            selectionInner.appendChild(textarea);
+            textarea.focus();
+
+            // Prevent all mouse and keyboard handlers from interfering while textarea is focused
+            function stopEvent(e) {
+                e.stopPropagation();
+            }
+            textarea.addEventListener('mousedown', stopEvent, true);
+            textarea.addEventListener('mousemove', stopEvent, true);
+            textarea.addEventListener('mouseup', stopEvent, true);
+            textarea.addEventListener('keydown', stopEvent, true);
+            textarea.addEventListener('keyup', stopEvent, true);
+            textarea.addEventListener('wheel', stopEvent, true);
+
+            textarea.addEventListener('blur', function () {
+                selectionInner.innerHTML = '';
+                selectionInner.innerText = text;
+            });
+        });
+    }
+
+    // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
         if (event.button !== 0 ||
             event.target.closest('.metadata-box, .miniature-box, .instructions') ||
             event.target.id === 'overlay-container' ||
+            event.target.id == 'selection-container' ||
             event.target.closest('.node') ||
             event.target.closest('.edge')) {
-            // Ignore right-clicks and clicks on controls, nodes, edges, or overlays        
             return;
         }
         dragState.type = 'pan';
@@ -380,9 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MOUSE MOVE HANDLER ---
     window.addEventListener('mousemove', (event) => {
         if (!dragState.type) return;
-
         if (dragState.type === 'pan') {
-            // Check if we should start panning (after drag threshold)
             if (!isPanning && mouseDownStartX !== undefined && mouseDownStartY !== undefined) {
                 const dx = Math.abs(event.clientX - mouseDownStartX);
                 const dy = Math.abs(event.clientY - mouseDownStartY);
@@ -391,7 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     svg.classList.add('grabbing');
                 }
             }
-            //console.log('isPanning:', isPanning, 'isDraggingIndicator:', isDraggingIndicator, 'isDraggingMiniature:', isDraggingMiniature);
             if (isPanning) {
                 event.preventDefault();
                 const dx = event.clientX - startX;
@@ -402,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 startY = event.clientY;
                 applyTransform();
             }
-        } else if (dragState.type === 'miniature' || dragState.type === 'metadata') {
+        } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
             let newLeft = event.clientX - dragState.offsetX;
             let newTop = event.clientY - dragState.offsetY;
             dragState.target.style.left = `${newLeft}px`;
@@ -410,16 +513,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dragState.type === 'indicator') {
             event.preventDefault();
             const miniRect = miniatureContainer.getBoundingClientRect();
-            // Calculate new position based on drag start
             let indicatorLeft = dragState.indicatorStartLeft + (event.clientX - dragState.startX);
             let indicatorTop = dragState.indicatorStartTop + (event.clientY - dragState.startY);
             indicatorLeft = Math.max(0, Math.min(miniRect.width - viewportIndicator.offsetWidth, indicatorLeft));
             indicatorTop = Math.max(0, Math.min(miniRect.height - viewportIndicator.offsetHeight, indicatorTop));
-            // Update indicator position visually during drag
             viewportIndicator.style.left = `${indicatorLeft}px`;
             viewportIndicator.style.top = `${indicatorTop}px`;
-
-            // Calculate relative position and update main view
             const relLeft = indicatorLeft / miniRect.width;
             const relTop = indicatorTop / miniRect.height;
             const mainBounds = getMainERDBounds();
@@ -432,6 +531,23 @@ document.addEventListener('DOMContentLoaded', () => {
             userTx = ((mainBounds.x + relLeft * mainBounds.width) - svgPt1.x) / initialS;
             userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
             applyTransform();
+        } else if (dragState.type === 'resize') {
+            const dx = event.clientX - dragState.startX;
+            const dy = event.clientY - dragState.startY;
+            let newWidth = dragState.startWidth;
+            let newHeight = dragState.startHeight;
+            if (dragState.handle.classList.contains('resize-handle-se')) {
+                newWidth += dx;
+                newHeight += dy;
+            } else if (dragState.handle.classList.contains('resize-handle-nw')) {
+                newWidth -= dx;
+                newHeight -= dy;
+                // Optionally move the window as well
+                dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) + dx}px`;
+                dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) + dy}px`;
+            }
+            dragState.target.style.width = `${Math.max(100, newWidth)}px`;
+            dragState.target.style.height = `${Math.max(50, newHeight)}px`;
         }
     });
 
@@ -442,10 +558,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dragState.type === 'pan') {
             svg.classList.remove('grabbing');
             isPanning = false;
+        } else if (dragState.type === 'resize') {
+            const rect = dragState.target.getBoundingClientRect();
+            const newWidth = rect.width;
+            const newHeight = rect.height;
+            // Optionally, you can snap to a grid or minimum size
+            const minSize = 50;
+            if (newWidth < minSize || newHeight < minSize) {
+                dragState.target.style.width = `${minSize}px`;
+                dragState.target.style.height = `${minSize}px`;
+            }
         }
         dragState.type = null;
         dragState.target = null;
-        resizing = false;
     });
 
     // --- Other UI Events ---
@@ -480,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainBounds = getMainERDBounds();
         const centerX = mainBounds.x + mainBounds.width;
         const centerY = mainBounds.y + mainBounds.height;
-        zoomToPoint(centerX, centerY, 0.7);
+        zoomToPoint(centerX, centerY, userS);
         if (document.activeElement && document.activeElement.blur) {
             document.activeElement.blur();
         }
@@ -529,6 +654,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
+
     miniatureContainer.addEventListener('click', function (event) {
         // Get click position relative to the minimap
         const rect = miniatureContainer.getBoundingClientRect();
@@ -541,7 +668,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetY = mainBounds.y + relY * mainBounds.height;
 
         // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
-        zoomToPoint(targetX, targetY, 1);
+        zoomToPoint(targetX, targetY, userS);
         event.stopPropagation();
     });
+
 });

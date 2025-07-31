@@ -194,23 +194,31 @@ def generate_erd_with_graphviz(
         dot.node(safe_table_name, label=label, id=safe_table_name, shape=node_shape, style=node_style)
 
     # --- Update edge creation to use parallel splines ---
-    for i, (ltbl, col, rtbl, rcol, _line,  on_delete, on_update) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, col, rtbl, rcol, _line, on_delete, on_update) in enumerate(filtered_foreign_keys):
+        edge_id = f"edge-{i}"
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
-        safe_col = sanitize_label(col)
-        safe_rcol = sanitize_label(rcol)
-        safe_on_delet = sanitize_label(on_delete)
-        safe_on_update = sanitize_label(on_update)
+        graph_data["edges"][edge_id] = {
+            "tables": [safe_ltbl, safe_rtbl],
+            "defaultColor": table_colors[ltbl],
+            "highlightColor": saturate_color(table_colors[ltbl], saturation_factor=2.0),
+            "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.5),
+            "onDelete": on_delete,
+            "onUpdate": on_update,
+            "fkText": _line,  
+            "fromColumn": col,
+            "toColumn": rcol,
+        }
 
         # Use Graphviz's color="A:B" syntax for parallel splines
         color1 = table_colors[ltbl]
         color2 = table_colors[rtbl]
         dot.edge(
-            f"{safe_ltbl}:{safe_col}:e",
-            f"{safe_rtbl}:{safe_rcol}:w",
+            f"{safe_ltbl}:{col}:e",
+            f"{safe_rtbl}:{rcol}:w",
             id=f"edge-{i}",
-            on_delete=safe_on_delet,
-            on_update=safe_on_update,
+            on_delete=on_delete,
+            on_update=on_update,
             color=f"{color1}:{color2}"
         )
 
@@ -225,6 +233,7 @@ def generate_erd_with_graphviz(
     with open(actual_svg_path, 'r', encoding='utf-8') as f:
         svg_content = f.read()
 
+    svg_content = re.sub(r'<svg([^>]*)>', r'<svg\1 style="overflow:hidden;">', svg_content, count=1)
     # Remove Graphviz background rects/paths (double border fix) for full-size SVG
     svg_content = re.sub(r'<rect[^>]*fill="white"[^>]*/>', '', svg_content)
     svg_content = re.sub(r'<path[^>]*fill="white"[^>]*stroke="#E8A8A8"[^>]*/>', '', svg_content)
