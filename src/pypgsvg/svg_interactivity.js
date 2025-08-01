@@ -48,7 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.innerHTML = '×';
             controls.appendChild(closeBtn);
         }
+
         minBtn.onclick = (e) => {
+            console.log('minimize');
+
             e.stopPropagation();
             windowElem.classList.toggle('minimized');
             const content = windowElem.querySelector('.window-content');
@@ -62,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (options.onMinimize) options.onMinimize(windowElem.classList.contains('minimized'));
         };
         closeBtn.onclick = (e) => {
+            console.log
             e.stopPropagation();
             windowElem.style.display = 'none';
             if (options.onClose) options.onClose();
@@ -210,10 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Highlight selected tables/edges
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
+            color = tableElement.querySelector('title');
+            console.log(color);
+
             if (tableElement) {
                 tableElement.setAttribute('opacity', '1');
                 tableElement.classList.add('highlighted');
                 setElementColor(tableElement, tables[id].highlightColor, true);
+                tableElement.querySelectorAll('text').forEach(textElem => {
+                    textElem.setAttribute('fill', color);
+                });
             }
         });
 
@@ -438,8 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.type = 'selection';
             dragState.target = selectionContainer;
             const rect = selectionContainer.getBoundingClientRect();
-            dragState.offsetX = event.clientX ;
-            dragState.offsetY = event.clientY ;
+            dragState.offsetX = event.clientX;
+            dragState.offsetY = event.clientY;
             selectionContainer.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -756,5 +766,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     placeFloatingWindows();
+    document.querySelectorAll('.minimize-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const parent = btn.parentElement;
+            const contents = btn.parentNode.parentNode.childNodes; // Select only children with the class 'container-content'
+
+            // Toggle the button's text
+            btn.innerHTML = btn.innerHTML === '+' ? '–' : '+';
+
+            // Toggle the display of each content element
+            contents.forEach(content => {
+                if (content.nodeType !== Node.ELEMENT_NODE) return; // Skip non-element nodes
+                console.log(content.id);
+                if (content.classList.contains('container-content')) {
+                    content.style.display = content.style.display === 'none' ? '' : 'none';
+                }
+            });
+        });
+    });
 
 });

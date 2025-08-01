@@ -167,27 +167,29 @@ def inject_metadata_into_svg(
 
     # HTML overlays
     metadata_html = f"""
-<div class='metadata-container' id='metadata-container'>
-      <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
+<div class='metadata-container container' id='metadata-container'>
+    <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
     <div class='header'>Metadata</div>
+    <div class='metadata-inner-container container-content'>
     <ul>
         {''.join(f'<li>{line}</li>' for line in metadata_lines)}
     </ul>
+    </div>
 </div>
 """
     minimap_html = ''
     if miniature_svg:
         minimap_html = f'''
-<div id="miniature-container" class="miniature-container" style="z-index:10000;" >
+<div id="miniature-container" class="miniature-container container" style="z-index:10000;" >
+    <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
   <div class="header" id="miniature-header">Directed GraphOverview
-      <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
   </div>
-  <div class="miniature-inner-container" id="miniature-inner-container">
+  <div class="miniature-inner-container container-content" id="miniature-inner-container">
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursorse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor;se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
     instructions_html = '''
@@ -196,11 +198,12 @@ def inject_metadata_into_svg(
     </div>
     '''
     selection_html = f'''
-<div id="selection-container" class="selection-box" style="display:none">
-  <div class="header" id="selection-header">SQL   
+<div id="selection-container" class="selection-box container" style="display:none">
       <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
+
+  <div class="header" id="selection-header">Highlighted SQL   
   </div>
-  <div class="selection-container" id="selection-inner-container">
+  <div class="selection-container container-content" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
