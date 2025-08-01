@@ -18,9 +18,9 @@ Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres sche
 - Curent view area highlighted on minimized imagbe.
 
 ## TODO:
-- finish initial placement of overview, and metadata
-- finish placement of selection container sql on cursor
 - reveal trigger information for each highlighted table
+- Fix resizing and dragging of viewport indicator.
+- Update tests to run remotely properly.
 
 
 ## Installation

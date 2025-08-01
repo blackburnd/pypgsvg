@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         minBtn.onclick = (e) => {
-            console.log('minimize');
+            //console.log('minimize');
 
             e.stopPropagation();
             windowElem.classList.toggle('minimized');
@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (options.onMinimize) options.onMinimize(windowElem.classList.contains('minimized'));
         };
         closeBtn.onclick = (e) => {
-            console.log
             e.stopPropagation();
             windowElem.style.display = 'none';
             if (options.onClose) options.onClose();
@@ -214,59 +213,70 @@ document.addEventListener('DOMContentLoaded', () => {
         // Highlight selected tables/edges
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
-            color = tableElement.querySelector('title');
-            console.log(color);
+            if (!tableElement) return;
 
-            if (tableElement) {
-                tableElement.setAttribute('opacity', '1');
-                tableElement.classList.add('highlighted');
-                setElementColor(tableElement, tables[id].highlightColor, true);
-                tableElement.querySelectorAll('text').forEach(textElem => {
-                    textElem.setAttribute('fill', color);
-                });
-            }
+            // Get the background color from the title element
+            const titleElement = tableElement.querySelector('title');
+            //console.log(titleElement);
+            backgroundColor = tables[id].defaultColor || '#712e2eff'; // Default to white if no color defin
+            console.log(`Highlighting table ${id} with background color: ${backgroundColor}`);
+            // Highlight the table
+            tableElement.setAttribute('opacity', '1');
+            tableElement.classList.add('highlighted');
+
+            // Apply the background color to all text elements in the table
+            tableElement.querySelectorAll('text').forEach(textElem => {
+                textElem.style.fill = 'black'; // Ensure text is readable
+                textElem.setAttribute('backgroundColor', backgroundColor);
+            });
         });
 
         edgeIds.forEach(id => {
             const edgeElement = document.getElementById(id);
-            if (edgeElement) {
+            if (!edgeElement) return;
 
-                edgeElement.classList.add('highlighted');
-                edgeElement.setAttribute('opacity', '1');
-                const paths = edgeElement.querySelectorAll('path');
-                if (paths.length > 0) {
-                    paths[0].setAttribute('stroke-width', '16');
-                }
-                if (paths.length > 1) {
-                    paths[1].setAttribute('stroke-width', '7');
-                    paths[1].setAttribute('opacity', '1');
-                }
-                if (paths.length === 1) {
-                    paths[0].setAttribute('stroke-width', '3');
-                    paths[0].setAttribute('opacity', '1');
-                }
+            // Highlight the edge
+            edgeElement.classList.add('highlighted');
+            edgeElement.setAttribute('opacity', '1');
+
+            // Adjust stroke widths for paths
+            const paths = edgeElement.querySelectorAll('path');
+            if (paths.length > 0) {
+                paths[0].setAttribute('stroke-width', '16');
+            }
+            if (paths.length > 1) {
+                paths[1].setAttribute('stroke-width', '7');
+                paths[1].setAttribute('opacity', '1');
+            }
+            if (paths.length === 1) {
+                paths[0].setAttribute('stroke-width', '3');
+                paths[0].setAttribute('opacity', '1');
             }
         });
+
         // Grey out everything else
         Object.keys(tables).forEach(id => {
             if (!tableIds.includes(id)) {
                 const tableElement = document.getElementById(id);
-                if (tableElement) {
-                    setElementColor(tableElement, tables[id].desaturatedColor, false);
-                    if ('highlighted' in tableElement.classList) {
-                        tableElement.classList.remove('highlighted');
-                    }
-                }
+                if (!tableElement) return;
+
+                // Reset text elements to white background
+                tableElement.querySelectorAll('text').forEach(textElem => {
+                    textElem.style.fill = 'black'; // Ensure text is readable
+                    textElem.style.backgroundColor = '#ffffff'; // Reset to white background
+                });
+
+                tableElement.classList.remove('highlighted');
+                tableElement.setAttribute('opacity', '0.5'); // Dim non-highlighted tables
             }
         });
         Object.keys(edges).forEach(id => {
             if (!edgeIds.includes(id)) {
                 const edgeElement = document.getElementById(id);
-                if (edgeElement) {
-                    if ('highlighted' in edgeElement.classList) {
-                        edgeElement.classList.remove('highlighted');
-                    }
-                }
+                if (!edgeElement) return;
+
+                edgeElement.classList.remove('highlighted');
+                edgeElement.setAttribute('opacity', '0.5'); // Dim non-highlighted edges
             }
         });
         showSelectionWindow(tableIds, edgeIds, event);
@@ -777,7 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Toggle the display of each content element
             contents.forEach(content => {
                 if (content.nodeType !== Node.ELEMENT_NODE) return; // Skip non-element nodes
-                console.log(content.id);
+                //console.log(content.id);
                 if (content.classList.contains('container-content')) {
                     content.style.display = content.style.display === 'none' ? '' : 'none';
                 }
