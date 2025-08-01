@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             controls = document.createElement('div');
             controls.className = 'window-controls';
             controls.style.position = 'absolute';
+            controls.style.left = 'auto';
             controls.style.top = '2px';
             controls.style.right = '2px';
             controls.style.zIndex = '10001';
@@ -205,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
-    const highlightElements = (tableIds, edgeIds) => {
+    const highlightElements = (tableIds, edgeIds, event) => {
         // Highlight selected tables/edges
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
@@ -258,18 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-        showSelectionWindow(tableIds, edgeIds);
+        showSelectionWindow(tableIds, edgeIds, event);
     };
 
 
 
-    function showSelectionWindow(selectedTables, selectedEdges) {
+    function showSelectionWindow(selectedTables, selectedEdges, event) {
         const selectionContainer = document.getElementById('selection-container');
         if (!selectionContainer) return;
         selectionContainer.style.display = 'block';
+        selectionContainer.style.position = 'fixed';
         const inner = selectionContainer.querySelector('#selection-inner-container');
         if (!inner) return;
-
 
         let html = '';
         if (selectedTables.length) {
@@ -288,6 +289,28 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</ul></div>';
         }
         inner.innerHTML = html;
+
+        // Position the container next to the cursor, accounting for scroll offsets
+        if (event) {
+            console.log('Positioning selection window at cursor:', event.clientX, event.clientY);
+
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Use getComputedStyle to get accurate dimensions
+            const computedStyle = window.getComputedStyle(selectionContainer);
+            const containerWidth = parseFloat(computedStyle.width);
+            const containerHeight = parseFloat(computedStyle.height);
+
+            let left = event.clientX - containerWidth / 2;
+            let top = event.clientY - containerHeight / 2;
+
+            selectionContainer.style.position = 'fixed';
+            selectionContainer.style.left = `${Math.max(0, left)}px`;
+            selectionContainer.style.top = `${Math.max(0, top)}px`;
+
+            console.log(`Selection window positioned at (${left}, ${top})`);
+        }
     }
 
     function hideSelectionWindow() {
@@ -380,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Metadata box drag (whole container)
-    const metadataContainer = document.getElementById('metadata-box');
+    const metadataContainer = document.getElementById('metadata-container');
     if (metadataContainer) {
         addWindowControls(metadataContainer);
         metadataContainer.addEventListener('mousedown', (event) => {
@@ -466,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
         if (event.button !== 0 ||
-            event.target.closest('.metadata-box, .miniature-box, .instructions') ||
+            event.target.closest('.metadata-container, .miniature-container, .instructions') ||
             event.target.id === 'overlay-container' ||
             event.target.id == 'selection-container' ||
             event.target.closest('.node') ||
@@ -574,12 +597,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Other UI Events ---
+    // Helper to compute minimum zoom to fit SVG in viewport
+    function getMinZoomToFit() {
+        const mainBounds = getMainERDBounds();
+        if (!mainBounds.width || !mainBounds.height) return 0.01;
+        const svgWidth = window.innerWidth;
+        const svgHeight = window.innerHeight;
+        const scaleX = svgWidth / mainBounds.width;
+        const scaleY = svgHeight / mainBounds.height;
+        return Math.min(scaleX, scaleY);
+    }
+
     svg.addEventListener('wheel', (event) => {
         event.preventDefault();
         const dir = event.deltaY < 0 ? 1 : -1;
         const scaleAmount = 1 + dir * 0.1;
         let newS = userS * scaleAmount;
-        newS = Math.max(0.01, Math.min(5, newS));
+        const minZoom = getMinZoomToFit();
+        newS = Math.max(minZoom, Math.min(5, newS)); // Clamp to minZoom
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
         pt.y = event.clientY;
@@ -601,16 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', onViewportChange, { passive: true });
     window.addEventListener('resize', onViewportChange, { passive: true });
 
-    requestAnimationFrame(() => {
-        const mainBounds = getMainERDBounds();
-        const centerX = mainBounds.x + mainBounds.width;
-        const centerY = mainBounds.y + mainBounds.height;
-        zoomToPoint(centerX, centerY, userS);
-        if (document.activeElement && document.activeElement.blur) {
-            document.activeElement.blur();
-        }
-        svg.focus && svg.focus();
-    });
 
     // --- Highlight click handler ---
     svg.addEventListener('click', (event) => {
@@ -636,6 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
                 const uniqueTables = [...new Set(connectedTables)];
                 highlightElements(uniqueTables, connectedEdges);
+                showSelectionWindow(uniqueTables, connectedEdges, event);
             }
         }
         if (edgeId && edges[edgeId]) {
@@ -654,8 +680,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-
     miniatureContainer.addEventListener('click', function (event) {
         // Get click position relative to the minimap
         const rect = miniatureContainer.getBoundingClientRect();
@@ -671,5 +695,66 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomToPoint(targetX, targetY, userS);
         event.stopPropagation();
     });
+
+    requestAnimationFrame(() => {
+        const mainBounds = getMainERDBounds();
+        // Center coordinates
+        const centerX = mainBounds.x + mainBounds.width / 2;
+        const centerY = mainBounds.y + mainBounds.height / 2;
+        // Fit to screen
+        const minZoom = getMinZoomToFit();
+        zoomToPoint(centerX, centerY, minZoom);
+        if (document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
+        svg.focus && svg.focus();
+    });
+
+    function clampPan(tx, ty, s) {
+        const mainBounds = getMainERDBounds();
+        const svgWidth = window.innerWidth;
+        const svgHeight = window.innerHeight;
+        const scaledWidth = mainBounds.width * s * initialS;
+        const scaledHeight = mainBounds.height * s * initialS;
+
+        // Calculate min/max tx/ty so at least half of SVG stays visible
+        const minTx = svgWidth / (2 * initialS) - (mainBounds.x + mainBounds.width) * s;
+        const maxTx = (mainBounds.x + mainBounds.width / 2) * s - svgWidth;
+        const minTy = svgHeight / (2 * initialS) - (mainBounds.y + mainBounds.height) * s;
+        const maxTy = (mainBounds.y + mainBounds.height / 2) * s - svgHeight;
+
+        return {
+            tx: Math.min(Math.max(tx, minTx), maxTx),
+            ty: Math.min(Math.max(ty, minTy), maxTy)
+        };
+    }
+
+    function placeFloatingWindows() {
+        // Top left for metadata
+        const metadataContainer = document.getElementById('metadata-container');
+        if (metadataContainer) {
+            metadataContainer.style.position = 'fixed';
+            metadataContainer.style.left = '2rem';
+            metadataContainer.style.top = '2rem';
+            metadataContainer.style.zIndex = '10000';
+        }
+
+        // Top right for miniature/overview
+        const miniatureContainer = document.getElementById('miniature-container');
+        if (miniatureContainer) {
+            miniatureContainer.style.position = 'fixed';
+            miniatureContainer.style.left = '2rem';
+            miniatureContainer.style.right = '';
+            miniatureContainer.style.top = '5rem';
+            miniatureContainer.style.zIndex = '10001';
+        }
+
+        // Bottom left for selection
+        const selectionContainer = document.getElementById('selection-container');
+        if (selectionContainer) {
+            // Additional positioning logic if needed
+        }
+    }
+    placeFloatingWindows();
 
 });

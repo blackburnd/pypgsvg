@@ -4,6 +4,8 @@ Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres sche
 
 ## Features
 
+
+
 - Parse PostgreSQL schema dump file to extract table definitions and relationships
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette
@@ -11,11 +13,14 @@ Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres sche
 - Table filtering to exclude temporary/utility tables
 - MouseOver for extra information on paths, and entities.
 - Comprehensive test suite with >90% code coverage
-
-
 - Viewport minimized version generated with window view highlight.
 - 10% scaled minimized image.
 - Curent view area highlighted on minimized imagbe.
+
+## TODO:
+- finish initial placement of overview, and metadata
+- finish placement of selection container sql on cursor
+- reveal trigger information for each highlighted table
 
 
 ## Installation

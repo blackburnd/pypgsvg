@@ -60,13 +60,10 @@ def generate_miniature_erd(
 
     # Extract original dimensions
     width, height = extract_svg_dimensions_from_content(main_svg_content)
-    miniature_width = max(int(width * 0.1), 150)
-    miniature_height = max(int(height * 0.1), 100)
-    max_width = int(1920 * 0.5)
-    if miniature_width > max_width:
-        scale_factor = max_width / miniature_width
-        miniature_width = max_width
-        miniature_height = int(miniature_height * scale_factor)
+    max_dim = 500
+    scale = min(max_dim / width, max_dim / height, 1.0)
+    miniature_width = int(width * scale)
+    miniature_height = int(height * scale)
 
     # Scale SVG using viewBox and width/height
     # Replace the width/height attributes in the SVG tag
@@ -124,13 +121,12 @@ def inject_metadata_into_svg(
     node_shape,
     node_sep,
     rank_sep,
-    # ... other settings ...
 ):
-    """
-    Inject metadata and miniature ERD (as PNG) directly into the SVG using a single foreignObject for fixed positioning.
-    Also includes JavaScript for interactive click-to-zoom functionality.
-    """
-    # Create metadata lines
+    # Remove XML declaration and DOCTYPE robustly
+    svg_content = re.sub(r'<\?xml[^>]*\?>\s*', '', svg_content)
+    svg_content = re.sub(r'<!DOCTYPE[^>]*>\s*', '', svg_content)
+
+    # Metadata lines
     metadata_lines = [
         f"Source: {file_info['filename']}",
         f"File Size: {file_info['filesize']}",
@@ -152,27 +148,12 @@ def inject_metadata_into_svg(
         f"node_sep: {node_sep}",
         f"rank_sep: {rank_sep}"
     ]
+
+    # Generate miniature ERD if requested
     miniature_svg = ""
     miniature_width = 0
     miniature_height = 0
-
-    if xml_decl in svg_content:
-        svg_content = svg_content.replace(xml_decl, '')
-  
-    if doctype in svg_content:
-        svg_content = svg_content.replace(doctype, '')
-
-    for line in svg_content[:].splitlines():
-        if '<!DOCTYPE' in line:
-            svg_content = svg_content.replace(line, '')
-    
-        elif 'SVG/1.1/DTD/svg11.dtd' in line:
-            svg_content = svg_content.replace(line, '')
-            
-
-        
     if tables and foreign_keys and gen_min_erd:
-        print("Generating miniature ERD...")
         miniature_data = generate_miniature_erd(
             tables, foreign_keys, file_info, total_tables, total_columns,
             total_foreign_keys, total_edges, show_standalone, main_svg_content=svg_content,
@@ -182,50 +163,42 @@ def inject_metadata_into_svg(
             rank_sep=rank_sep)
         if miniature_data:
             miniature_svg, miniature_width, miniature_height = miniature_data
-            print(f"Miniature SVG generated successfully: {miniature_width}x{miniature_height}")
-        else:
-            print("Miniature SVG generation failed")
-    else:
-        print("No tables or foreign_keys data provided for miniature")
+            miniature_svg = prefix_svg_ids(miniature_svg, prefix='mini-')
 
+    # HTML overlays
     metadata_html = f"""
-<div class='metadata-box' id='metadata-box'>
-  <div class='window-controls'></div>
-  <div class='header'>Metadata</div>
-  <ul>
-    {''.join(f'<li>{line}</li>' for line in metadata_lines)}
-  </ul>
+<div class='metadata-container' id='metadata-container'>
+      <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
+    <div class='header'>Metadata</div>
+    <ul>
+        {''.join(f'<li>{line}</li>' for line in metadata_lines)}
+    </ul>
 </div>
 """
-
     minimap_html = ''
     if miniature_svg:
-        miniature_svg = prefix_svg_ids(miniature_svg, prefix='mini-')
         minimap_html = f'''
-<div id="miniature-container" class="miniature-box">
-  <div class="header" id="miniature-header">Overview
-      <div class="window-controls"></div>
+<div id="miniature-container" class="miniature-container" style="z-index:10000;" >
+  <div class="header" id="miniature-header">Directed GraphOverview
+      <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
   </div>
-  <div class="miniature-container" id="miniature-inner-container">
-
+  <div class="miniature-inner-container" id="miniature-inner-container">
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursorse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
-
     instructions_html = '''
     <div class="instructions">
         💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight • ESC/R to reset
     </div>
     '''
-
     selection_html = f'''
 <div id="selection-container" class="selection-box" style="display:none">
-  <div class="header" id="selection-header">Selection   
-      <div class="window-controls"></div>
+  <div class="header" id="selection-header">SQL   
+      <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
   </div>
   <div class="selection-container" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
@@ -234,18 +207,14 @@ def inject_metadata_into_svg(
   <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
-
-
     all_overlays_html = f"""
         {instructions_html}
-
-     <div class='metadata-minimap-row'>
-      {metadata_html}
-      {minimap_html}
-      {selection_html}
-    </div>
+        {metadata_html}
+        <div class='metadata-minimap-row'>
+            {minimap_html}
+        </div>
+        {selection_html}
     """
-
     overlay_container_html = f'''
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
