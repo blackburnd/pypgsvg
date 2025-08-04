@@ -2,7 +2,11 @@
 
 pypgsvg is an open source Python application that parses postgresql schema SQL dump files and generates 
 Directed Entity Relationship Diagrams (Diagraph, ERDs) using Graphviz with overview controls, user edge highilight
-and introspection displaying the SQL used to generate the table nodes, and edges.  In a past life I had been tasked
+and introspection displaying the SQL used to generate the table nodes, and edges to quickly diagnose or debug postgres sql 
+data structures
+
+
+  In a past life I had been tasked
 with showing what the normalized postgresql database looks like for employers who do not want to pay for 
 postgres tools that have the graphical tools. There are certainly usable free ones out there, and at the time required the installation of Java. 
 So admittedly this started as an academic excersise. By no means is this even an alledgedly full throated tool, but takes most diagraph args.
@@ -110,7 +114,7 @@ For more complex databases, pypgsvg can handle extensive schemas with many table
 *View the interactive SVG diagrams:*
 
 - [Simple Schema Example](Samples/sample_schema_erd.svg)
-- [Complex Database Schema Example](Samples/schema_erd.svg)
+- [Complex Database Schema Example](test.svg)
 
 The diagram shows:
 

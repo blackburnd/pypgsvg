@@ -27,7 +27,7 @@ def run_main_with_args(args, mock_file_content=None, raise_file_error=None, pars
              patch("pypgsvg.__init__.generate_erd_with_graphviz") as mgen, \
              patch("webbrowser.open") as mweb:
             # parse_sql_dump returns (tables, fks, errors)
-            mparse.return_value = ({"users": {"columns": []}}, [], parse_errors or [])
+            mparse.return_value = ({"users": {"columns": []}}, [], [], parse_errors or [])
             if gen_exception:
                 mgen.side_effect = gen_exception
             yield mfile, mparse, mgen, mweb

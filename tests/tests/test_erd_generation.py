@@ -28,14 +28,14 @@ def sample_sql():
 
 @pytest.fixture
 def parsed_schema(sample_sql):
-    tables, foreign_keys, errors = parse_sql_dump(sample_sql)
+    tables, foreign_keys, triggers,  errors = parse_sql_dump(sample_sql)
     assert not errors
     return tables, foreign_keys
 
 
 def test_parse_sql_dump(sample_sql):
 
-    tables, foreign_keys, errors = parse_sql_dump(sample_sql)
+    tables, foreign_keys, triggers, errors = parse_sql_dump(sample_sql)
     assert 'users' in tables
     def test_generate_erd_creates_svg_file(parsed_schema):
         """
@@ -179,7 +179,7 @@ def test_parse_sql_dump(sample_sql):
         from pypgsvg.db_parser import parse_sql_dump
         from pypgsvg.erd_generator import generate_erd_with_graphviz
     
-        tables, foreign_keys, errors = parse_sql_dump(sql_content)
+        tables, foreign_keys, triggers, errors = parse_sql_dump(sql_content)
         # Should parse some tables and not fail
         assert isinstance(tables, dict)
         assert len(tables) > 10  # Should find many tables
