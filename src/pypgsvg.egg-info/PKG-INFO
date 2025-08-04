@@ -68,17 +68,59 @@ Dynamic: requires-python
 # Python ERD Generator from Postgres schema dump file
 
 pypgsvg is an open source Python application that parses postgresql schema SQL dump files and generates 
-Directed Entity Relationship Diagrams (Diagraph, ERDs) using Graphviz.  In a past life I had been tasked
+Directed Entity Relationship Diagrams (Diagraph, ERDs) using Graphviz with overview controls, user edge highilight
+and introspection displaying the SQL used to generate the table nodes, and edges to quickly diagnose or debug postgres sql 
+data structures
+
+
+  In a past life I had been tasked
 with showing what the normalized postgresql database looks like for employers who do not want to pay for 
-postgres tools that have the graphical tools. There are some free ones out there but requires the installation of Java, 
-and does work well for what I needed it for, so admittedly this started as an academic excersise. By no 
-means is this even an alledgedly full throated tool, but is being adapted to take all diagraph  args shortly as to 
-offer some options for best display of the ERD. Some versions of this saved me hours of time in explainations, 
+postgres tools that have the graphical tools. There are certainly usable free ones out there, and at the time required the installation of Java. 
+So admittedly this started as an academic excersise. By no means is this even an alledgedly full throated tool, but takes most diagraph args.
+
+Some versions of this saved me hours of time in explainations, 
 now easier to share.
+
+---
+
+## Supported Command-Line Arguments
+
+The following arguments are supported and passed to Graphviz for generating the ERD:
+
+### Input and Output
+- **`input_file`**: Path to the PostgreSQL dump file to be parsed.
+- **`-o, --output`**: Output file name (without extension). Default: `schema_erd`.
+
+### Diagram Customization
+- **`--show-standalone`**: Hide standalone tables. Default: `'true'`.
+- **`--view`**: Open the generated SVG in a browser.
+- **`--saturate`**: Saturation factor for table colors. Default: `1.8`.
+- **`--brightness`**: Brightness factor for table colors. Default: `1.0`.
+
+### Graphviz Parameters
+- **`--packmode`**: Graphviz packmode (`array`, `cluster`, `graph`). Default: `array`.
+- **`--rankdir`**: Direction of graph layout (`TB`, `LR`, `BT`, `RL`). Default: `TB` (top-to-bottom).
+- **`--esep`**: Edge separation value. Default: `8`.
+
+### Font Customization
+- **`--fontname`**: Font name for graph, nodes, and edges. Default: `Arial`.
+- **`--fontsize`**: Font size for graph label. Default: `18`.
+- **`--node-fontsize`**: Font size for node labels. Default: `14`.
+- **`--edge-fontsize`**: Font size for edge labels. Default: `12`.
+
+### Node Style and Layout
+- **`--node-style`**: Node style (e.g., `filled`, `rounded,filled`). Default: `rounded,filled`.
+- **`--node-shape`**: Node shape (e.g., `rect`, `ellipse`). Default: `rect`.
+- **`--node-sep`**: Node separation distance. Default: `0.5`.
+- **`--rank-sep`**: Rank separation distance. Default: `1.2`.
+
+---
+
 
 
 ```
  PYTHONPATH=src python -m pytest tests/tests/ 
+python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
  python -m src.pypgsvg Samples/schema.dump --output=test
 ```
 
@@ -93,14 +135,14 @@ now easier to share.
 - Automatic color coding for tables with accessible color palette
 - Support for complex SQL structures including foreign keys, constraints, and various data types
 - Table filtering to exclude temporary/utility tables
-- Comprehensive test suite with >90% code coverage
+- Comprehensive test suite with >80% code coverage
 
 ## Installation
 
 1. Install pypgsvg:
 
 ```bash
-pip install .
+pip install pypgsvg
 ```
 
 2. Ensure Graphviz is installed on your system:
@@ -139,7 +181,7 @@ For more complex databases, pypgsvg can handle extensive schemas with many table
 *View the interactive SVG diagrams:*
 
 - [Simple Schema Example](Samples/sample_schema_erd.svg)
-- [Complex Database Schema Example](Samples/schema_erd.svg)
+- [Complex Database Schema Example](test.svg)
 
 The diagram shows:
 
