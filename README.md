@@ -99,7 +99,7 @@ This will create an SVG file with the same name as your input file (e.g., `your_
 
 Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
 
-[![Sample ERD](Samples/sample_schema_erd.svg)](Samples/sample_schema_erd.svg)
+[![Sample ERD](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](Samples/sample_schema_erd.svg)
 
 *Simple Blog Schema - showing basic relationships between users, posts, and comments*
 

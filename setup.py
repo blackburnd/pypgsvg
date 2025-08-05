@@ -4,11 +4,12 @@ setup(
     name="pypgsvg-erd-generator",
     version="1.0.07",
     description="Python ERD Generator from SQL dumps using Graphviz",
-    author="ERD Generator",
-    packages=find_packages(),
+    author="blackburnd@gmail.com",
+    packages=find_ckages(),
     install_requires=[
         "graphviz>=0.20.1",
     ],
+
     python_requires=">=3.8",
     extras_require={
         "dev": [
