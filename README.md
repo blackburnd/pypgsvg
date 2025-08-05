@@ -39,24 +39,31 @@ Some versions of this saved me hours of time in explainations, now easier to sha
 If you do not already schema dump file, you can generate one with pg_dump, or you can use the the [Sample](https://github.com/blackburnd/pypgsvg/blob/main/Samples/schema.dump).
 pg_dump comes along with the postgresql install if you do not yet have a SQL schema dump file to process.
 [PostgreSQL](https://www.postgresql.org/)
-```
+
+```bash
 pg_dump -h 192.168.1.xxx --format=plain -d database -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
 ```
 
 ### Command-Line Usage
 Generate an ERD from your SQL dump file:
+
 ```bash
 python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph
 ```
 
 View the diagram immediately after generation:
+
 ```bash
+
 python -m src.pypgsvg Samples/schema.dump --view
+
 ```
 
-The following screenshots were generated from the dump file in the samples directory, 
+The following screenshots were generated from the dump file in the samples directory,
+You can view the example_output_erd.svg via github, but for security reasons github restricts scripts runnning remotely.
+If you want to have the intented interactive svg the file must be downloaded and opened in a browser from your local machine.
 
-[[example_output_erd.svg](https://raw.githubusercontent.com/blackburnd/pypgsvg/refs/heads/main/Samples/example_output_erd.svg)]
+[[example_output_erd.svg](https://github.com/blackburnd/pypgsvg/blob/main/Samples/example_output_erd.svg)]
 
 
 
@@ -64,8 +71,10 @@ The following screenshots were generated from the dump file in the samples direc
 
 
 ### Python API Usage
+
 For programmatic use:
-```python
+```
+python
 from src.pypgsvg import parse_sql_dump, generate_erd_with_graphviz
 
 # Load SQL dump
