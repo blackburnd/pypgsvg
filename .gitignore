@@ -1,12 +1,6 @@
 .DS_Store
 *.pyc
-/tests/pypgsvg_erd_generator.egg-info
-database_diagram.svg
-database_diagram
-database_diagram.svg
-test.svg
-coverage.xml
 *.svg
 .coverage
-dist/pypgsvg-1.0.71.tar.gz
 /dist
+/tests/pypgsvg_erd_generator.egg-info

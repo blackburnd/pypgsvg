@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pypgsvg
-Version: 1.0.72
+Version: 1.0.74
 Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dumps
 Author: blackburnd@gmail.com
 Author-email: Daniel Blackburn <daniel@example.com>
@@ -26,10 +26,10 @@ License: MIT License
         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
         SOFTWARE.
         
-Project-URL: Homepage, https://github.com/danielblackburn/pypgsvg
-Project-URL: Bug Reports, https://github.com/danielblackburn/pypgsvg/issues
-Project-URL: Source Code, https://github.com/danielblackburn/pypgsvg
-Project-URL: Documentation, https://github.com/danielblackburn/pypgsvg#readme
+Project-URL: Homepage, https://github.com/blackburnd/pypgsvg
+Project-URL: Bug Reports, https://github.com/blackburnd/pypgsvg/issues
+Project-URL: Source Code, https://github.com/blackburnd/pypgsvg
+Project-URL: Documentation, https://github.com/blackburnd/pypgsvg#readme
 Keywords: postgresql,database,erd,diagram,svg,graphviz,schema,visualization
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
@@ -113,6 +113,11 @@ View the diagram immediately after generation:
 ```bash
 python -m src.pypgsvg Samples/schema.dump --view
 ```
+
+The following screenshots were generated from the dump file in the samples directory
+
+[![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
+
 
 ### Python API Usage
 For programmatic use:

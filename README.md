@@ -35,6 +35,13 @@ Some versions of this saved me hours of time in explainations, now easier to sha
 ---
 
 ## Usage
+### Obtain or generate a PostgreSQL schema dump file
+If you do not already schema dump file, you can generate one with pg_dump, or you can use the the [Sample](https://github.com/blackburnd/pypgsvg/blob/main/Samples/schema.dump).
+pg_dump comes along with the postgresql install if you do not yet have a SQL schema dump file to process.
+[PostgreSQL](https://www.postgresql.org/)
+```
+pg_dump -h 192.168.1.xxx --format=plain -d database -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
+```
 
 ### Command-Line Usage
 Generate an ERD from your SQL dump file:

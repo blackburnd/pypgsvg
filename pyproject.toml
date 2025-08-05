@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypgsvg"
-version = "1.0.72"
+version = "1.0.74"
 authors = [
     {name = "Daniel Blackburn", email = "daniel@example.com"},
 ]
@@ -50,10 +50,10 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/danielblackburn/pypgsvg"
-"Bug Reports" = "https://github.com/danielblackburn/pypgsvg/issues"
-"Source Code" = "https://github.com/danielblackburn/pypgsvg"
-Documentation = "https://github.com/danielblackburn/pypgsvg#readme"
+Homepage = "https://github.com/blackburnd/pypgsvg"
+"Bug Reports" = "https://github.com/blackburnd/pypgsvg/issues"
+"Source Code" = "https://github.com/blackburnd/pypgsvg"
+Documentation = "https://github.com/blackburnd/pypgsvg#readme"
 
 [project.scripts]
 pypgsvg = "pypgsvg:main"
