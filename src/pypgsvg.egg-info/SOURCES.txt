@@ -5,6 +5,7 @@ pyproject.toml
 requirements.txt
 setup.py
 Samples/database_diagram.svg
+Samples/example_output_erd.svg
 Samples/sample_schema_erd.svg
 Samples/schema.dump
 Samples/schema_erd.svg
