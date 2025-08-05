@@ -3,3 +3,4 @@
 .coverage
 /dist
 tests/
+/src/pypgsvg.egg-info

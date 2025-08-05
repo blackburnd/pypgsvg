@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypgsvg"
-version = "1.0.74"
+version = "1.0.76"
 authors = [
     {name = "Daniel Blackburn", email = "daniel@example.com"},
 ]
-description = "Generate SVG Entity Relationship Diagrams from PostgreSQL database dumps"
+description = "Generate SVG Entity Relationship Diagrams from PostgreSQL database dump files"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
