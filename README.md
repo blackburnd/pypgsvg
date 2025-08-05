@@ -1,149 +1,59 @@
-# Python ERD Generator from Postgres schema dump file
+# Python ERD Generator from Postgres Schema Dump File
 
-pypgsvg is an open source Python application that parses postgresql schema SQL dump files and generates 
-Directed Entity Relationship Diagrams (Diagraph, ERDs) using Graphviz with overview controls, user edge highilight
-and introspection displaying the SQL used to generate the table nodes, and edges to quickly diagnose or debug postgres sql 
-data structures
-
-
-  In a past life I had been tasked
-with showing what the normalized postgresql database looks like for employers who do not want to pay for 
-postgres tools that have the graphical tools. There are certainly usable free ones out there, and at the time required the installation of Java. 
-So admittedly this started as an academic excersise. By no means is this even an alledgedly full throated tool, but takes most diagraph args.
-
-Some versions of this saved me hours of time in explainations, 
-now easier to share.
+`pypgsvg` is an open-source Python application that parses PostgreSQL schema SQL dump files and generates Directed Entity Relationship Diagrams (ERDs) using Graphviz. It includes features such as overview controls, edge highlighting, and introspection to display the SQL used to generate table nodes and edges, making it easier to debug PostgreSQL data structures.
 
 ---
 
+In a past life I had been tasked with showing what the normalized postgresql database looks like for employers who do not want to pay for postgres tools that have the graphical tools. There are certainly usable free ones out there, and at the time required the installation of Java. So admittedly this started as an academic excersise. By no means is this even an alledgedly full throated tool, but takes most diagraph args.
+
+Some versions of this saved me hours of time in explainations, now easier to share.
+
+
+
+## Features
+- Parse PostgreSQL dump files to extract table definitions and relationships.
+- Generate interactive SVG ERDs with automatic color coding.
+- Support for complex SQL structures, including foreign keys, constraints, and various data types.
+- Table filtering to exclude temporary or utility tables.
+- Accessible color palette with proper contrast for readability.
+- Comprehensive test suite with >80% code coverage.
+
+---
+
+## Installation
+
+1. Install `pypgsvg`:
+   ```bash
+   pip install pypgsvg
+   ```
+
+2. Ensure Graphviz is installed:
+   - **macOS**: `brew install graphviz`
+   - **Ubuntu/Debian**: `sudo apt-get install graphviz`
+   - **Windows**: Download from [Graphviz.org](https://graphviz.org/download/).
+
+---
+
+## Usage
+
+### Command-Line Usage
 Generate an ERD from your SQL dump file:
-### Usage
-
+```bash
+python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph
 ```
- python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=your_database_erd  --rankdir TB --node-sep 4 --packmode 'graph' 
- python -m src.pypgsvg Samples/schema.dump --output=your_database_erd
-```
-This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
 
+View the diagram immediately after generation:
+```bash
+python -m src.pypgsvg Samples/schema.dump --view
+```
 
 The following screenshots were generated from the dump file in the samples directory
 
 [![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
 
-The following arguments are supported and passed to Graphviz for generating the ERD:
-
-### Input and Output
-- **`input_file`**: Path to the PostgreSQL dump file to be parsed.
-- **`-o, --output`**: Output file name (without extension). Default: `schema_erd`.
-
-### Diagram Customization
-- **`--show-standalone`**: Hide standalone tables. Default: `'true'`.
-- **`--view`**: Open the generated SVG in a browser.
-- **`--saturate`**: Saturation factor for table colors. Default: `1.8`.
-- **`--brightness`**: Brightness factor for table colors. Default: `1.0`.
-
-### Graphviz Parameters
-- **`--packmode`**: Graphviz packmode (`array`, `cluster`, `graph`). Default: `array`.
-- **`--rankdir`**: Direction of graph layout (`TB`, `LR`, `BT`, `RL`). Default: `TB` (top-to-bottom).
-- **`--esep`**: Edge separation value. Default: `8`.
-
-### Font Customization
-- **`--fontname`**: Font name for graph, nodes, and edges. Default: `Arial`.
-- **`--fontsize`**: Font size for graph label. Default: `18`.
-- **`--node-fontsize`**: Font size for node labels. Default: `14`.
-- **`--edge-fontsize`**: Font size for edge labels. Default: `12`.
-
-### Node Style and Layout
-- **`--node-style`**: Node style (e.g., `filled`, `rounded,filled`). Default: `rounded,filled`.
-- **`--node-shape`**: Node shape (e.g., `rect`, `ellipse`). Default: `rect`.
-- **`--node-sep`**: Node separation distance. Default: `0.5`.
-- **`--rank-sep`**: Rank separation distance. Default: `1.2`.
-
----
-
-
-
-
-
-
-## BETA, TODO, and Features
-- TODO: 
-  - A show/hide FK based on cascade type. 
-  - CSS facelift.
-  - Show trigger information.
-  - Update instructions and tests. 
-  DONE:
-- Include screenshots 
-- Parse PostgreSQL dump files to extract table definitions and relationships
-- Generate interactive SVG Entity Relationship Diagrams
-- Automatic color coding for tables with accessible color palette
-- Support for complex SQL structures including foreign keys, constraints, and various data types
-- Table filtering to exclude temporary/utility tables
-- Allow all argument options for Diagraph..
-- Comprehensive test suite with >80% code coverage
-
-## Installation
-
-1. Install pypgsvg:
-
-```bash
-pip install pypgsvg
-```
-
-2. Ensure Graphviz is installed on your system:
-   - **macOS**: `brew install graphviz`
-   - **Ubuntu/Debian**: `sudo apt-get install graphviz`
-   - **Windows**: Download from <https://graphviz.org/download/>
-
-
-### Basic Test Runs
-
-```
- PYTHONPATH=src python -m pytest tests/tests
- ```
-
-Generate an ERD from your SQL dump file:
-### Components
-
-## Metadata
-- The metadata informational overlay contains interesting information about the   
-  svg generated, and the options used to generate that file.
-[![Metadata](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/ps/46D1Th)
-
-
-## Overview
--The overview minimap is used to help locate and quickly navigate larger svg files. 
-[![Overview](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/ps/46D1Th)
-
-# Selection SQL:
-- Anything highlighted  will have its SQL generation text displayed here. Single click inside the content area converts to a TextArea for copy/paste.
-[![SQL](https://live.staticflickr.com/65535/54701891288_096038eca2_b.jpg)](https://flic.kr/ps/46D1Th)
-
-The diagram shows:
-
-- **Tables** as nodes with their column definitions
-- **Foreign key relationships** as directed edges between tables
-- **Automatic color coding** for visual distinction
-- **Accessible color palette** with proper contrast for readability
-
-### Usage
-
-Specify a custom output filename:
-
-```bash
-pypgsvg your_database_dump.sql --output custom_diagram.svg
-```
-
-View the diagram immediately after generation:
-
-```bash
-pypgsvg your_database_dump.sql --view
-```
 
 ### Python API Usage
-
 For programmatic use:
-
 ```python
 from src.pypgsvg import parse_sql_dump, generate_erd_with_graphviz
 
@@ -162,26 +72,44 @@ else:
     print("Parsing errors found:", errors)
 ```
 
+---
+
+## Components
+
+### Metadata
+Displays information about the generated SVG and the options used.
+[![Metadata](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/ps/46D1Th)
+
+### Overview
+A minimap to quickly navigate larger SVG files.
+[![Overview](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/ps/46D1Th)
+
+### Selection SQL
+Highlights SQL generation text for selected elements. Single-click inside the content area converts it to a text area for copy/paste.
+[![SQL](https://live.staticflickr.com/65535/54701891288_096038eca2_b.jpg)](https://flic.kr/ps/46D1Th)
+
+---
+
 ## Testing
 
-Run the complete test suite with coverage:
-
+Run the complete test suite:
 ```bash
-# Run all tests with coverage
-PYTHONPATH=src python -m pytest tests/tests/
+PYTHONPATH=src python -m pytest tests/tests
+```
 
-
-# Run specific test categories
+Run specific test categories:
+```bash
 pytest -m unit          # Unit tests only
 pytest -m integration   # Integration tests only
-
-# Run with verbose output
-pytest -v
-
-# Generate HTML coverage report
-pytest --cov-report=html
-open htmlcov/index.html  # View coverage report
 ```
+
+Generate an HTML coverage report:
+```bash
+pytest --cov-report=html
+open htmlcov/index.html
+```
+
+---
 
 ## Project Structure
 
@@ -195,16 +123,16 @@ open htmlcov/index.html  # View coverage report
 │   ├── test_erd_generation.py   # Tests for ERD generation
 │   └── test_integration.py      # Integration tests
 ├── requirements.txt             # Python dependencies
-├── pyproject.toml              # pytest configuration
-└── README.md                   # This file
+├── pyproject.toml               # pytest configuration
+└── README.md                    # Documentation
 ```
+
+---
 
 ## Configuration
 
 ### Table Exclusion
-
-The application automatically excludes tables matching certain patterns (defined in `should_exclude_table`):
-
+The application automatically excludes tables matching certain patterns:
 - Views (`vw_`)
 - Backup tables (`bk`)
 - Temporary fix tables (`fix`)
@@ -215,38 +143,42 @@ The application automatically excludes tables matching certain patterns (defined
 - Member data (`memberdata`)
 
 ### Color Palette
-
 The ERD uses an accessible color palette with automatic contrast calculation for text readability following WCAG guidelines.
+
+---
 
 ## Supported SQL Features
 
-- `CREATE TABLE` statements with various column types
-- `CREATE TABLE IF NOT EXISTS`
-- `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY`
-- Quoted identifiers
-- Complex data types (numeric, timestamp, jsonb, etc.)
-- Multiple constraint variations
+- `CREATE TABLE` statements with various column types.
+- `ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY`.
+- Quoted identifiers and complex data types (e.g., `numeric`, `timestamp`, `jsonb`).
+- Multiple constraint variations.
+
+---
 
 ## Error Handling
 
 The application includes comprehensive error handling for:
+- Malformed SQL syntax.
+- Missing table references in foreign keys.
+- Unicode encoding issues.
+- File reading errors.
 
-- Malformed SQL syntax
-- Missing table references in foreign keys
-- Unicode encoding issues
-- File reading errors
+---
 
 ## Contributing
 
-1. Follow PEP 8 style guidelines
-2. Write tests for new functionality
-3. Maintain >90% test coverage
-4. Use type hints where appropriate
-5. Update documentation as needed
+1. Follow PEP 8 style guidelines.
+2. Write tests for new functionality.
+3. Maintain >90% test coverage.
+4. Use type hints where appropriate.
+5. Update documentation as needed.
+
+---
 
 ## Dependencies
 
-- `graphviz>=0.20.1` - For generating diagrams
-- `pytest>=7.4.0` - Testing framework
-- `pytest-cov>=4.1.0` - Coverage reporting
-- `pytest-mock>=3.11.0` - Mocking utilities
+- `graphviz>=0.20.1` - For generating diagrams.
+- `pytest>=7.4.0` - Testing framework.
+- `pytest-cov>=4.1.0` - Coverage reporting.
+- `pytest-mock>=3.11.0` - Mocking utilities.
