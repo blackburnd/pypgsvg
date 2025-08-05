@@ -1,6 +1,5 @@
 .DS_Store
 *.pyc
-*.svg
 .coverage
 /dist
-/tests/pypgsvg_erd_generator.egg-info
+tests/

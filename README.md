@@ -54,7 +54,11 @@ View the diagram immediately after generation:
 python -m src.pypgsvg Samples/schema.dump --view
 ```
 
-The following screenshots were generated from the dump file in the samples directory
+The following screenshots were generated from the dump file in the samples directory, 
+
+[[example_output_erd.svg](https://raw.githubusercontent.com/blackburnd/pypgsvg/refs/heads/main/Samples/example_output_erd.svg)]
+
+
 
 [![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
 
