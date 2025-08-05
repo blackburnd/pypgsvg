@@ -16,7 +16,6 @@ now easier to share.
 
 ---
 
-
 Generate an ERD from your SQL dump file:
 ### Usage
 
@@ -104,19 +103,22 @@ pip install pypgsvg
  ```
 
 Generate an ERD from your SQL dump file:
-### Usage
+### Components
 
-```
-python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
- python -m src.pypgsvg Samples/schema.dump --output=test
-```
-
-This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
+## Metadata
+- The metadata informational overlay contains interesting information about the   
+  svg generated, and the options used to generate that file.
+[![Metadata](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/ps/46D1Th)
 
 
-[![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
+## Overview
+-The overview minimap is used to help locate and quickly navigate larger svg files. 
+[![Overview](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/ps/46D1Th)
 
-*View the interactive SVG diagrams
+# Selection SQL:
+- Anything highlighted  will have its SQL generation text displayed here. Single click inside the content area converts to a TextArea for copy/paste.
+[![SQL](https://live.staticflickr.com/65535/54701891288_096038eca2_b.jpg)](https://flic.kr/ps/46D1Th)
+
 The diagram shows:
 
 - **Tables** as nodes with their column definitions
