@@ -8,3 +8,5 @@ test.svg
 coverage.xml
 *.svg
 .coverage
+dist/pypgsvg-1.0.71.tar.gz
+/dist

@@ -5,7 +5,7 @@ setup(
     version="1.0.07",
     description="Python ERD Generator from SQL dumps using Graphviz",
     author="blackburnd@gmail.com",
-    packages=find_ckages(),
+    packages=find_packages(),
     install_requires=[
         "graphviz>=0.20.1",
     ],

@@ -16,7 +16,20 @@ now easier to share.
 
 ---
 
-## Supported Command-Line Arguments
+
+Generate an ERD from your SQL dump file:
+### Usage
+
+```
+ python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=your_database_erd  --rankdir TB --node-sep 4 --packmode 'graph' 
+ python -m src.pypgsvg Samples/schema.dump --output=your_database_erd
+```
+This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
+
+
+The following screenshots were generated from the dump file in the samples directory
+
+[![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
 
 The following arguments are supported and passed to Graphviz for generating the ERD:
 
@@ -51,23 +64,23 @@ The following arguments are supported and passed to Graphviz for generating the 
 
 
 
-```
- PYTHONPATH=src python -m pytest tests/tests/ 
-python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
- python -m src.pypgsvg Samples/schema.dump --output=test
-```
 
 
 
 ## BETA, TODO, and Features
-- TODO: Allow all argument options for Diagraph..
-  - allow show/hide FK based on cascade type. 
+- TODO: 
+  - A show/hide FK based on cascade type. 
   - CSS facelift.
+  - Show trigger information.
+  - Update instructions and tests. 
+  DONE:
+- Include screenshots 
 - Parse PostgreSQL dump files to extract table definitions and relationships
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette
 - Support for complex SQL structures including foreign keys, constraints, and various data types
 - Table filtering to exclude temporary/utility tables
+- Allow all argument options for Diagraph..
 - Comprehensive test suite with >80% code coverage
 
 ## Installation
@@ -83,39 +96,27 @@ pip install pypgsvg
    - **Ubuntu/Debian**: `sudo apt-get install graphviz`
    - **Windows**: Download from <https://graphviz.org/download/>
 
-## Usage
 
-### Basic Usage
+### Basic Test Runs
+
+```
+ PYTHONPATH=src python -m pytest tests/tests
+ ```
 
 Generate an ERD from your SQL dump file:
+### Usage
 
-```bash
-pypgsvg your_database.sql
+```
+python -m src.pypgsvg Samples/schema.dump  --show-standalone=true --output=test  --rankdir TB --node-sep 4 --packmode 'graph' 
+ python -m src.pypgsvg Samples/schema.dump --output=test
 ```
 
 This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
 
-### Example Output
 
-Here's an example of the generated ERD from a sample database schema with users, posts, and comments:
+[![Demo Images](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
 
-[![Sample ERD](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](Samples/sample_schema_erd.svg)
-
-*Simple Blog Schema - showing basic relationships between users, posts, and comments*
-
----
-
-For more complex databases, pypgsvg can handle extensive schemas with many tables and relationships:
-
-[![Complex Database Schema](Samples/example.png)](Samples/schema_erd.svg)
-
-*Complex Database Schema - demonstrating pypgsvg's ability to visualize large, real-world database structures*
-
-*View the interactive SVG diagrams:*
-
-- [Simple Schema Example](Samples/sample_schema_erd.svg)
-- [Complex Database Schema Example](test.svg)
-
+*View the interactive SVG diagrams
 The diagram shows:
 
 - **Tables** as nodes with their column definitions
