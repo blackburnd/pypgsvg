@@ -16,25 +16,13 @@ doctype = '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Gra
 
 # --- Utility functions (copy from original) ---
 def extract_svg_dimensions_from_content(svg_content):
-    try:
-        svg_match = re.search(r'<svg[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*>', svg_content)
-        if svg_match:
-            width_str, height_str = svg_match.groups()
-            width = float(re.sub(r'[^0-9.]', '', width_str))
-            height = float(re.sub(r'[^0-9.]', '', height_str))
-            return int(width), int(height)
-        viewbox_match = re.search(r'viewBox="([^"]*)"', svg_content)
-        if viewbox_match:
-            viewbox = viewbox_match.group(1)
-            parts = viewbox.split()
-            if len(parts) >= 4:
-                width = float(parts[2])
-                height = float(parts[3])
-                return int(width), int(height)
-        return 800, 600
-    except Exception as e:
-        print(f"Warning: Could not parse SVG dimensions from content: {e}")
-        return 800, 600
+ 
+    svg_match = re.search(r'<svg[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*>', svg_content)
+    if svg_match:
+        width_str, height_str = svg_match.groups()
+        width = float(re.sub(r'[^0-9.]', '', width_str))
+        height = float(re.sub(r'[^0-9.]', '', height_str))
+        return int(width), int(height)
 
 
 def generate_miniature_erd(
@@ -53,11 +41,7 @@ def generate_miniature_erd(
     node_style='filled',
     node_shape='rect',
 ):
-    # Use the main SVG content and scale it down
-    if not main_svg_content:
-        print("No main SVG content provided for miniature ERD.")
-        return None
-
+   
     # Extract original dimensions
     width, height = extract_svg_dimensions_from_content(main_svg_content)
     max_dim = 500
@@ -270,50 +254,3 @@ def inject_marker_defs(svg_content):
         # Insert <defs> after <svg ...>
         svg_content = re.sub(r'(<svg[^>]*>)', r'\1\n<defs>' + marker_defs + '</defs>', svg_content, count=1)
     return svg_content
-
-def inject_colored_arrowheads(svg_content, edge_color_map):
-    """
-    Injects per-edge colored arrowhead markers and updates edge paths to use them.
-    edge_color_map: dict mapping edge IDs (or unique SVG group IDs) to (color1, color2)
-    """
-    marker_defs = ""
-    for edge_id, (color1, color2) in edge_color_map.items():
-        # Create two markers for each edge (A and B)
-        marker_defs += f'''
-        <marker id="arrowhead-{edge_id}-A" markerWidth="2" markerHeight="5" refX="6" refY="2"
-          orient="auto" markerUnits="strokeWidth">
-          <polygon points="0 0, 1 3.5, 0 1" fill="{color1}"/>
-        </marker>
-        <marker id="arrowhead-{edge_id}-B" markerWidth="2" markerHeight="5" refX="10" refY="3.5"
-          orient="auto" markerUnits="strokeWidth"
-          <polygon points="0 0, 2 6.5, 0 3" fill="{color2}"/>
-        </marker>
-        '''
-    # Inject marker defs into <defs>
-    if '<defs>' in svg_content:
-        svg_content = re.sub(r'(<defs[^>]*>)', r'\1' + marker_defs, svg_content, count=1)
-    else:
-        svg_content = re.sub(r'(<svg[^>]*>)', r'\1\n<defs>' + marker_defs + '</defs>', svg_content, count=1)
-
-    # Update each edge path to use the correct marker
-    for edge_id, (color1, color2) in edge_color_map.items():
-        # Find <g id="edge-..."> block and add marker-end to <path>
-        svg_content = re.sub(
-            rf'(<g[^>]*id="{edge_id}"[^>]*>)(.*?)(</g>)',
-            lambda m: m.group(1) + re.sub(
-                r'(<path\b[^>]*)(/?>)',
-                rf'\1 marker-end="url(#arrowhead-{edge_id}-A)"\2',
-                m.group(2)
-            ) + m.group(3),
-            svg_content,
-            flags=re.DOTALL
-        )
-    return svg_content
-
-# Example usage in your pipeline (after SVG generation, before writing out):
-# edge_color_map = {
-#     "edge1": ("#00aaff", "#ffaa00"),
-#     "edge2": ("#aaff00", "#aa00ff"),
-#     ...
-# }
-# svg_content = inject_colored_arrowheads(svg_content, edge_color_map)

@@ -36,7 +36,8 @@ def generate_erd_with_graphviz(
     node_sep='0.5',
     rank_sep='1.2',
     node_style='filled',
-    node_shape='rect'
+    node_shape='rect',
+    constraints=None
 ):
     """
     Generate an ERD using Graphviz with explicit side connections.
@@ -58,6 +59,7 @@ def generate_erd_with_graphviz(
         node_shape: Node shape (e.g., 'rect')
         node_sep: Node separation distance
         rank_sep: Rank separation distance
+        constraints: Optional list of constraints discovered during parsing
 
     """
 

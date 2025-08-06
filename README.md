@@ -48,7 +48,7 @@ pg_dump -h 192.168.1.xxx --format=plain -d database -U postgres -s -O -F plain -
 Generate an ERD from your SQL dump file:
 
 ```bash
-python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph
+python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph --view
 ```
 
 View the diagram immediately after generation:

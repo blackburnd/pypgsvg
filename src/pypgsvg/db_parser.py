@@ -106,6 +106,7 @@ def parse_sql_dump(sql_dump):
 
         # Extract triggers (with and without args)
         for match in trigger_pattern.finditer(sql_dump):
+
             trigger_name = match.group(1).strip('"')
             event = match.group(2).replace('\n', ' ').strip()
             table_name = match.group(3).strip('"')
@@ -149,26 +150,28 @@ def parse_sql_dump(sql_dump):
     return tables, foreign_keys, triggers, parsing_errors
 
 
-def extract_constraint_info(foreign_keys, table_name):
+def extract_constraint_info(foreign_keys):
     """
     Extract and clean constraint information for a table.
     Remove SQL action syntax and keep only the constraint definitions.
     """
-    constraints = []  
-    for ltbl, col, rtbl, rcol, _line in foreign_keys:
-        if ltbl == table_name:
-            # Clean up the constraint line by removing ALTER TABLE syntax
-            constraint_line = _line.strip()         
-            # Extract just the constraint definition part
-            if "ADD CONSTRAINT" in constraint_line:
-                # Find the constraint name and definition
-                parts = constraint_line.split("ADD CONSTRAINT", 1)
-                if len(parts) > 1:
-                    constraint_def = parts[1].strip()
-                    # Remove trailing semicolon and extra clauses
-                    constraint_def = constraint_def.replace(";", "")
-                    constraint_def = re.sub(r'\s+NOT VALID.*$', '', constraint_def)
-                    constraint_def = re.sub(r'\s+ON DELETE.*$', '', constraint_def)
-                    constraints.append(constraint_def.strip())
-  
-    return constraints
+    _constraints = {}
+    for ltbl, col, rtbl, rcol, _line, on_del, on_up in foreign_keys:
+        if ltbl not in _constraints:
+            _constraints[ltbl] = []
+        constraints = _constraints[ltbl]
+        # Clean up the constraint line by removing ALTER TABLE syntax
+        constraint_line = _line.strip()         
+        # Extract just the constraint definition part
+        if "ADD CONSTRAINT" in constraint_line:
+            # Find the constraint name and definition
+            parts = constraint_line.split("ADD CONSTRAINT", 1)
+            if len(parts) > 1:
+                ccdef = parts[1].strip()
+                # Remove trailing semicolon and extra clauses
+                ccdef = ccdef.replace(";", "")
+                ccdef = re.sub(r'\s+NOT VALID.*$', '', ccdef)
+                ccdef = re.sub(r'\s+ON DELETE.*$', '', ccdef)
+                constraints.append(ccdef.strip())
+
+    return _constraints

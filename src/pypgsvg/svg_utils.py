@@ -5,7 +5,6 @@ import tempfile
 from graphviz import Digraph
 
 
-
 def wrap_main_erd_content(*args, **kwargs):
     """
     Finds the main Graphviz group and adds an ID and style to it for easy DOM manipulation.
@@ -15,7 +14,6 @@ def wrap_main_erd_content(*args, **kwargs):
     if not isinstance(svg_content, str):
         return svg_content
 
-    import re
     graph_pattern = re.compile(r'(<g\s[^>]*?(?:class="graph"|id="graph0")[^>]*>)', re.IGNORECASE)
     match = graph_pattern.search(svg_content)
     if not match:
@@ -44,22 +42,15 @@ def wrap_main_erd_content(*args, **kwargs):
 
 def load_interactivity_js():
     js_path = os.path.join(os.path.dirname(__file__), 'svg_interactivity.js')
-    try:
-        with open(js_path, 'r', encoding='utf-8') as f:
-            js_code = f.read()
-        return f'<script type="text/javascript"><![CDATA[\n' + js_code + '\n]]></script>'
-    except Exception as e:
-        return f'<script><!-- Failed to load svg_interactivity.js: {e} --></script>'
-
+    with open(js_path, 'r', encoding='utf-8') as f:
+        js_code = f.read()
+    return f'<script type="text/javascript"><![CDATA[\n' + js_code + '\n]]></script>'
 SVG_INTERACTIVITY_SCRIPT = load_interactivity_js()
 
 def load_svg_css():
     css_path = os.path.join(os.path.dirname(__file__), 'svg.css')
-    try:
-        with open(css_path, 'r', encoding='utf-8') as f:
-            css_code = f.read()
-        return f'<style type="text/css"><![CDATA[\n' + css_code + '\n]]></style>'
-    except Exception as e:
-        return f'<style><!-- Failed to load svg.css: {e} --></style>'
-
+    with open(css_path, 'r', encoding='utf-8') as f:
+        css_code = f.read()
+    return f'<style type="text/css"><![CDATA[\n' + css_code + '\n]]></style>'
+ 
 SVG_CSS_STYLE = load_svg_css()

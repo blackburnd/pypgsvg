@@ -11,7 +11,7 @@ import sys
 import webbrowser
 import logging
 
-from .db_parser import parse_sql_dump
+from .db_parser import parse_sql_dump, extract_constraint_info
 from .erd_generator import generate_erd_with_graphviz
 
 
@@ -58,6 +58,7 @@ def main():
         sys.exit(1)
 
     tables, foreign_keys, triggers, errors = parse_sql_dump(sql_dump)
+    constraints = extract_constraint_info(foreign_keys)
 
     if errors:
         print("--- PARSING ERRORS ---")
@@ -79,7 +80,8 @@ def main():
                 node_style=args.node_style,
                 node_shape=args.node_shape,
                 node_sep=args.node_sep,
-                rank_sep=args.rank_sep
+                rank_sep=args.rank_sep,
+                constraints=constraints,
             )
 
             print(f"Successfully generated ERD: {output_file}.svg")
