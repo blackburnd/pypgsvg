@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pypgsvg
-Version: 1.0.76
+Version: 1.0.77
 Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dump files
 Author: blackburnd@gmail.com
 Author-email: Daniel Blackburn <daniel@example.com>
@@ -115,7 +115,7 @@ pg_dump -h 192.168.1.xxx --format=plain -d database -U postgres -s -O -F plain -
 Generate an ERD from your SQL dump file:
 
 ```bash
-python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph
+python -m src.pypgsvg Samples/schema.dump --output your_database_erd --rankdir TB --node-sep 4 --packmode graph --view
 ```
 
 View the diagram immediately after generation:

@@ -2809,7 +2809,7 @@
     <div class='header'>Metadata</div>
     <div class='metadata-inner-container container-content'>
     <ul>
-        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-06 12:14:28</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li>
+        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-07 13:16:46</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li>
     </ul>
     </div>
 </div>
@@ -5460,7 +5460,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let userTx = 0, userTy = 0, userS = 1;
     let isPanning = false;
     let startX = 0, startY = 0;
-    let mouseDownStartX = 0, mouseDownStartY = 0;
     let dragThreshold = 5;
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null };
@@ -5522,15 +5521,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function makeResizable(windowElem) {
         const handle = windowElem.querySelector('.resize-handle');
+        console.log(handle);
         if (!handle) return;
         handle.addEventListener('mousedown', function (event) {
             dragState.type = 'resize';
+            rect = windowElem.getBoundingClientRect();
             dragState.target = windowElem;
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
-            const style = window.getComputedStyle(windowElem);
-            dragState.startWidth = parseInt(style.width, 10);
-            dragState.startHeight = parseInt(style.height, 10);
+            dragState.startWidth = parseInt(rect.width, 10);
+            dragState.startHeight = parseInt(rect.height, 10);
             windowElem.classList.add('resizing');
             event.preventDefault();
             event.stopPropagation();
@@ -5842,10 +5842,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const miniatureHeader = document.getElementById('miniature-header');
     if (miniatureHeader) {
         miniatureHeader.addEventListener('mousedown', (event) => {
+            rect = miniatureContainer.getBoundingClientRect();
             dragState.type = 'miniature';
             dragState.target = miniatureContainer;
-            dragState.offsetX = event.clientX;
-            dragState.offsetY = event.clientY;
+            console.log(event.target);
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.offsetX = rect.left;
+            dragState.offsetY = rect.top;
+            console.log(rect.left);
+            console.log(rect.top);
+
             dragState.target.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -5861,11 +5868,14 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.target = viewportIndicator;
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
+            dragState.offsetX = event.target.left;
+            dragState.offsetY = event.target.top;
             const style = window.getComputedStyle(viewportIndicator);
             dragState.indicatorStartLeft = parseFloat(style.left);
             dragState.indicatorStartTop = parseFloat(style.top);
             viewportIndicator.classList.add('dragging');
             event.preventDefault();
+            event.stopPropagation();
         });
     }
 
@@ -5882,8 +5892,10 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.type = 'metadata';
             dragState.target = metadataContainer;
             const rect = metadataContainer.getBoundingClientRect();
-            dragState.offsetX = event.clientX - rect.left;
-            dragState.offsetY = event.clientY - rect.top;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.offsetX = rect.left;
+            dragState.offsetY = rect.top;
             metadataContainer.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -5905,8 +5917,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.type = 'selection';
             dragState.target = selectionContainer;
             const rect = selectionContainer.getBoundingClientRect();
-            dragState.offsetX = event.clientX;
-            dragState.offsetY = event.clientY;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.offsetX = rect.left;
+            dragState.offsetY = rect.top;
+            metadataContainer.classList.add('dragging');
             selectionContainer.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -5955,31 +5970,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
+  event.preventDefault();
+        event.stopPropagation();
+        const rect = event.target.getBoundingClientRect();
+
         if (event.button !== 0 ||
             event.target.closest('.metadata-container, .miniature-container, .instructions') ||
             event.target.id === 'overlay-container' ||
             event.target.id == 'selection-container' ||
             event.target.closest('.node') ||
             event.target.closest('.edge')) {
+            dragState.target = event.target;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.offsetX = rect.left;
+            dragState.offsetY = rect.top;
+            dragState.startHeight = rect.height;
+            dragState.startWidth = rect.width;
+            console.log(dragState);
+            
             return;
         }
         dragState.type = 'pan';
         dragState.startX = event.clientX;
         dragState.startY = event.clientY;
-        startX = event.clientX;
-        startY = event.clientY;
-        mouseDownStartX = event.clientX;
-        mouseDownStartY = event.clientY;
-        event.preventDefault();
+
+        dragState.offsetX = rect.left;
+        dragState.offsetY = rect.top;
+        console.log(dragState);
+      
     });
 
     // --- MOUSE MOVE HANDLER ---
     window.addEventListener('mousemove', (event) => {
+        let target, enclosing_container, dx, dy;
+        target = event.target;
+        enclosing_container = target.getBoundingClientRect();
+        startX = dragState.startX;
+        startY = dragState.startY;
+
+        //console.log(`Mouse move at (${event.clientX}, ${event.clientY})`);
         if (!dragState.type) return;
         if (dragState.type === 'pan') {
-            if (!isPanning && mouseDownStartX !== undefined && mouseDownStartY !== undefined) {
-                const dx = Math.abs(event.clientX - mouseDownStartX);
-                const dy = Math.abs(event.clientY - mouseDownStartY);
+            console.log('Panning SVG');
+            if (!isPanning && startX !== undefined && startY !== undefined) {
+                dx = Math.abs(event.clientX - startX);
+                dy = Math.abs(event.clientY - startY);
                 if (dx > dragThreshold || dy > dragThreshold) {
                     isPanning = true;
                     svg.classList.add('grabbing');
@@ -5987,41 +6023,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (isPanning) {
                 event.preventDefault();
-                const dx = event.clientX - startX;
-                const dy = event.clientY - startY;
+                dx = event.clientX - startX;
+                dy = event.clientY - startY;
                 userTx += dx / (userS * initialS);
                 userTy += dy / (userS * initialS);
-                startX = event.clientX;
-                startY = event.clientY;
                 applyTransform();
             }
         } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
-            let newLeft = event.clientX - dragState.offsetX;
-            let newTop = event.clientY - dragState.offsetY;
-            dragState.target.style.left = `${newLeft}px`;
-            dragState.target.style.top = `${newTop}px`;
+            event.preventDefault();
+            event.stopPropagation();
+            console.log(dragState);
+
+            dx = event.clientX - dragState.startX + dragState.offsetX;
+            dy = event.clientY - dragState.startY + dragState.offsetY;
+
+            console.log(`Dragging ${dragState.type} to (${dx}, ${dy})`);
+            dragState.target.style.left = `${dx}px`;
+            dragState.target.style.top = `${dy}px`;
+
         } else if (dragState.type === 'indicator') {
             event.preventDefault();
             const miniRect = miniatureContainer.getBoundingClientRect();
-            let indicatorLeft = dragState.indicatorStartLeft + (event.clientX - dragState.startX);
-            let indicatorTop = dragState.indicatorStartTop + (event.clientY - dragState.startY);
-            indicatorLeft = Math.max(0, Math.min(miniRect.width - viewportIndicator.offsetWidth, indicatorLeft));
-            indicatorTop = Math.max(0, Math.min(miniRect.height - viewportIndicator.offsetHeight, indicatorTop));
-            viewportIndicator.style.left = `${indicatorLeft}px`;
-            viewportIndicator.style.top = `${indicatorTop}px`;
-            const relLeft = indicatorLeft / miniRect.width;
-            const relTop = indicatorTop / miniRect.height;
+
+            const rect = miniatureContainer.getBoundingClientRect();
+            const relX = (event.clientX - rect.left) / rect.width;
+            const relY = (event.clientY - rect.top) / rect.height;
+
+            // Get main SVG bounds
             const mainBounds = getMainERDBounds();
-            const ctm = mainGroup.getScreenCTM();
-            if (!ctm) return;
-            const invCtm = ctm.inverse();
-            const pt1 = svg.createSVGPoint();
-            pt1.x = 0; pt1.y = 0;
-            const svgPt1 = pt1.matrixTransform(invCtm);
-            userTx = ((mainBounds.x + relLeft * mainBounds.width) - svgPt1.x) / initialS;
-            userTy = ((mainBounds.y + relTop * mainBounds.height) - svgPt1.y) / initialS;
+            const targetX = mainBounds.x + relX * mainBounds.width;
+            const targetY = mainBounds.y + relY * mainBounds.height;
+
+            // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
+            zoomToPoint(targetX, targetY, userS);
+            event.stopPropagation();
+
             applyTransform();
         } else if (dragState.type === 'resize') {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log('resizing window');
             const dx = event.clientX - dragState.startX;
             const dy = event.clientY - dragState.startY;
             let newWidth = dragState.startWidth;
@@ -6061,6 +6102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         dragState.type = null;
         dragState.target = null;
+
     });
 
     // --- Other UI Events ---
@@ -6097,6 +6139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userTx = 0; userTy = 0; userS = 1;
             clearAllHighlights();
             applyTransform();
+            window.scrollTo(0, 0);
         }
     });
 
@@ -6201,8 +6244,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const metadataContainer = document.getElementById('metadata-container');
         if (metadataContainer) {
             metadataContainer.style.position = 'fixed';
-            metadataContainer.style.left = '2rem';
-            metadataContainer.style.top = '2rem';
+            metadataContainer.style.left = '10px';
+            metadataContainer.style.top = '10px';
             metadataContainer.style.zIndex = '10000';
         }
 
@@ -6210,9 +6253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const miniatureContainer = document.getElementById('miniature-container');
         if (miniatureContainer) {
             miniatureContainer.style.position = 'fixed';
-            miniatureContainer.style.left = '2rem';
+            miniatureContainer.style.left = '10px';
             miniatureContainer.style.right = '';
-            miniatureContainer.style.top = '5rem';
+            miniatureContainer.style.top = '30px';
             miniatureContainer.style.zIndex = '10001';
         }
 
