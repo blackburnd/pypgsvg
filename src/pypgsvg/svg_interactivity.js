@@ -583,11 +583,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             if (isPanning) {
+                let panX = 0.03
                 event.preventDefault();
+                event.stopPropagation();
                 dx = event.clientX - startX;
                 dy = event.clientY - startY;
-                userTx += dx / (userS * initialS);
-                userTy += dy / (userS * initialS);
+                userTx += (dx * panX) / (userS * initialS);
+                userTy += (dy * panX) / (userS * initialS);
                 applyTransform();
             }
         } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
@@ -619,23 +621,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dragState.type === 'resize') {
             console.log('resizing Window');
             const svgImage = target.parentElement.querySelector('svg');
-
+            let resizeX = 0.025
             let dx = event.clientX - dragState.startX;
             let dy = event.clientY - dragState.startY;
             let newWidth = dragState.startWidth;
             let newHeight = dragState.startHeight;
-            if (dragState.target.classList.contains('resize-handle-se')) {
-                newWidth += dx;
-                newHeight += dy;
+
+            
+
+            if (dragState.target.classList.contains('resize-handle-nw')) {
+                newWidth += (dx * resizeX);
+                newHeight += (dy * resizeX);
+                 dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) - dx}px`;
+                 dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) - dy}px`;
                 console.log('se');
-            } else if (dragState.target.classList.contains('resize-handle-nw')) {
-                newWidth -= dx;
-                newHeight -= dy;
+            } else if (dragState.target.classList.contains('resize-handle-se')) {
+                newWidth -= (dx * resizeX);
+                newHeight -= (dy * resizeX);
                 // Optionally move the window as well
             }
             console.log('nw');
-            dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) + dx}px`;
-            dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) + dy}px`;
+           
             if (svgImage != null) {
                 svgImage.setAttribute('width', `${Math.max(100, newWidth)}px`);
                 svgImage.setAttribute('height', `${Math.max(50, newHeight)}px`);
@@ -700,10 +706,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
-            userTx = 0; userTy = 0; userS = 1;
-            clearAllHighlights();
-            applyTransform();
-            window.scrollTo(0, 0);
+            window.location.reload();
+          
         }
     });
 

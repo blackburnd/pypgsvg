@@ -5,6 +5,7 @@ import types
 import pytest
 from unittest.mock import patch, mock_open, MagicMock
 import contextlib
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 import pypgsvg.__init__ as mainmod
 

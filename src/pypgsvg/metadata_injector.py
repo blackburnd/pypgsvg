@@ -172,8 +172,8 @@ def inject_metadata_into_svg(
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor;se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor;nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
     instructions_html = '''
