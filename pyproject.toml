@@ -33,7 +33,6 @@ classifiers = [
 keywords = ["postgresql", "database", "erd", "diagram", "svg", "graphviz", "schema", "visualization"]
 dependencies = [
     "graphviz>=0.20.0",
-    "cairosvg>=2.8.0",
 ]
 
 [project.optional-dependencies]
