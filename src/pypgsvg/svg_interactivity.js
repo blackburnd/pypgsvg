@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let startX = 0, startY = 0;
     let dragThreshold = 5;
     let highlightedElementId = null;
-    let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null };
+    let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
 
     // --- Window Controls ---
     function addWindowControls(windowElem, options = {}) {
@@ -153,11 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elem) return;
         let miniElem = null;
         const nodeId = elem.id;
-        if (nodeId.indexOf('mini-') == -1) {
+        let isMini = nodeId.indexOf('mini-') != -1;
+
+        if (!isMini) {
             const miniNodeId = 'mini-' + nodeId;
             miniElem = document.getElementById(miniNodeId);
             if (miniElem) {
-                setElementColor(miniElem, color, isHighlighted);
+                setElementColor(miniElem, 'red', isHighlighted)
             }
         }
         if (elem.classList && elem.classList.contains('node')) {
@@ -165,7 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 if (polygon.type !== 'title') {
-                    //polygon.setAttribute('fill', isHighlighted ? color : 'white');
+                    if (isMini) {
+                        polygon.setAttribute('fill', isHighlighted ? color : 'white');
+                    }
                 }
             })
         }
@@ -174,7 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 polygon.setAttribute('stroke-width', isHighlighted ? '15' : '3');
-                //polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
+                if (isMini) {
+                    polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
+                }
             })
 
             const edgeId = elem.id;
@@ -213,34 +219,42 @@ document.addEventListener('DOMContentLoaded', () => {
         // Highlight selected tables/edges
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
+            const miniTableElement = document.getElementById('mini-' + id);
             if (!tableElement) return;
 
             // Get the background color from the title element
             const titleElement = tableElement.querySelector('title');
-            //console.log(titleElement);
             backgroundColor = tables[id].defaultColor || '#712e2eff'; // Default to white if no color defin
             console.log(`Highlighting table ${id} with background color: ${backgroundColor}`);
             // Highlight the table
             tableElement.setAttribute('opacity', '1');
             tableElement.classList.add('highlighted');
+            
+            miniTableElement.setAttribute('opacity', '1');
+            miniTableElement.classList.add('highlighted');
 
             // Apply the background color to all text elements in the table
-            tableElement.querySelectorAll('text').forEach(textElem => {
+            miniTableElement.querySelectorAll('text').forEach(textElem => {
                 textElem.style.fill = 'black'; // Ensure text is readable
-                textElem.setAttribute('backgroundColor', backgroundColor);
+                textElem.style.fill = backgroundColor; // Set background color
+                console.log(backgroundColor);
             });
         });
-
         edgeIds.forEach(id => {
-            const edgeElement = document.getElementById(id);
+            let edgeElement = document.getElementById(id);
+            let miniEdgeElement = document.getElementById('mini-' + id);
             if (!edgeElement) return;
 
             // Highlight the edge
             edgeElement.classList.add('highlighted');
             edgeElement.setAttribute('opacity', '1');
 
+            miniEdgeElement.setAttribute('fill', edges[id].defaultColor || '#712e2eff');
+            miniEdgeElement.setAttribute('opacity', '1');
+            miniEdgeElement.classList.add('highlighted');
+
             // Adjust stroke widths for paths
-            const paths = edgeElement.querySelectorAll('path');
+            let paths = edgeElement.querySelectorAll('path');
             if (paths.length > 0) {
                 paths[0].setAttribute('stroke-width', '16');
             }
@@ -252,33 +266,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 paths[0].setAttribute('stroke-width', '3');
                 paths[0].setAttribute('opacity', '1');
             }
-        });
 
-        // Grey out everything else
-        Object.keys(tables).forEach(id => {
-            if (!tableIds.includes(id)) {
-                const tableElement = document.getElementById(id);
-                if (!tableElement) return;
-
-                // Reset text elements to white background
-                tableElement.querySelectorAll('text').forEach(textElem => {
-                    textElem.style.fill = 'black'; // Ensure text is readable
-                    textElem.style.backgroundColor = '#ffffff'; // Reset to white background
-                });
-
-                tableElement.classList.remove('highlighted');
-                tableElement.setAttribute('opacity', '0.5'); // Dim non-highlighted tables
+            // Adjust stroke widths for mini paths
+            let mpaths = miniEdgeElement.querySelectorAll('path');
+            if (mpaths.length > 0) {
+                mpaths[0].setAttribute('stroke-width', '24');
             }
-        });
-        Object.keys(edges).forEach(id => {
-            if (!edgeIds.includes(id)) {
-                const edgeElement = document.getElementById(id);
-                if (!edgeElement) return;
-
-                edgeElement.classList.remove('highlighted');
-                edgeElement.setAttribute('opacity', '0.5'); // Dim non-highlighted edges
+            if (mpaths.length > 1) {
+                mpaths[1].setAttribute('stroke-width', '10');
+                mpaths[1].setAttribute('opacity', '1');
             }
+            if (mpaths.length === 1) {
+                mpaths[0].setAttribute('stroke-width', '5');
+                mpaths[0].setAttribute('opacity', '1');
+            }
+
+
+
+
         });
+
+       
         showSelectionWindow(tableIds, edgeIds, event);
     };
 
@@ -310,27 +318,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         inner.innerHTML = html;
 
-        // Position the container next to the cursor, accounting for scroll offsets
-        if (event) {
-            console.log('Positioning selection window at cursor:', event.clientX, event.clientY);
+        // Use getComputedStyle to get accurate dimensions
+        const computedStyle = window.getComputedStyle(selectionContainer);
+        const containerWidth = parseFloat(computedStyle.width);
+        const containerHeight = parseFloat(computedStyle.heisght);
+        rect = selectionContainer.getBoundingClientRect();
+        const left = window.innerWidth - (containerWidth * 2);
+        console.log(containerWidth, rect.width, left);
 
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            // Use getComputedStyle to get accurate dimensions
-            const computedStyle = window.getComputedStyle(selectionContainer);
-            const containerWidth = parseFloat(computedStyle.width);
-            const containerHeight = parseFloat(computedStyle.height);
-
-            let left = event.clientX - containerWidth / 2;
-            let top = event.clientY - containerHeight / 2;
-
-            selectionContainer.style.position = 'fixed';
-            selectionContainer.style.left = `${Math.max(0, left)}px`;
-            selectionContainer.style.top = `${Math.max(0, top)}px`;
-
-            console.log(`Selection window positioned at (${left}, ${top})`);
-        }
+        selectionContainer.style.position = 'fixed';
+        selectionContainer.style.left = `${left}px`;
+        selectionContainer.style.right = 'auto';
+        selectionContainer.style.top = `30px`;
+        selectionContainer.style.bottom = 'auto';
+        console.log(`Selection window positioned at (${left}, ${top})`);
     }
 
     function hideSelectionWindow() {
@@ -523,25 +524,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
-  event.preventDefault();
+        event.preventDefault();
+        dragState.handle = event;
         event.stopPropagation();
-        const rect = event.target.getBoundingClientRect();
-
+        let rect = event.target.getBoundingClientRect();
+        dragState.target = event.target;
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+        dragState.offsetX = rect.left;
+        dragState.offsetY = rect.top;
+        dragState.startHeight = rect.height;
+        dragState.startWidth = rect.width;
+        dragState.handle = event.target;
+        if (event.target.id == 'resize-handle-se') {
+            dragState.type = 'resize';
+            dragState.handle = event.target;
+        }
+        if (event.target.id == 'resize-handle-nw') {
+            dragState.type = 'resize';
+            dragState.handle = event.target;
+        }
         if (event.button !== 0 ||
             event.target.closest('.metadata-container, .miniature-container, .instructions') ||
             event.target.id === 'overlay-container' ||
             event.target.id == 'selection-container' ||
             event.target.closest('.node') ||
             event.target.closest('.edge')) {
-            dragState.target = event.target;
-            dragState.startX = event.clientX;
-            dragState.startY = event.clientY;
-            dragState.offsetX = rect.left;
-            dragState.offsetY = rect.top;
-            dragState.startHeight = rect.height;
-            dragState.startWidth = rect.width;
-            console.log(dragState);
-            
             return;
         }
         dragState.type = 'pan';
@@ -551,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dragState.offsetX = rect.left;
         dragState.offsetY = rect.top;
         console.log(dragState);
-      
+
     });
 
     // --- MOUSE MOVE HANDLER ---
@@ -583,8 +591,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyTransform();
             }
         } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
-            event.preventDefault();
-            event.stopPropagation();
             console.log(dragState);
 
             dx = event.clientX - dragState.startX + dragState.offsetX;
@@ -606,32 +612,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const mainBounds = getMainERDBounds();
             const targetX = mainBounds.x + relX * mainBounds.width;
             const targetY = mainBounds.y + relY * mainBounds.height;
-
             // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
             zoomToPoint(targetX, targetY, userS);
             event.stopPropagation();
 
-            applyTransform();
         } else if (dragState.type === 'resize') {
-            event.preventDefault();
-            event.stopPropagation();
-            console.log('resizing window');
-            const dx = event.clientX - dragState.startX;
-            const dy = event.clientY - dragState.startY;
+            console.log('resizing Window');
+            const svgImage = target.parentElement.querySelector('svg');
+
+            let dx = event.clientX - dragState.startX;
+            let dy = event.clientY - dragState.startY;
             let newWidth = dragState.startWidth;
             let newHeight = dragState.startHeight;
-            if (dragState.handle.classList.contains('resize-handle-se')) {
+            if (dragState.target.classList.contains('resize-handle-se')) {
                 newWidth += dx;
                 newHeight += dy;
-            } else if (dragState.handle.classList.contains('resize-handle-nw')) {
+                console.log('se');
+            } else if (dragState.target.classList.contains('resize-handle-nw')) {
                 newWidth -= dx;
                 newHeight -= dy;
                 // Optionally move the window as well
-                dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) + dx}px`;
-                dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) + dy}px`;
             }
-            dragState.target.style.width = `${Math.max(100, newWidth)}px`;
-            dragState.target.style.height = `${Math.max(50, newHeight)}px`;
+            console.log('nw');
+            dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) + dx}px`;
+            dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) + dy}px`;
+            if (svgImage != null) {
+                svgImage.setAttribute('width', `${Math.max(100, newWidth)}px`);
+                svgImage.setAttribute('height', `${Math.max(50, newHeight)}px`);
+
+                dragState.target.style.width = `${Math.max(100, newWidth)}px`;
+                dragState.target.style.height = `${Math.max(50, newHeight)}px`;
+            }
         }
     });
 
@@ -811,7 +822,6 @@ document.addEventListener('DOMContentLoaded', () => {
             miniatureContainer.style.top = '30px';
             miniatureContainer.style.zIndex = '10001';
         }
-
         // Bottom left for selection
         const selectionContainer = document.getElementById('selection-container');
         if (selectionContainer) {
@@ -819,6 +829,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     placeFloatingWindows();
+    makeResizable(miniatureContainer);
+
     document.querySelectorAll('.minimize-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const parent = btn.parentElement;
