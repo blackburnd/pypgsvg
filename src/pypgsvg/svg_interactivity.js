@@ -813,17 +813,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadataContainer) {
             metadataContainer.style.position = 'fixed';
             metadataContainer.style.left = '10px';
-            metadataContainer.style.top = '10px';
+            metadataContainer.style.top = '20px';
             metadataContainer.style.zIndex = '10000';
         }
 
         // Top right for miniature/overview
         const miniatureContainer = document.getElementById('miniature-container');
+        let rect = metadataContainer.getClientRects()[0];
         if (miniatureContainer) {
             miniatureContainer.style.position = 'fixed';
-            miniatureContainer.style.left = '10px';
+            miniatureContainer.style.left = rect.width + 'px';
             miniatureContainer.style.right = '';
-            miniatureContainer.style.top = '30px';
+            miniatureContainer.style.top = '20px';
             miniatureContainer.style.zIndex = '10001';
         }
         // Bottom left for selection

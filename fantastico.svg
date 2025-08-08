@@ -2649,7 +2649,7 @@
     cursor: crosshair;
     width: auto;
     height: auto;
-    overflow: contain;
+    overflow: hidden;
     display: block;
 }
 
@@ -2809,7 +2809,7 @@
     <div class='header'>Metadata</div>
     <div class='metadata-inner-container container-content'>
     <ul>
-        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-08 14:04:41</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li>
+        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-08 14:41:43</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li>
     </ul>
     </div>
 </div>
@@ -6260,17 +6260,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadataContainer) {
             metadataContainer.style.position = 'fixed';
             metadataContainer.style.left = '10px';
-            metadataContainer.style.top = '10px';
+            metadataContainer.style.top = '20px';
             metadataContainer.style.zIndex = '10000';
         }
 
         // Top right for miniature/overview
         const miniatureContainer = document.getElementById('miniature-container');
+        let rect = metadataContainer.getClientRects()[0];
         if (miniatureContainer) {
             miniatureContainer.style.position = 'fixed';
-            miniatureContainer.style.left = '10px';
+            miniatureContainer.style.left = rect.width + 'px';
             miniatureContainer.style.right = '';
-            miniatureContainer.style.top = '30px';
+            miniatureContainer.style.top = '20px';
             miniatureContainer.style.zIndex = '10001';
         }
         // Bottom left for selection

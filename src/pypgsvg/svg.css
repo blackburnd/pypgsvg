@@ -38,7 +38,7 @@
     cursor: crosshair;
     width: auto;
     height: auto;
-    overflow: contain;
+    overflow: hidden;
     display: block;
 }
 

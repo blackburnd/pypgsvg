@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pypgsvg
-Version: 1.0.78
+Version: 1.0.79
 Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dump files
 Author: blackburnd@gmail.com
 Author-email: Daniel Blackburn <daniel@example.com>

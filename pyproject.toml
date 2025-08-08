@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pypgsvg"
-version = "1.0.78"
+version = "1.0.79"
 authors = [
     {name = "Daniel Blackburn", email = "daniel@example.com"},
 ]
