@@ -82,7 +82,6 @@ def prefix_svg_ids(svg_content, prefix='mini-'):
     return svg_content
 
 
-
 def inject_metadata_into_svg(
     svg_content,
     file_info,
@@ -105,6 +104,7 @@ def inject_metadata_into_svg(
     node_shape,
     node_sep,
     rank_sep,
+    triggers={},
 ):
     # Remove XML declaration and DOCTYPE robustly
     svg_content = re.sub(r'<\?xml[^>]*\?>\s*', '', svg_content)
@@ -130,7 +130,8 @@ def inject_metadata_into_svg(
         f"node_style: {node_style}",
         f"node_shape: {node_shape}",
         f"node_sep: {node_sep}",
-        f"rank_sep: {rank_sep}"
+        f"rank_sep: {rank_sep}",
+        f"triggers: {len(triggers)}",
     ]
 
     # Generate miniature ERD if requested
@@ -185,8 +186,7 @@ def inject_metadata_into_svg(
 <div id="selection-container" class="selection-box container" style="display:none">
       <div class="window-controls" style="position:absolute;right:2px;top:2px;"></div>
 
-  <div class="header" id="selection-header">Highlighted SQL   
-  </div>
+  <div class="header" id="selection-header"></div>
   <div class="selection-container container-content" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>

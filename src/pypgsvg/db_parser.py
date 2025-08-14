@@ -83,24 +83,24 @@ def parse_sql_dump(sql_dump):
                         if fk_match:
                             ref_table = fk_match.group(1)
                             ref_column = fk_match.group(2)
-                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, None, None))
+                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, {}, {}))
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
             tables[table_name]['columns'] = columns
 
         # Extract foreign keys from ALTER TABLE
+        triggers = {}
+        constraints = {}
         for match in alter_fk_pattern.finditer(sql_dump):
             table_name = match.group(1)
             fk_column = match.group(2).strip()
             ref_table = match.group(3).strip()
             ref_column = match.group(4).strip()
-            on_delete = match.group(5).strip().upper() if match.group(5) else None
-            on_update = match.group(6).strip().upper() if match.group(6) else None
             _line = match.string[match.start():match.end()]
 
             if table_name in tables and ref_table in tables:
-                foreign_keys.append((table_name, fk_column, ref_table, ref_column, _line, on_delete, on_update))
+                foreign_keys.append((table_name, fk_column, ref_table, ref_column, _line, triggers, constraints))
             else:
                 parsing_errors.append(f"FK parsing issue: {match.group(0)}")
 
@@ -161,7 +161,7 @@ def extract_constraint_info(foreign_keys):
             _constraints[ltbl] = []
         constraints = _constraints[ltbl]
         # Clean up the constraint line by removing ALTER TABLE syntax
-        constraint_line = _line.strip()         
+        constraint_line = _line.strip()  
         # Extract just the constraint definition part
         if "ADD CONSTRAINT" in constraint_line:
             # Find the constraint name and definition

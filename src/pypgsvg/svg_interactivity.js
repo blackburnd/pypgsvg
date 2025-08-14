@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         closeBtn.onclick = (e) => {
             e.stopPropagation();
+            e.target.destroyRecursive = true;
+
             windowElem.style.display = 'none';
             if (options.onClose) options.onClose();
         };
@@ -73,21 +75,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function makeResizable(windowElem) {
-        const handle = windowElem.querySelector('.resize-handle');
-        console.log(handle);
-        if (!handle) return;
-        handle.addEventListener('mousedown', function (event) {
-            dragState.type = 'resize';
-            rect = windowElem.getBoundingClientRect();
-            dragState.target = windowElem;
-            dragState.startX = event.clientX;
-            dragState.startY = event.clientY;
-            dragState.startWidth = parseInt(rect.width, 10);
-            dragState.startHeight = parseInt(rect.height, 10);
-            windowElem.classList.add('resizing');
-            event.preventDefault();
-            event.stopPropagation();
-        });
+        // Get both handles
+        const nwHandle = windowElem.querySelector('#resize_handle_nw');
+        const seHandle = windowElem.querySelector('#resize_handle_se');
+        
+        if (nwHandle) {
+            nwHandle.addEventListener('mousedown', function(event) {
+                dragState.type = 'resize';
+                const rect = windowElem.getBoundingClientRect();
+                dragState.target = windowElem; // The target is the window, not the handle
+                dragState.handle = 'nw'; // Mark which handle we're using
+                dragState.startX = event.clientX;
+                dragState.startY = event.clientY;
+                dragState.startWidth = rect.width;
+                dragState.startHeight = rect.height;
+                dragState.startLeft = rect.left;
+                dragState.startTop = rect.top;
+                windowElem.classList.add('resizing');
+                event.preventDefault();
+                event.stopPropagation();
+            });
+        }
+        
+        if (seHandle) {
+            seHandle.addEventListener('mousedown', function(event) {
+                dragState.type = 'resize';
+                const rect = windowElem.getBoundingClientRect();
+                dragState.target = windowElem; // The target is the window, not the handle
+                dragState.handle = 'se'; // Mark which handle we're using
+                dragState.startX = event.clientX;
+                dragState.startY = event.clientY;
+                dragState.startWidth = rect.width;
+                dragState.startHeight = rect.height;
+                windowElem.classList.add('resizing');
+                event.preventDefault();
+                event.stopPropagation();
+            });
+        }
     }
 
     // --- Initialization ---
@@ -225,11 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Get the background color from the title element
             const titleElement = tableElement.querySelector('title');
             backgroundColor = tables[id].defaultColor || '#712e2eff'; // Default to white if no color defin
-            console.log(`Highlighting table ${id} with background color: ${backgroundColor}`);
             // Highlight the table
             tableElement.setAttribute('opacity', '1');
             tableElement.classList.add('highlighted');
-            
+
             miniTableElement.setAttribute('opacity', '1');
             miniTableElement.classList.add('highlighted');
 
@@ -237,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
             miniTableElement.querySelectorAll('text').forEach(textElem => {
                 textElem.style.fill = 'black'; // Ensure text is readable
                 textElem.style.fill = backgroundColor; // Set background color
-                console.log(backgroundColor);
             });
         });
         edgeIds.forEach(id => {
@@ -280,16 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 mpaths[0].setAttribute('stroke-width', '5');
                 mpaths[0].setAttribute('opacity', '1');
             }
-
-
-
-
         });
-
-       
         showSelectionWindow(tableIds, edgeIds, event);
     };
-
 
 
     function showSelectionWindow(selectedTables, selectedEdges, event) {
@@ -302,10 +317,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let html = '';
         if (selectedTables.length) {
-            html += '<div><b>Tables:</b> ' + selectedTables.join('<br/>') + '</div>';
+            let this_table = selectedTables[0];
+            selection_header = document.getElementById('selection-header');
+            selection_header.setAttribute('innerHTML', `Selected Table: ${this_table}`);
+            html += '<div><b>Related Tables:</b><br/> ' + selectedTables.join('<br/>') + '</div>';
         }
+
         if (selectedEdges.length) {
-            html += '<div><b>Foreign Keys:</b><ul>';
+            html += '<div id="selected_edges"><b>Foreign Keys:</b><ul>';
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
@@ -316,6 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             html += '</ul></div>';
         }
+
+    
         inner.innerHTML = html;
 
         // Use getComputedStyle to get accurate dimensions
@@ -324,14 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const containerHeight = parseFloat(computedStyle.heisght);
         rect = selectionContainer.getBoundingClientRect();
         const left = window.innerWidth - (containerWidth * 2);
-        console.log(containerWidth, rect.width, left);
 
         selectionContainer.style.position = 'fixed';
         selectionContainer.style.left = `${left}px`;
         selectionContainer.style.right = 'auto';
         selectionContainer.style.top = `30px`;
         selectionContainer.style.bottom = 'auto';
-        console.log(`Selection window positioned at (${left}, ${top})`);
     }
 
     function hideSelectionWindow() {
@@ -399,22 +418,16 @@ document.addEventListener('DOMContentLoaded', () => {
             rect = miniatureContainer.getBoundingClientRect();
             dragState.type = 'miniature';
             dragState.target = miniatureContainer;
-            console.log(event.target);
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
             dragState.offsetX = rect.left;
             dragState.offsetY = rect.top;
-            console.log(rect.left);
-            console.log(rect.top);
-
             dragState.target.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
         });
         addWindowControls(miniatureContainer);
     }
-
-
     // Viewport indicator drag
     if (viewportIndicator) {
         viewportIndicator.addEventListener('mousedown', (event) => {
@@ -468,6 +481,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.target.tagName === 'BUTTON'
             ) return;
 
+            // Stop event from reaching the SVG
+            event.preventDefault();
+            event.stopPropagation();
+
             dragState.type = 'selection';
             dragState.target = selectionContainer;
             const rect = selectionContainer.getBoundingClientRect();
@@ -475,10 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.startY = event.clientY;
             dragState.offsetX = rect.left;
             dragState.offsetY = rect.top;
-            metadataContainer.classList.add('dragging');
+            
+            // Don't add dragging to metadataContainer - BUG FIX
+            // metadataContainer.classList.add('dragging');
             selectionContainer.classList.add('dragging');
-            event.preventDefault();
-            event.stopPropagation();
         });
     }
 
@@ -524,6 +541,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
+        // Check if we're inside selection-container or its children
+        if (event.target.closest('#selection-container')) {
+            return; // Don't initiate pan if we're in the selection container
+        }
+
         event.preventDefault();
         dragState.handle = event;
         event.stopPropagation();
@@ -536,20 +558,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dragState.startHeight = rect.height;
         dragState.startWidth = rect.width;
         dragState.handle = event.target;
-        if (event.target.id == 'resize-handle-se') {
-            dragState.type = 'resize';
-            dragState.handle = event.target;
-        }
-        if (event.target.id == 'resize-handle-nw') {
-            dragState.type = 'resize';
-            dragState.handle = event.target;
-        }
-        if (event.button !== 0 ||
-            event.target.closest('.metadata-container, .miniature-container, .instructions') ||
-            event.target.id === 'overlay-container' ||
-            event.target.id == 'selection-container' ||
-            event.target.closest('.node') ||
-            event.target.closest('.edge')) {
+        if (event.target.id === 'resize_handle_se' || event.target.id === 'resize_handle_nw') {
+            // Don't do anything here - the dedicated event listeners will handle it
             return;
         }
         dragState.type = 'pan';
@@ -558,7 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         dragState.offsetX = rect.left;
         dragState.offsetY = rect.top;
-        console.log(dragState);
 
     });
 
@@ -570,10 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startX = dragState.startX;
         startY = dragState.startY;
 
-        //console.log(`Mouse move at (${event.clientX}, ${event.clientY})`);
         if (!dragState.type) return;
         if (dragState.type === 'pan') {
-            console.log('Panning SVG');
             if (!isPanning && startX !== undefined && startY !== undefined) {
                 dx = Math.abs(event.clientX - startX);
                 dy = Math.abs(event.clientY - startY);
@@ -593,12 +600,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyTransform();
             }
         } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
-            console.log(dragState);
-
             dx = event.clientX - dragState.startX + dragState.offsetX;
             dy = event.clientY - dragState.startY + dragState.offsetY;
 
-            console.log(`Dragging ${dragState.type} to (${dx}, ${dy})`);
+            //console.log(`Dragging ${dragState.type} to (${dx}, ${dy})`);
             dragState.target.style.left = `${dx}px`;
             dragState.target.style.top = `${dy}px`;
 
@@ -619,35 +624,44 @@ document.addEventListener('DOMContentLoaded', () => {
             event.stopPropagation();
 
         } else if (dragState.type === 'resize') {
-            console.log('resizing Window');
-            const svgImage = target.parentElement.querySelector('svg');
-            let resizeX = 0.025
-            let dx = event.clientX - dragState.startX;
-            let dy = event.clientY - dragState.startY;
-            let newWidth = dragState.startWidth;
-            let newHeight = dragState.startHeight;
-
+            event.preventDefault();
+            event.stopPropagation();
             
-
-            if (dragState.target.classList.contains('resize-handle-nw')) {
-                newWidth += (dx * resizeX);
-                newHeight += (dy * resizeX);
-                 dragState.target.style.left = `${parseFloat(dragState.target.style.left || 0) - dx}px`;
-                 dragState.target.style.top = `${parseFloat(dragState.target.style.top || 0) - dy}px`;
-                console.log('se');
-            } else if (dragState.target.classList.contains('resize-handle-se')) {
-                newWidth -= (dx * resizeX);
-                newHeight -= (dy * resizeX);
-                // Optionally move the window as well
+            // Calculate how much the mouse has moved
+            const dx = event.clientX - dragState.startX;
+            const dy = event.clientY - dragState.startY;
+            
+            // Get the SVG element inside the container
+            const container = dragState.target;
+            const svgImage = container.querySelector('svg');
+            
+            // Calculate new dimensions based on which handle is being dragged
+            let newWidth, newHeight, newLeft, newTop;
+            
+            if (dragState.handle === 'nw') {
+                // Northwest handle: resize and reposition
+                newWidth = Math.max(100, dragState.startWidth - dx);
+                newHeight = Math.max(80, dragState.startHeight - dy);
+                newLeft = dragState.startLeft + (dragState.startWidth - newWidth);
+                newTop = dragState.startTop + (dragState.startHeight - newHeight);
+                
+                // Update position
+                container.style.left = `${newLeft}px`;
+                container.style.top = `${newTop}px`;
+            } 
+            else if (dragState.handle === 'se') {
+                // Southeast handle: just resize
+                newWidth = Math.max(100, dragState.startWidth + dx);
+                newHeight = Math.max(80, dragState.startHeight + dy);
             }
-            console.log('nw');
-           
-            if (svgImage != null) {
-                svgImage.setAttribute('width', `${Math.max(100, newWidth)}px`);
-                svgImage.setAttribute('height', `${Math.max(50, newHeight)}px`);
-
-                dragState.target.style.width = `${Math.max(100, newWidth)}px`;
-                dragState.target.style.height = `${Math.max(50, newHeight)}px`;
+            
+            // Update dimensions for both container and SVG
+            container.style.width = `${newWidth}px`;
+            container.style.height = `${newHeight}px`;
+            
+            if (svgImage) {
+                svgImage.setAttribute('width', `${newWidth}px`);
+                svgImage.setAttribute('height', `${newHeight}px`);
             }
         }
     });
@@ -655,7 +669,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MOUSE UP HANDLER ---
     window.addEventListener('mouseup', (event) => {
         if (!dragState.type) return;
-        if (dragState.target) dragState.target.classList.remove('dragging');
+        if (dragState.target) {
+            dragState.target.classList.remove('dragging');
+            dragState.target.classList.remove('resizing');
+        }
         if (dragState.type === 'pan') {
             svg.classList.remove('grabbing');
             isPanning = false;
@@ -670,9 +687,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 dragState.target.style.height = `${minSize}px`;
             }
         }
+        // Reset all dragState properties
         dragState.type = null;
         dragState.target = null;
-
+        dragState.handle = null;
     });
 
     // --- Other UI Events ---
@@ -707,56 +725,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
             window.location.reload();
-          
+
         }
     });
 
     window.addEventListener('scroll', onViewportChange, { passive: true });
     window.addEventListener('resize', onViewportChange, { passive: true });
-
-
-    // --- Highlight click handler ---
-    svg.addEventListener('click', (event) => {
-        let clickedElement = event.target;
-        let tableId = null, edgeId = null;
-        while (clickedElement && clickedElement !== svg) {
-            if (clickedElement.classList && clickedElement.classList.contains('node')) {
-                tableId = clickedElement.id; break;
-            }
-            if (clickedElement.classList && clickedElement.classList.contains('edge')) {
-                edgeId = clickedElement.id; break;
-            }
-            clickedElement = clickedElement.parentElement;
-        }
-        if (tableId && tables[tableId]) {
-            event.preventDefault(); event.stopPropagation();
-            if (highlightedElementId === tableId) {
-                clearAllHighlights();
-            } else {
-                clearAllHighlights();
-                highlightedElementId = tableId;
-                const connectedEdges = tables[tableId].edges;
-                const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
-                const uniqueTables = [...new Set(connectedTables)];
-                highlightElements(uniqueTables, connectedEdges);
-                showSelectionWindow(uniqueTables, connectedEdges, event);
-            }
-        }
-        if (edgeId && edges[edgeId]) {
-            event.preventDefault(); event.stopPropagation();
-            if (highlightedElementId === edgeId) {
-                clearAllHighlights();
-
-            } else {
-                console.log('Edge clicked:', edgeId);
-
-                clearAllHighlights()
-                highlightedElementId = edgeId;
-                const connectedTables = edges[edgeId].tables;
-                highlightElements(connectedTables, [edgeId]);
-            }
-        }
-    });
 
     miniatureContainer.addEventListener('click', function (event) {
         // Get click position relative to the minimap
@@ -771,8 +745,99 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
         zoomToPoint(targetX, targetY, userS);
-        event.stopPropagation();
+        // Click on SVG background (not node/edge): zoom to point
+        if (
+            event.target === svg ||
+            (!event.target.closest('.node') && !event.target.closest('.edge'))
+        ) {
+            // Get mouse position relative to SVG
+            const pt = svg.createSVGPoint();
+            pt.x = event.clientX;
+            pt.y = event.clientY;
+            const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
+            zoomToPoint(svgP.x, svgP.y, userS);
+            event.stopPropagation();
+            return;
+        }
+    }
+    );
+
+
+    // --- Consolidated event listeners
+    document.addEventListener('click', function (event) {
+        if (event.target.classList.contains('minimize-btn')) {
+            const btn = event.target;
+            const contents = btn.parentNode.parentNode.childNodes;
+            btn.innerHTML = btn.innerHTML === '+' ? '–' : '+';
+            contents.forEach(content => {
+                if (content.nodeType !== Node.ELEMENT_NODE) return;
+                if (content.classList.contains('container-content')) {
+                    content.style.display = content.style.display === 'none' ? '' : 'none';
+                }
+            });
+            event.stopPropagation();
+            return;
+        }
+
+        // SVG highlight click handler
+        if (event.target.closest('svg')) {
+            let clickedElement = event.target;
+            let tableId = null, edgeId = null;
+            while (clickedElement && clickedElement !== svg) {
+                if (clickedElement.classList && clickedElement.classList.contains('node')) {
+                    tableId = clickedElement.id; break;
+                }
+                if (clickedElement.classList && clickedElement.classList.contains('edge')) {
+                    edgeId = clickedElement.id; break;
+                }
+                clickedElement = clickedElement.parentElement;
+            }
+            if (tableId && tables[tableId]) {
+                event.preventDefault(); event.stopPropagation();
+                if (highlightedElementId === tableId) {
+                    clearAllHighlights();
+                } else {
+                    clearAllHighlights();
+                    highlightedElementId = tableId;
+                    const connectedEdges = tables[tableId].edges;
+                    const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+                    const uniqueTables = [...new Set(connectedTables)];
+                    highlightElements(uniqueTables, connectedEdges);
+                    showSelectionWindow(uniqueTables, connectedEdges, event);
+                }
+                return;
+            }
+            if (edgeId && edges[edgeId]) {
+                event.preventDefault(); event.stopPropagation();
+                if (highlightedElementId === edgeId) {
+                    clearAllHighlights();
+                } else {
+                    clearAllHighlights();
+                    highlightedElementId = edgeId;
+                    const connectedTables = edges[edgeId].tables;
+                    highlightElements(connectedTables, [edgeId]);
+                }
+                return;
+            }
+
+            // Click on SVG background (not node/edge): zoom to point
+            if (
+                event.target === svg ||
+                (!event.target.closest('.node') && !event.target.closest('.edge'))
+            ) {
+                // Get mouse position relative to SVG
+                const pt = svg.createSVGPoint();
+                pt.x = event.clientX;
+                pt.y = event.clientY;
+                const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
+                zoomToPoint(svgP.x, svgP.y, userS);
+                event.stopPropagation();
+                return;
+            }
+        }
+
     });
+  
 
     requestAnimationFrame(() => {
         const mainBounds = getMainERDBounds();
@@ -847,7 +912,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Toggle the display of each content element
             contents.forEach(content => {
                 if (content.nodeType !== Node.ELEMENT_NODE) return; // Skip non-element nodes
-                //console.log(content.id);
                 if (content.classList.contains('container-content')) {
                     content.style.display = content.style.display === 'none' ? '' : 'none';
                 }

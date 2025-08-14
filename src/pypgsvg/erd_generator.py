@@ -37,7 +37,8 @@ def generate_erd_with_graphviz(
     rank_sep='1.2',
     node_style='filled',
     node_shape='rect',
-    constraints=None
+    constraints={},
+    triggers={}
 ):
     """
     Generate an ERD using Graphviz with explicit side connections.
@@ -60,9 +61,9 @@ def generate_erd_with_graphviz(
         node_sep: Node separation distance
         rank_sep: Rank separation distance
         constraints: Optional list of constraints discovered during parsing
+        triggers: Optional list of triggers discovered during parsing
 
     """
-
     # Filter tables based on exclusion patterns and standalone option
     filtered_tables = {}
     for table_name, columns in tables.items():
@@ -150,11 +151,13 @@ def generate_erd_with_graphviz(
             "defaultColor": table_colors[table_name],
             "highlightColor": saturate_color(table_colors[table_name], saturation_factor=4.0),
             "desaturatedColor": desaturate_color(table_colors[table_name], desaturation_factor=0.1),
+            "triggers": triggers.get(table_name, []),  # <-- Add this line
+            "constraints": [],
             "edges": []
         }
 
     # Populate edge data and update table data with connected edges
-    for i, (ltbl, _, rtbl, _, _, on_delete, on_update) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, _, rtbl, _, _, triggers, constraints) in enumerate(filtered_foreign_keys):
         edge_id = f"edge-{i}"
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
@@ -164,8 +167,8 @@ def generate_erd_with_graphviz(
             "defaultColor": table_colors[ltbl],
             "highlightColor": saturate_color(table_colors[ltbl], saturation_factor=2.0),
             "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.5),
-            "onDelete": on_delete,
-            "onUpdate": on_update,
+            "triggers": triggers,
+            "constraints": constraints,
         }
 
         if safe_ltbl in graph_data["tables"]:
@@ -179,7 +182,20 @@ def generate_erd_with_graphviz(
         bg_color = graph_data["tables"][safe_table_name]["desaturatedColor"]
         text_color = get_contrasting_text_color(header_color)
 
+        # --- Lightning bolt SVG icon ---
+        # bolt_svg = '<svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:middle;"><polygon points="7,1 2,9 7,9 6,15 14,6 9,6 10,1" fill="#FFD700" stroke="#FFA500" stroke-width="1"/></svg>'
+
+        # Get triggers for this table
+        triggers = graph_data["tables"][safe_table_name].get("triggers", [])
+        bolt_unicode = "&#9889;"  # Unicode lightning bolt ⚡
+        trigger_icons = ""
+        for idx, trigger in enumerate(triggers):
+            trigger_icons += f'<FONT POINT-SIZE="16" class="trigger-icon" TITLE="{trigger.get("trigger_name", "")}">{bolt_unicode}</FONT> '
+
         label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">'
+        # Lightning bolts row (left aligned)
+        if trigger_icons:
+            label += f'<TR><TD class="trigger-icons" ALIGN="left">{trigger_icons}</TD></TR>'
         # Table header row (full width, saturated color)
         label += (
             f'<TR><TD ALIGN="center" BGCOLOR="{header_color}">'
@@ -190,13 +206,12 @@ def generate_erd_with_graphviz(
             label += (
                 f'<TR><TD ALIGN="left" PORT="{sanitize_label(column["name"])}"><FONT POINT-SIZE="18">{column["name"]} ({column["type"]})</FONT></TD></TR>'
             )
-
         label += '</TABLE>>'
 
         dot.node(safe_table_name, label=label, id=safe_table_name, shape=node_shape, style=node_style)
 
     # --- Update edge creation to use parallel splines ---
-    for i, (ltbl, col, rtbl, rcol, _line, on_delete, on_update) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, col, rtbl, rcol, _line, triggers, constraints) in enumerate(filtered_foreign_keys):
         edge_id = f"edge-{i}"
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)
@@ -205,9 +220,9 @@ def generate_erd_with_graphviz(
             "defaultColor": table_colors[ltbl],
             "highlightColor": saturate_color(table_colors[ltbl], saturation_factor=2.0),
             "desaturatedColor": desaturate_color(table_colors[ltbl], desaturation_factor=0.5),
-            "onDelete": on_delete,
-            "onUpdate": on_update,
-            "fkText": _line,  
+            "triggers": triggers,
+            "constraints": constraints,
+            "fkText": _line,
             "fromColumn": col,
             "toColumn": rcol,
         }
@@ -219,8 +234,6 @@ def generate_erd_with_graphviz(
             f"{safe_ltbl}:{col}:e",
             f"{safe_rtbl}:{rcol}:w",
             id=f"edge-{i}",
-            on_delete=on_delete,
-            on_update=on_update,
             color=f"{color1}:{color2}"
         )
 
@@ -272,7 +285,7 @@ def generate_erd_with_graphviz(
         esep=esep, fontname=fontname, fontsize=fontsize,
         node_fontsize=node_fontsize, edge_fontsize=edge_fontsize,
         node_style=node_style, node_shape=node_shape,
-        node_sep=node_sep, rank_sep=rank_sep
+        node_sep=node_sep, rank_sep=rank_sep, triggers=triggers,
     )
 
     with open(actual_svg_path, 'w', encoding='utf-8') as f:

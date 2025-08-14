@@ -82,6 +82,7 @@ def main():
                 node_sep=args.node_sep,
                 rank_sep=args.rank_sep,
                 constraints=constraints,
+                triggers=triggers,
             )
 
             print(f"Successfully generated ERD: {output_file}.svg")

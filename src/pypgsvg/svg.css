@@ -126,12 +126,25 @@
 /* Selection Container */
 #selection-container {
     position: fixed;
+    z-index: 10000;
+    pointer-events: auto !important; /* Force pointer events */
+    cursor: grab;
+    background: rgba(168, 188, 220, 0.98);
+    border: 1px solid #000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#selection-container container-content{
+    position: fixed;
     font-size: -2rem;
     opacity: 0.85;
     border: 1px solid #000;
     z-index: 10000;
     cursor: grab;
     pointer-events: auto;
+    margin-top: 3rem;
 }
 
 #selection-container.dragging {
@@ -181,4 +194,17 @@
     line-height: 1;
     pointer-events: auto;
     z-index: 10099;
+}
+
+.trigger-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+    vertical-align: middle;
+    cursor: pointer;
+    z-index: 10004;
+}
+.trigger-icon:hover {
+    filter: drop-shadow(0 0 2px #FFD700);
 }
