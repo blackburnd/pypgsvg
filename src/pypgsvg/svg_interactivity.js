@@ -899,24 +899,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     placeFloatingWindows();
+    ensureResizeHandles(miniatureContainer);
+    ensureResizeHandles(selectionContainer);
     makeResizable(miniatureContainer);
+    makeResizable(selectionContainer);
 
-    document.querySelectorAll('.minimize-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const parent = btn.parentElement;
-            const contents = btn.parentNode.parentNode.childNodes; // Select only children with the class 'container-content'
+    // Add this function after the showSelectionWindow function
+    function ensureResizeHandles(container) {
+        if (!container) return;
+        
+        // Check for SE handle
+        let seHandle = container.querySelector('#resize_handle_se');
+        if (!seHandle) {
+            seHandle = document.createElement('div');
+            seHandle.id = 'resize_handle_se';
+            seHandle.className = 'resize-handle se';
+            seHandle.style.position = 'absolute';
+            seHandle.style.right = '0';
+            seHandle.style.bottom = '0';
+            seHandle.style.width = '10px';
+            seHandle.style.height = '10px';
+            seHandle.style.cursor = 'nwse-resize';
+            seHandle.style.backgroundColor = '#666';
+            container.appendChild(seHandle);
+        }
+        
+        // Check for NW handle
+        let nwHandle = container.querySelector('#resize_handle_nw');
+        if (!nwHandle) {
+            nwHandle = document.createElement('div');
+            nwHandle.id = 'resize_handle_nw';
+            nwHandle.className = 'resize-handle nw';
+            nwHandle.style.position = 'absolute';
+            nwHandle.style.left = '0';
+            nwHandle.style.top = '0';
+            nwHandle.style.width = '10px';
+            nwHandle.style.height = '10px';
+            nwHandle.style.cursor = 'nwse-resize';
+            nwHandle.style.backgroundColor = '#666';
+            container.appendChild(nwHandle);
+        }
+    }
 
-            // Toggle the button's text
-            btn.innerHTML = btn.innerHTML === '+' ? '–' : '+';
+    // Add this after makeResizable(selectionContainer)
 
-            // Toggle the display of each content element
-            contents.forEach(content => {
-                if (content.nodeType !== Node.ELEMENT_NODE) return; // Skip non-element nodes
-                if (content.classList.contains('container-content')) {
-                    content.style.display = content.style.display === 'none' ? '' : 'none';
-                }
-            });
+    // Add font scaling functionality for the selection window
+    function setupAdaptiveFontSize(container, innerContainer) {
+        if (!container || !innerContainer) return;
+        
+        // Set initial overflow to hidden to prevent content spilling
+        innerContainer.style.overflow = 'hidden';
+        
+        // Function to adjust font size based on container width
+        const adjustFontSize = () => {
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            // Base font size and minimum font size
+            const baseFontSize = 14; // Default font size in pixels
+            const minFontSize = 9;   // Minimum font size in pixels
+            
+            // Calculate scaling factor based on width
+            // Adjust these numbers to tune the scaling behavior
+            const idealWidth = 400;  // Width at which we want the base font size
+            let scaleFactor = containerWidth / idealWidth;
+            
+            // Ensure font size stays within reasonable bounds
+            let newFontSize = Math.max(minFontSize, Math.min(baseFontSize, baseFontSize * scaleFactor));
+            
+            // Apply the new font size to the inner container
+            innerContainer.style.fontSize = `${newFontSize}px`;
+            
+            // Also adjust line height for better readability
+            innerContainer.style.lineHeight = `${Math.max(1.2, 1 + (scaleFactor * 0.2))}`;
+        };
+        
+        // Create a ResizeObserver to watch for size changes
+        const resizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(adjustFontSize);
         });
-    });
+        
+        // Start observing the container
+        resizeObserver.observe(container);
+        
+        // Apply initial font sizing
+        adjustFontSize();
+    }
 
+    // Call the function for the selection container
+    if (selectionContainer && selectionInner) {
+        setupAdaptiveFontSize(selectionContainer, selectionInner);
+    }
 });

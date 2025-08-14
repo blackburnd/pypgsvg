@@ -208,3 +208,19 @@
 .trigger-icon:hover {
     filter: drop-shadow(0 0 2px #FFD700);
 }
+
+/* Add these to your existing CSS */
+#selection-inner-container {
+    overflow: hidden; /* Prevents content from spilling out */
+    width: 100%;      /* Ensures it fills the container */
+    height: 100%;     /* Ensures it fills the container */
+    box-sizing: border-box;
+    word-wrap: break-word;  /* Breaks long words to prevent horizontal overflow */
+}
+
+/* Make pre tags wrap text to prevent code blocks from overflowing */
+#selection-inner-container pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: inherit;  /* Inherit the dynamic font size */
+}
