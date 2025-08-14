@@ -2798,11 +2798,15 @@
 
 /* Viewport Indicator */
 .viewport-indicator {
-    position: absolute;
-    border: 2px solid red;
-    background-color: rgba(255, 0, 0, 0.2);
-    pointer-events: auto;
-    opacity: 0.5;
+    position: absolute !important;
+    display: block !important;
+    border: 2px solid #ff4081 !important;
+    background-color: rgba(255, 64, 129, 0.2) !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    z-index: 1000 !important;
+    min-width: 10px !important;
+    min-height: 10px !important;
     transition: all 0.1s ease;
     box-sizing: border-box;
     cursor: grab;
@@ -2972,6 +2976,57 @@
     margin: 2px 0;
 }
 
+/* Add to your CSS for the copy button */
+.copy-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.copy-btn:hover {
+    background: #ddd;
+}
+
+/* Add to your CSS for the edit button */
+.edit-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.edit-btn:hover {
+    background: #ddd;
+}
+
+/* Make table-name and edge-name more obviously clickable */
+.table-name, .edge-name {
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.table-name:hover, .edge-name:hover {
+    background-color: rgba(200, 200, 200, 0.5); /* More visible hover effect */
+    text-decoration: underline;
+}
+
 ]]></style>
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
@@ -2987,7 +3042,7 @@
     <div class='header'>Metadata</div>
     <div class='metadata-inner-container container-content'>
     <ul>
-        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-14 10:53:06</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
+        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-14 12:26:39</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
     </ul>
     </div>
 </div>
@@ -5751,6 +5806,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
 
     // --- Window Controls ---
+    // Update the addWindowControls function to take a buttons config parameter
     function addWindowControls(windowElem, options = {}) {
         if (!windowElem) return;
         let controls = windowElem.querySelector('.window-controls');
@@ -5764,6 +5820,37 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.style.zIndex = '10001';
             windowElem.appendChild(controls);
         }
+        
+        const btnConfig = options.buttons || {};
+        const allControls = {};
+        
+        // Only add edit button if specified in options
+        if (btnConfig.edit) {
+            let editBtn = controls.querySelector('.edit-btn');
+            if (!editBtn) {
+                editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.title = 'Edit content';
+                editBtn.innerHTML = '✏️';  // Pencil emoji
+                controls.appendChild(editBtn);
+            }
+            allControls.editBtn = editBtn;
+        }
+        
+        // Only add copy button if specified in options
+        if (btnConfig.copy) {
+            let copyBtn = controls.querySelector('.copy-btn');
+            if (!copyBtn) {
+                copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.title = 'Copy to clipboard';
+                copyBtn.innerHTML = '📋';
+                controls.appendChild(copyBtn);
+            }
+            allControls.copyBtn = copyBtn;
+        }
+        
+        // Always add minimize button
         let minBtn = controls.querySelector('.minimize-btn');
         if (!minBtn) {
             minBtn = document.createElement('button');
@@ -5772,6 +5859,9 @@ document.addEventListener('DOMContentLoaded', () => {
             minBtn.innerHTML = '–';
             controls.appendChild(minBtn);
         }
+        allControls.minBtn = minBtn;
+        
+        // Always add close button
         let closeBtn = controls.querySelector('.close-btn');
         if (!closeBtn) {
             closeBtn = document.createElement('button');
@@ -5780,10 +5870,111 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.innerHTML = '×';
             controls.appendChild(closeBtn);
         }
+        allControls.closeBtn = closeBtn;
 
+        // Set up event handlers
+        
+        // Edit button handler (only for selection window)
+        if (allControls.editBtn) {
+            allControls.editBtn.onclick = (e) => {
+                e.stopPropagation();
+                
+                // Find the inner container
+                const innerContainer = windowElem.querySelector('#selection-inner-container');
+                if (!innerContainer) return;
+                
+                // Skip if textarea already exists
+                if (innerContainer.querySelector('textarea')) return;
+                
+                // Save the original content
+                const originalContent = innerContainer.innerHTML;
+                let text = innerContainer.innerText || innerContainer.textContent || '';
+                
+                // Create textarea
+                const rect = innerContainer.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                
+                const XHTML_NS = "http://www.w3.org/1999/xhtml";
+                const textarea = document.createElementNS(XHTML_NS, 'textarea');
+                textarea.value = text;
+                textarea.setAttribute('aria-label', 'Edit selection details');
+                textarea.setAttribute('style', 
+                    `width:${width}px;height:${height}px;box-sizing:border-box;font-family:inherit;font-size:inherit;resize:vertical;`
+                );
+                
+                // Replace content with textarea
+                innerContainer.innerHTML = '';
+                innerContainer.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                
+                // Stop event propagation
+                function stopEvent(e) {
+                    e.stopPropagation();
+                }
+                
+                textarea.addEventListener('mousedown', stopEvent, true);
+                textarea.addEventListener('mousemove', stopEvent, true);
+                textarea.addEventListener('mouseup', stopEvent, true);
+                textarea.addEventListener('keydown', stopEvent, true);
+                textarea.addEventListener('keyup', stopEvent, true);
+                textarea.addEventListener('wheel', stopEvent, true);
+                
+                // Restore content on blur
+                textarea.addEventListener('blur', function() {
+                    innerContainer.innerHTML = originalContent;
+                    
+                    // Reattach table and edge event listeners
+                    const tableNames = innerContainer.querySelectorAll('.table-name');
+                    tableNames.forEach(tableName => {
+                        const tableId = tableName.getAttribute('data-table-id');
+                        // Re-attach all event handlers...
+                        // (Your existing code for attaching event handlers)
+                    });
+                    
+                    const edgeNames = innerContainer.querySelectorAll('.edge-name');
+                    edgeNames.forEach(edgeName => {
+                        const edgeId = edgeName.getAttribute('data-edge-id');
+                        // Re-attach all event handlers...
+                        // (Your existing code for attaching event handlers)
+                    });
+                });
+            };
+        }
+
+        // Copy button handler (for metadata/miniature)
+        if (allControls.copyBtn) {
+            allControls.copyBtn.onclick = (e) => {
+                e.stopPropagation();
+                // Your existing copy-to-clipboard code
+                const selectedTables = Array.from(document.querySelectorAll('.table-name.selected')).map(el => el.dataset.tableId);
+                const selectedEdges = Array.from(document.querySelectorAll('.edge-name.selected')).map(el => el.dataset.edgeId);
+                let copyText = '';
+                
+                // Rest of your copying logic...
+                if (selectedTables.length) {
+                    copyText += 'Tables:\n';
+                    selectedTables.forEach(id => {
+                        const table = tables[id];
+                        if (table) {
+                            copyText += `- ${id}: ${table.label || ''}\n`;
+                        }
+                    });
+                }
+                
+                // Copy to clipboard
+                navigator.clipboard.writeText(copyText).then(() => {
+                    allControls.copyBtn.classList.add('copied');
+                    setTimeout(() => {
+                        allControls.copyBtn.classList.remove('copied');
+                    }, 2000);
+                });
+            };
+        }
+
+        // Minimize button handler
         minBtn.onclick = (e) => {
-            //console.log('minimize');
-
             e.stopPropagation();
             windowElem.classList.toggle('minimized');
             const content = windowElem.querySelector('.window-content');
@@ -5796,15 +5987,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (options.onMinimize) options.onMinimize(windowElem.classList.contains('minimized'));
         };
+        
+        // Close button handler
         closeBtn.onclick = (e) => {
             e.stopPropagation();
             e.target.destroyRecursive = true;
-
             windowElem.style.display = 'none';
             if (options.onClose) options.onClose();
         };
+        
         controls.addEventListener('mousedown', e => e.stopPropagation());
         controls.addEventListener('click', e => e.stopPropagation());
+        
+        return allControls;
     }
 
     function makeResizable(windowElem) {
@@ -6164,6 +6359,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             });
+            
+            // ADD THE NEW CLICK HANDLER HERE
+            tableNameSpan.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent scrolling
+                e.stopPropagation();
+                
+                // Clear any existing highlights
+                clearAllHighlights();
+                
+                // Set this table as the highlighted element
+                highlightedElementId = tableId;
+                
+                // Get connected edges and tables (same logic as SVG click handler)
+                const connectedEdges = tables[tableId].edges;
+                const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+                const uniqueTables = [...new Set(connectedTables)];
+                
+                // Highlight everything
+                highlightElements(uniqueTables, connectedEdges);
+                
+                // Center view on the selected table
+                const tableElement = document.getElementById(tableId);
+                if (tableElement) {
+                    // Get the bounding box of the table element
+                    const bbox = tableElement.getBBox();
+                    // Center coordinates of the table
+                    const centerX = bbox.x + bbox.width / 2;
+                    const centerY = bbox.y + bbox.height / 2;
+                    // Center the view on the table, maintaining current zoom level
+                    zoomToPoint(centerX, centerY, userS);
+                }
+                
+                // No need to call showSelectionWindow again since we're already in it
+            });
         });
 
         // Add hover event listeners to edge names
@@ -6299,7 +6528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Use getComputedStyle to get accurate dimensions
+        // Get
         const computedStyle = window.getComputedStyle(selectionContainer);
         const containerWidth = parseFloat(computedStyle.width);
         const containerHeight = parseFloat(computedStyle.height);
@@ -6386,7 +6615,9 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
         });
-        addWindowControls(miniatureContainer);
+        addWindowControls(miniatureContainer, { 
+            buttons: { copy: false, edit: false }  // No copy or edit button
+        });
     }
     // Viewport indicator drag
     if (viewportIndicator) {
@@ -6409,7 +6640,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Metadata box drag (whole container)
     const metadataContainer = document.getElementById('metadata-container');
     if (metadataContainer) {
-        addWindowControls(metadataContainer);
+        addWindowControls(metadataContainer, { 
+            buttons: { copy: true, edit: false }   // Copy button but no edit
+        });
         metadataContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
             if (
@@ -6433,7 +6666,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectionContainer = document.getElementById('selection-container');
     const selectionInner = document.getElementById('selection-inner-container');
     if (selectionContainer) {
-        addWindowControls(selectionContainer);
+        addWindowControls(selectionContainer, { 
+            buttons: { copy: false, edit: true }   // Edit button but no copy
+        });
+        // Modified selection window mousedown handler
         selectionContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
             if (
@@ -6445,59 +6681,48 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
 
-            dragState.type = 'selection';
-            dragState.target = selectionContainer;
-            const rect = selectionContainer.getBoundingClientRect();
-            dragState.startX = event.clientX;
-            dragState.startY = event.clientY;
-            dragState.offsetX = rect.left;
-            dragState.offsetY = rect.top;
+            // Create a separate drag state specifically for the window
+            // This avoids conflicts with the SVG pan state
+            const windowDragState = {
+                type: 'selection-window',
+                target: selectionContainer,
+                startX: event.clientX,
+                startY: event.clientY,
+                offsetX: selectionContainer.getBoundingClientRect().left,
+                offsetY: selectionContainer.getBoundingClientRect().top
+            };
             
-            // Don't add dragging to metadataContainer - BUG FIX
-            // metadataContainer.classList.add('dragging');
+            // Store this separate state
+            selectionContainer._dragState = windowDragState;
             selectionContainer.classList.add('dragging');
+            
+            // Create window-specific mousemove handler that won't interfere with SVG
+            const handleMouseMove = (moveEvent) => {
+                moveEvent.preventDefault();
+                moveEvent.stopPropagation();
+                
+                const dx = moveEvent.clientX - windowDragState.startX + windowDragState.offsetX;
+                const dy = moveEvent.clientY - windowDragState.startY + windowDragState.offsetY;
+                
+                selectionContainer.style.left = `${dx}px`;
+                selectionContainer.style.top = `${dy}px`;
+            };
+            
+            // Create window-specific mouseup handler
+            const handleMouseUp = (upEvent) => {
+                selectionContainer.classList.remove('dragging');
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseup', handleMouseUp);
+                selectionContainer._dragState = null;
+            };
+            
+            // Add temporary event listeners for this drag operation only
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
         });
     }
 
-    // Add after DOMContentLoaded and selectionInner is defined:
-    if (selectionInner) {
-        selectionInner.addEventListener('click', function (event) {
-            if (selectionInner.querySelector('textarea')) return;
 
-            let text = selectionInner.innerText || selectionInner.textContent || '';
-            const rect = selectionInner.getBoundingClientRect();
-            const width = rect.width;
-            const height = rect.height;
-
-            const XHTML_NS = "http://www.w3.org/1999/xhtml";
-            const textarea = document.createElementNS(XHTML_NS, 'textarea');
-            textarea.value = text;
-            textarea.setAttribute('aria-label', 'Copy selection details');
-            textarea.setAttribute('style',
-                `width:${width}px;height:${height}px;box-sizing:border-box;font-family:inherit;font-size:inherit;resize:vertical;`
-            );
-
-            selectionInner.innerHTML = '';
-            selectionInner.appendChild(textarea);
-            textarea.focus();
-
-            // Prevent all mouse and keyboard handlers from interfering while textarea is focused
-            function stopEvent(e) {
-                e.stopPropagation();
-            }
-            textarea.addEventListener('mousedown', stopEvent, true);
-            textarea.addEventListener('mousemove', stopEvent, true);
-            textarea.addEventListener('mouseup', stopEvent, true);
-            textarea.addEventListener('keydown', stopEvent, true);
-            textarea.addEventListener('keyup', stopEvent, true);
-            textarea.addEventListener('wheel', stopEvent, true);
-
-            textarea.addEventListener('blur', function () {
-                selectionInner.innerHTML = '';
-                selectionInner.innerText = text;
-            });
-        });
-    }
 
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
@@ -6692,35 +6917,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', onViewportChange, { passive: true });
     window.addEventListener('resize', onViewportChange, { passive: true });
 
-    miniatureContainer.addEventListener('click', function (event) {
-        // Get click position relative to the minimap
-        const rect = miniatureContainer.getBoundingClientRect();
-        const relX = (event.clientX - rect.left) / rect.width;
-        const relY = (event.clientY - rect.top) / rect.height;
-
-        // Get main SVG bounds
-        const mainBounds = getMainERDBounds();
-        const targetX = mainBounds.x + relX * mainBounds.width;
-        const targetY = mainBounds.y + relY * mainBounds.height;
-
-        // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
-        zoomToPoint(targetX, targetY, userS);
-        // Click on SVG background (not node/edge): zoom to point
-        if (
-            event.target === svg ||
-            (!event.target.closest('.node') && !event.target.closest('.edge'))
-        ) {
-            // Get mouse position relative to SVG
-            const pt = svg.createSVGPoint();
-            pt.x = event.clientX;
-            pt.y = event.clientY;
-            const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
-            zoomToPoint(svgP.x, svgP.y, userS);
-            event.stopPropagation();
-            return;
-        }
-    }
-    );
 
 
     // --- Consolidated event listeners
@@ -6799,156 +6995,98 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
 
-    requestAnimationFrame(() => {
-        const mainBounds = getMainERDBounds();
-        // Center coordinates
-        const centerX = mainBounds.x + mainBounds.width / 2;
-        const centerY = mainBounds.y + mainBounds.height / 2;
-        // Fit to screen
-        const minZoom = getMinZoomToFit();
-        zoomToPoint(centerX, centerY, minZoom);
-        if (document.activeElement && document.activeElement.blur) {
-            document.activeElement.blur();
+    function initializeSvgView() {
+        console.log("Starting SVG initialization...");
+        
+        // Ensure all required elements exist
+        if (!svg || !mainGroup || !miniatureContainer || !viewportIndicator || !getMainERDBounds()) {
+            console.log("SVG elements not ready, retrying in 200ms...");
+            setTimeout(initializeSvgView, 200);
+            return;
         }
-        svg.focus && svg.focus();
+        
+        try {
+            // Get bounds and verify they're valid
+            const mainBounds = getMainERDBounds();
+            if (!mainBounds || typeof mainBounds !== 'object' || 
+                mainBounds.width <= 0 || mainBounds.height <= 0) {
+                console.log("Invalid SVG bounds, retrying in 200ms...");
+                setTimeout(initializeSvgView, 200);
+                return;
+            }
+            
+            console.log("SVG bounds:", mainBounds);
+            
+            // Calculate center of the diagram
+            const centerX = mainBounds.x + mainBounds.width / 2;
+            const centerY = mainBounds.y + mainBounds.height / 2;
+            
+            // Calculate zoom level (fit the diagram with some padding)
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const scaleX = viewportWidth / (mainBounds.width * 1.1); // 10% padding
+            const scaleY = viewportHeight / (mainBounds.height * 1.1);
+            const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 1:1
+            
+            // Reset and apply transformation
+            userTx = 0;
+            userTy = 0;
+            userS = scale;
+            
+            console.log(`Centering at (${centerX}, ${centerY}) with scale ${scale}`);
+            
+            // Use zoomToPoint for consistent positioning
+            zoomToPoint(centerX, centerY, scale);
+            
+            // Force viewport indicator update
+            updateViewportIndicator();
+            
+            // Ensure viewport indicator is visible
+            if (viewportIndicator) {
+                viewportIndicator.style.display = 'block';
+                viewportIndicator.style.opacity = '1';
+                viewportIndicator.style.border = '2px solid #ff4081';
+                viewportIndicator.style.backgroundColor = 'rgba(255, 64, 129, 0.2)';
+                viewportIndicator.style.pointerEvents = 'all';
+                
+                // Add this debug to check viewport indicator dimensions
+                const viStyle = window.getComputedStyle(viewportIndicator);
+                console.log("Viewport indicator styles:", {
+                    display: viStyle.display,
+                    width: viStyle.width,
+                    height: viStyle.height,
+                    left: viStyle.left,
+                    top: viStyle.top,
+                    opacity: viStyle.opacity
+                });
+            }
+        } catch (error) {
+            console.error("Error during SVG initialization:", error);
+            setTimeout(initializeSvgView, 300);
+        }
+    }
+
+    // Primary initialization on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOMContentLoaded fired");
+        // Small delay to ensure SVG is fully parsed
+        setTimeout(initializeSvgView, 300);
+        
+        // Also initialize when window is resized
+        window.addEventListener('resize', () => {
+            // Debounce the resize event
+            if (window.resizeTimer) clearTimeout(window.resizeTimer);
+            window.resizeTimer = setTimeout(() => {
+                console.log("Window resized, updating viewport indicator");
+                updateViewportIndicator();
+            }, 250);
+        });
     });
 
-    function clampPan(tx, ty, s) {
-        const mainBounds = getMainERDBounds();
-        const svgWidth = window.innerWidth;
-        const svgHeight = window.innerHeight;
-        const scaledWidth = mainBounds.width * s * initialS;
-        const scaledHeight = mainBounds.height * s * initialS;
-
-        // Calculate min/max tx/ty so at least half of SVG stays visible
-        const minTx = svgWidth / (2 * initialS) - (mainBounds.x + mainBounds.width) * s;
-        const maxTx = (mainBounds.x + mainBounds.width / 2) * s - svgWidth;
-        const minTy = svgHeight / (2 * initialS) - (mainBounds.y + mainBounds.height) * s;
-        const maxTy = (mainBounds.y + mainBounds.height / 2) * s - svgHeight;
-
-        return {
-            tx: Math.min(Math.max(tx, minTx), maxTx),
-            ty: Math.min(Math.max(ty, minTy), maxTy)
-        };
-    }
-
-    function placeFloatingWindows() {
-        // Top left for metadata
-        const metadataContainer = document.getElementById('metadata-container');
-        if (metadataContainer) {
-            metadataContainer.style.position = 'fixed';
-            metadataContainer.style.left = '10px';
-            metadataContainer.style.top = '20px';
-            metadataContainer.style.zIndex = '10000';
-        }
-
-        // Top right for miniature/overview
-        const miniatureContainer = document.getElementById('miniature-container');
-        let rect = metadataContainer.getClientRects()[0];
-        if (miniatureContainer) {
-            miniatureContainer.style.position = 'fixed';
-            miniatureContainer.style.left = rect.width + 'px';
-            miniatureContainer.style.right = '';
-            miniatureContainer.style.top = '20px';
-            miniatureContainer.style.zIndex = '10001';
-        }
-        // Bottom left for selection
-        const selectionContainer = document.getElementById('selection-container');
-        if (selectionContainer) {
-            // Additional positioning logic if needed
-        }
-    }
-    placeFloatingWindows();
-    ensureResizeHandles(miniatureContainer);
-    ensureResizeHandles(selectionContainer);
-    makeResizable(miniatureContainer);
-    makeResizable(selectionContainer);
-
-    // Add this function after the showSelectionWindow function
-    function ensureResizeHandles(container) {
-        if (!container) return;
-        
-        // Check for SE handle
-        let seHandle = container.querySelector('#resize_handle_se');
-        if (!seHandle) {
-            seHandle = document.createElement('div');
-            seHandle.id = 'resize_handle_se';
-            seHandle.className = 'resize-handle se';
-            seHandle.style.position = 'absolute';
-            seHandle.style.right = '0';
-            seHandle.style.bottom = '0';
-            seHandle.style.width = '10px';
-            seHandle.style.height = '10px';
-            seHandle.style.cursor = 'nwse-resize';
-            seHandle.style.backgroundColor = '#666';
-            container.appendChild(seHandle);
-        }
-        
-        // Check for NW handle
-        let nwHandle = container.querySelector('#resize_handle_nw');
-        if (!nwHandle) {
-            nwHandle = document.createElement('div');
-            nwHandle.id = 'resize_handle_nw';
-            nwHandle.className = 'resize-handle nw';
-            nwHandle.style.position = 'absolute';
-            nwHandle.style.left = '0';
-            nwHandle.style.top = '0';
-            nwHandle.style.width = '10px';
-            nwHandle.style.height = '10px';
-            nwHandle.style.cursor = 'nwse-resize';
-            nwHandle.style.backgroundColor = '#666';
-            container.appendChild(nwHandle);
-        }
-    }
-
-    // Add this after makeResizable(selectionContainer)
-
-    // Add font scaling functionality for the selection window
-    function setupAdaptiveFontSize(container, innerContainer) {
-        if (!container || !innerContainer) return;
-        
-        // Set initial overflow to hidden to prevent content spilling
-        innerContainer.style.overflow = 'hidden';
-        
-        // Function to adjust font size based on container width
-        const adjustFontSize = () => {
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            
-            // Base font size and minimum font size
-            const baseFontSize = 14; // Default font size in pixels
-            const minFontSize = 9;   // Minimum font size in pixels
-            
-            // Calculate scaling factor based on width
-            // Adjust these numbers to tune the scaling behavior
-            const idealWidth = 400;  // Width at which we want the base font size
-            let scaleFactor = containerWidth / idealWidth;
-            
-            // Ensure font size stays within reasonable bounds
-            let newFontSize = Math.max(minFontSize, Math.min(baseFontSize, baseFontSize * scaleFactor));
-            
-            // Apply the new font size to the inner container
-            innerContainer.style.fontSize = `${newFontSize}px`;
-            
-            // Also adjust line height for better readability
-            innerContainer.style.lineHeight = `${Math.max(1.2, 1 + (scaleFactor * 0.2))}`;
-        };
-        
-        // Create a ResizeObserver to watch for size changes
-        const resizeObserver = new ResizeObserver(() => {
-            requestAnimationFrame(adjustFontSize);
-        });
-        
-        // Start observing the container
-        resizeObserver.observe(container);
-        
-        // Apply initial font sizing
-        adjustFontSize();
-    }
-
-    // Call the function for the selection container
-    if (selectionContainer && selectionInner) {
-        setupAdaptiveFontSize(selectionContainer, selectionInner);
+    // Backup initialization for cases when DOMContentLoaded already fired
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log("Document already loaded, initializing directly");
+        setTimeout(initializeSvgView, 300);
     }
 });
 

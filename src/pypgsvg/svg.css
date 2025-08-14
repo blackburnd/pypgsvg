@@ -78,11 +78,15 @@
 
 /* Viewport Indicator */
 .viewport-indicator {
-    position: absolute;
-    border: 2px solid red;
-    background-color: rgba(255, 0, 0, 0.2);
-    pointer-events: auto;
-    opacity: 0.5;
+    position: absolute !important;
+    display: block !important;
+    border: 2px solid #ff4081 !important;
+    background-color: rgba(255, 64, 129, 0.2) !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    z-index: 1000 !important;
+    min-width: 10px !important;
+    min-height: 10px !important;
     transition: all 0.1s ease;
     box-sizing: border-box;
     cursor: grab;
@@ -250,4 +254,55 @@
 
 .edge-name pre {
     margin: 2px 0;
+}
+
+/* Add to your CSS for the copy button */
+.copy-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.copy-btn:hover {
+    background: #ddd;
+}
+
+/* Add to your CSS for the edit button */
+.edit-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.edit-btn:hover {
+    background: #ddd;
+}
+
+/* Make table-name and edge-name more obviously clickable */
+.table-name, .edge-name {
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.table-name:hover, .edge-name:hover {
+    background-color: rgba(200, 200, 200, 0.5); /* More visible hover effect */
+    text-decoration: underline;
 }
