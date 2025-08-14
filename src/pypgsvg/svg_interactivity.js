@@ -320,7 +320,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let this_table = selectedTables[0];
             selection_header = document.getElementById('selection-header');
             selection_header.setAttribute('innerHTML', `Selected Table: ${this_table}`);
-            html += '<div><b>Related Tables:</b><br/> ' + selectedTables.join('<br/>') + '</div>';
+            
+            // Create table entries with data attributes for hover effects
+            html += '<div><b>Related Tables:</b><br/>';
+            selectedTables.forEach(tableId => {
+                // Add data-table-id attribute for event handling
+                html += `<span class="table-name" data-table-id="${tableId}">${tableId}</span><br/>`;
+            });
+            html += '</div>';
         }
 
         if (selectedEdges.length) {
@@ -336,13 +343,62 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</ul></div>';
         }
 
-    
         inner.innerHTML = html;
+
+        // Add hover event listeners to table names
+        const tableNames = inner.querySelectorAll('.table-name');
+        tableNames.forEach(tableNameSpan => {
+            const tableId = tableNameSpan.getAttribute('data-table-id');
+            
+            // Mouseover event - highlight the table
+            tableNameSpan.addEventListener('mouseover', () => {
+                // Get the table element in the SVG
+                const tableElement = document.getElementById(tableId);
+                if (tableElement) {
+                    // Store original background for restoration
+                    if (!tableElement.dataset.originalBackground) {
+                        const polygons = tableElement.querySelectorAll('polygon');
+                        polygons.forEach(polygon => {
+                            if (!polygon.dataset.originalFill) {
+                                polygon.dataset.originalFill = polygon.getAttribute('fill') || 'white';
+                            }
+                        });
+                    }
+                    
+                    // Apply highlighting
+                    const backgroundColor = tables[tableId].defaultColor || '#712e2eff';
+                    const polygons = tableElement.querySelectorAll('polygon');
+                    polygons.forEach(polygon => {
+                        // Only change non-header polygons
+                        if (!polygon.classList.contains('title')) {
+                            polygon.setAttribute('fill', backgroundColor);
+                        }
+                    });
+                    
+                    // Increase opacity for better visibility
+                    tableElement.setAttribute('opacity', '1');
+                }
+            });
+            
+            // Mouseout event - restore original background
+            tableNameSpan.addEventListener('mouseout', () => {
+                const tableElement = document.getElementById(tableId);
+                if (tableElement) {
+                    const polygons = tableElement.querySelectorAll('polygon');
+                    polygons.forEach(polygon => {
+                        // Only reset non-header polygons
+                        if (!polygon.classList.contains('title')) {
+                            polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
+                        }
+                    });
+                }
+            });
+        });
 
         // Use getComputedStyle to get accurate dimensions
         const computedStyle = window.getComputedStyle(selectionContainer);
         const containerWidth = parseFloat(computedStyle.width);
-        const containerHeight = parseFloat(computedStyle.heisght);
+        const containerHeight = parseFloat(computedStyle.height);
         rect = selectionContainer.getBoundingClientRect();
         const left = window.innerWidth - (containerWidth * 2);
 

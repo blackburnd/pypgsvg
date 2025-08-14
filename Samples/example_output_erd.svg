@@ -2945,6 +2945,19 @@
     font-size: inherit;  /* Inherit the dynamic font size */
 }
 
+/* Style for table names in selection window */
+.table-name {
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.table-name:hover {
+    background-color: rgba(200, 200, 200, 0.3);
+}
+
 ]]></style>
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
@@ -2960,7 +2973,7 @@
     <div class='header'>Metadata</div>
     <div class='metadata-inner-container container-content'>
     <ul>
-        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-14 10:27:33</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
+        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-14 10:34:10</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
     </ul>
     </div>
 </div>
@@ -6026,7 +6039,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let this_table = selectedTables[0];
             selection_header = document.getElementById('selection-header');
             selection_header.setAttribute('innerHTML', `Selected Table: ${this_table}`);
-            html += '<div><b>Related Tables:</b><br/> ' + selectedTables.join('<br/>') + '</div>';
+            
+            // Create table entries with data attributes for hover effects
+            html += '<div><b>Related Tables:</b><br/>';
+            selectedTables.forEach(tableId => {
+                // Add data-table-id attribute for event handling
+                html += `<span class="table-name" data-table-id="${tableId}">${tableId}</span><br/>`;
+            });
+            html += '</div>';
         }
 
         if (selectedEdges.length) {
@@ -6042,13 +6062,62 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</ul></div>';
         }
 
-    
         inner.innerHTML = html;
+
+        // Add hover event listeners to table names
+        const tableNames = inner.querySelectorAll('.table-name');
+        tableNames.forEach(tableNameSpan => {
+            const tableId = tableNameSpan.getAttribute('data-table-id');
+            
+            // Mouseover event - highlight the table
+            tableNameSpan.addEventListener('mouseover', () => {
+                // Get the table element in the SVG
+                const tableElement = document.getElementById(tableId);
+                if (tableElement) {
+                    // Store original background for restoration
+                    if (!tableElement.dataset.originalBackground) {
+                        const polygons = tableElement.querySelectorAll('polygon');
+                        polygons.forEach(polygon => {
+                            if (!polygon.dataset.originalFill) {
+                                polygon.dataset.originalFill = polygon.getAttribute('fill') || 'white';
+                            }
+                        });
+                    }
+                    
+                    // Apply highlighting
+                    const backgroundColor = tables[tableId].defaultColor || '#712e2eff';
+                    const polygons = tableElement.querySelectorAll('polygon');
+                    polygons.forEach(polygon => {
+                        // Only change non-header polygons
+                        if (!polygon.classList.contains('title')) {
+                            polygon.setAttribute('fill', backgroundColor);
+                        }
+                    });
+                    
+                    // Increase opacity for better visibility
+                    tableElement.setAttribute('opacity', '1');
+                }
+            });
+            
+            // Mouseout event - restore original background
+            tableNameSpan.addEventListener('mouseout', () => {
+                const tableElement = document.getElementById(tableId);
+                if (tableElement) {
+                    const polygons = tableElement.querySelectorAll('polygon');
+                    polygons.forEach(polygon => {
+                        // Only reset non-header polygons
+                        if (!polygon.classList.contains('title')) {
+                            polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
+                        }
+                    });
+                }
+            });
+        });
 
         // Use getComputedStyle to get accurate dimensions
         const computedStyle = window.getComputedStyle(selectionContainer);
         const containerWidth = parseFloat(computedStyle.width);
-        const containerHeight = parseFloat(computedStyle.heisght);
+        const containerHeight = parseFloat(computedStyle.height);
         rect = selectionContainer.getBoundingClientRect();
         const left = window.innerWidth - (containerWidth * 2);
 

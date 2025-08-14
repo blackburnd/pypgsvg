@@ -224,3 +224,16 @@
     word-wrap: break-word;
     font-size: inherit;  /* Inherit the dynamic font size */
 }
+
+/* Style for table names in selection window */
+.table-name {
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.table-name:hover {
+    background-color: rgba(200, 200, 200, 0.3);
+}
