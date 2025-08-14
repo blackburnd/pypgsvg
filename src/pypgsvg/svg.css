@@ -237,3 +237,17 @@
 .table-name:hover {
     background-color: rgba(200, 200, 200, 0.3);
 }
+
+/* Style for edge names in selection window */
+.edge-name {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.edge-name:hover {
+    background-color: rgba(200, 200, 200, 0.3);
+}
+
+.edge-name pre {
+    margin: 2px 0;
+}

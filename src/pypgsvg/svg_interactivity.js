@@ -330,19 +330,22 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</div>';
         }
 
+        // Update the foreign keys section in showSelectionWindow function
+
         if (selectedEdges.length) {
             html += '<div id="selected_edges"><b>Foreign Keys:</b><ul>';
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
-                    html += `<li><pre>${edge.fkText}</pre></li>`;
+                    // Add edge-name class and data-edge-id attribute
+                    html += `<li class="edge-name" data-edge-id="${edgeId}"><pre>${edge.fkText}</pre></li>`;
                 } else {
-                    html += `<li>${edgeId}</li>`;
+                    html += `<li class="edge-name" data-edge-id="${edgeId}">${edgeId}</li>`;
                 }
             }
             html += '</ul></div>';
         }
-
+        
         inner.innerHTML = html;
 
         // Add hover event listeners to table names
@@ -354,6 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tableNameSpan.addEventListener('mouseover', () => {
                 // Get the table element in the SVG
                 const tableElement = document.getElementById(tableId);
+                const miniTableElement = document.getElementById('mini-' + tableId);
+                
                 if (tableElement) {
                     // Store original background for restoration
                     if (!tableElement.dataset.originalBackground) {
@@ -378,11 +383,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Increase opacity for better visibility
                     tableElement.setAttribute('opacity', '1');
                 }
+                
+                // Also highlight the miniature version
+                if (miniTableElement) {
+                    // Store original background for restoration
+                    if (!miniTableElement.dataset.originalBackground) {
+                        const miniPolygons = miniTableElement.querySelectorAll('polygon');
+                        miniPolygons.forEach(polygon => {
+                            if (!polygon.dataset.originalFill) {
+                                polygon.dataset.originalFill = polygon.getAttribute('fill') || 'white';
+                            }
+                        });
+                    }
+                    
+                    // Apply highlighting to miniature
+                    const backgroundColor = tables[tableId].defaultColor || '#712e2eff';
+                    const miniPolygons = miniTableElement.querySelectorAll('polygon');
+                    miniPolygons.forEach(polygon => {
+                        polygon.setAttribute('fill', backgroundColor);
+                    });
+                    
+                    // Increase opacity for better visibility
+                    miniTableElement.setAttribute('opacity', '1');
+                }
             });
             
             // Mouseout event - restore original background
             tableNameSpan.addEventListener('mouseout', () => {
                 const tableElement = document.getElementById(tableId);
+                const miniTableElement = document.getElementById('mini-' + tableId);
+                
                 if (tableElement) {
                     const polygons = tableElement.querySelectorAll('polygon');
                     polygons.forEach(polygon => {
@@ -390,6 +420,147 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!polygon.classList.contains('title')) {
                             polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
                         }
+                    });
+                }
+                
+                // Also restore the miniature version
+                if (miniTableElement) {
+                    const miniPolygons = miniTableElement.querySelectorAll('polygon');
+                    miniPolygons.forEach(polygon => {
+                        polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
+                    });
+                }
+            });
+        });
+
+        // Add hover event listeners to edge names
+        const edgeNames = inner.querySelectorAll('.edge-name');
+        edgeNames.forEach(edgeNameLi => {
+            const edgeId = edgeNameLi.getAttribute('data-edge-id');
+            
+            // Mouseover event - highlight the edge
+            edgeNameLi.addEventListener('mouseover', () => {
+                // First reduce opacity of ALL edges in the graph
+                Object.keys(edges).forEach(currEdgeId => {
+                    const currEdgeElement = document.getElementById(currEdgeId);
+                    const currMiniEdgeElement = document.getElementById('mini-' + currEdgeId);
+                    
+                    if (currEdgeElement) {
+                        // Store original opacity if not already stored
+                        if (!currEdgeElement.dataset.originalOpacity) {
+                            currEdgeElement.dataset.originalOpacity = currEdgeElement.getAttribute('opacity') || '1';
+                        }
+                        // Reduce opacity for all edges
+                        currEdgeElement.setAttribute('opacity', '0.2');
+                    }
+                    
+                    if (currMiniEdgeElement) {
+                        // Store original opacity for miniature
+                        if (!currMiniEdgeElement.dataset.originalOpacity) {
+                            currMiniEdgeElement.dataset.originalOpacity = currMiniEdgeElement.getAttribute('opacity') || '1';
+                        }
+                        // Reduce opacity for all mini edges
+                        currMiniEdgeElement.setAttribute('opacity', '0.2');
+                    }
+                });
+                
+                // Now highlight just the edge we're hovering over
+                const edgeElement = document.getElementById(edgeId);
+                const miniEdgeElement = document.getElementById('mini-' + edgeId);
+                
+                if (edgeElement) {
+                    // Store original styles for restoration if not already stored
+                    if (!edgeElement.dataset.originalStyles) {
+                        const paths = edgeElement.querySelectorAll('path');
+                        paths.forEach((path, index) => {
+                            path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '1';
+                            path.dataset.originalOpacity = path.getAttribute('opacity') || '1';
+                        });
+                        edgeElement.dataset.originalStyles = 'saved';
+                    }
+                    
+                    // Apply highlighting to the hovered edge
+                    const paths = edgeElement.querySelectorAll('path');
+                    if (paths.length > 0) {
+                        paths[0].setAttribute('stroke-width', '16');
+                    }
+                    if (paths.length > 1) {
+                        paths[1].setAttribute('stroke-width', '7');
+                        paths[1].setAttribute('opacity', '1');
+                    }
+                    if (paths.length === 1) {
+                        paths[0].setAttribute('stroke-width', '3');
+                        paths[0].setAttribute('opacity', '1');
+                    }
+                    
+                    // Set this edge to full opacity
+                    edgeElement.setAttribute('opacity', '1');
+                }
+                
+                // Also highlight the miniature edge
+                if (miniEdgeElement) {
+                    // Store original styles for mini edge
+                    if (!miniEdgeElement.dataset.originalStyles) {
+                        const miniPaths = miniEdgeElement.querySelectorAll('path');
+                        miniPaths.forEach((path, index) => {
+                            path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '1';
+                            path.dataset.originalOpacity = path.getAttribute('opacity') || '1';
+                        });
+                        miniEdgeElement.dataset.originalStyles = 'saved';
+                    }
+                    
+                    // Apply highlighting to mini edge
+                    const miniPaths = miniEdgeElement.querySelectorAll('path');
+                    if (miniPaths.length > 0) {
+                        miniPaths[0].setAttribute('stroke-width', '6'); // Smaller for mini
+                    }
+                    if (miniPaths.length > 1) {
+                        miniPaths[1].setAttribute('stroke-width', '3'); // Smaller for mini
+                        miniPaths[1].setAttribute('opacity', '1');
+                    }
+                    if (miniPaths.length === 1) {
+                        miniPaths[0].setAttribute('stroke-width', '2'); // Smaller for mini
+                        miniPaths[0].setAttribute('opacity', '1');
+                    }
+                    
+                    // Set miniature edge to full opacity
+                    miniEdgeElement.setAttribute('opacity', '1');
+                }
+            });
+            
+            // Mouseout event - restore original styles for all edges
+            edgeNameLi.addEventListener('mouseout', () => {
+                // Restore opacity for all edges
+                Object.keys(edges).forEach(currEdgeId => {
+                    const currEdgeElement = document.getElementById(currEdgeId);
+                    const currMiniEdgeElement = document.getElementById('mini-' + currEdgeId);
+                    
+                    if (currEdgeElement && currEdgeElement.dataset.originalOpacity) {
+                        currEdgeElement.setAttribute('opacity', currEdgeElement.dataset.originalOpacity);
+                    }
+                    
+                    if (currMiniEdgeElement && currMiniEdgeElement.dataset.originalOpacity) {
+                        currMiniEdgeElement.setAttribute('opacity', currMiniEdgeElement.dataset.originalOpacity);
+                    }
+                });
+                
+                // Restore specific styles for the edge we were hovering over
+                const edgeElement = document.getElementById(edgeId);
+                const miniEdgeElement = document.getElementById('mini-' + edgeId);
+                
+                if (edgeElement && edgeElement.dataset.originalStyles) {
+                    const paths = edgeElement.querySelectorAll('path');
+                    paths.forEach((path, index) => {
+                        path.setAttribute('stroke-width', path.dataset.originalStrokeWidth || '1');
+                        path.setAttribute('opacity', path.dataset.originalOpacity || '1');
+                    });
+                }
+                
+                if (miniEdgeElement && miniEdgeElement.dataset.originalStyles) {
+                    const miniPaths = miniEdgeElement.querySelectorAll('path');
+                    miniPaths.forEach((path, index) => {
+                        path.setAttribute('stroke-width', path.dataset.originalStrokeWidth || '1');
+                        path.setAttribute('opacity', path.dataset.originalOpacity || '1');
                     });
                 }
             });
