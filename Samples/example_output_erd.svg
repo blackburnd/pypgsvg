@@ -3073,7 +3073,7 @@
     <div class='header'>Metadata</div>
     <div class='metadata-inner-container container-content'>
     <ul>
-        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-15 09:45:47</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
+        <li>Source: schema.dump</li><li>File Size: 209,595 bytes</li><li>Generated: 2025-08-15 10:46:00</li><li>Tables: 64</li><li>Columns: 664</li><li>Foreign Keys: 107</li><li>Connections: 107</li><li>rankdir: TB</li><li>packmode: graph</li><li>show_standalone: False</li><li>esep: 8</li><li>fontname: Arial</li><li>fontsize: 18</li><li>node_fontsize: 14</li><li>edge_fontsize: 12</li><li>node_style: rounded,filled</li><li>node_shape: rect</li><li>node_sep: 4</li><li>rank_sep: 3</li><li>triggers: 39</li>
     </ul>
     </div>
 </div>
@@ -6649,6 +6649,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addWindowControls(miniatureContainer, { 
             buttons: { copy: false, edit: false }  // No copy or edit button
         });
+        makeResizable(miniatureContainer);
     }
     // Viewport indicator drag
     if (viewportIndicator) {
@@ -6700,6 +6701,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addWindowControls(selectionContainer, { 
             buttons: { copy: false, edit: true }   // Edit button but no copy
         });
+        makeResizable(selectionContainer);
         // Modified selection window mousedown handler
         selectionContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
@@ -6712,15 +6714,20 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
 
+            // Get the container's current position
+            const rect = selectionContainer.getBoundingClientRect();
+            
+            // Calculate the offset from mouse to container's top-left corner
+            const offsetX = event.clientX - rect.left;
+            const offsetY = event.clientY - rect.top;
+            
             // Create a separate drag state specifically for the window
             // This avoids conflicts with the SVG pan state
             const windowDragState = {
                 type: 'selection-window',
                 target: selectionContainer,
-                startX: event.clientX,
-                startY: event.clientY,
-                offsetX: selectionContainer.getBoundingClientRect().left,
-                offsetY: selectionContainer.getBoundingClientRect().top
+                offsetX: offsetX,
+                offsetY: offsetY
             };
             
             // Store this separate state
@@ -6732,11 +6739,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 moveEvent.preventDefault();
                 moveEvent.stopPropagation();
                 
-                const dx = moveEvent.clientX - windowDragState.startX + windowDragState.offsetX;
-                const dy = moveEvent.clientY - windowDragState.startY + windowDragState.offsetY;
+                // Calculate new position by subtracting the offset from mouse position
+                const newX = moveEvent.clientX - windowDragState.offsetX;
+                const newY = moveEvent.clientY - windowDragState.offsetY;
                 
-                selectionContainer.style.left = `${dx}px`;
-                selectionContainer.style.top = `${dy}px`;
+                selectionContainer.style.left = `${newX}px`;
+                selectionContainer.style.top = `${newY}px`;
             };
             
             // Create window-specific mouseup handler
@@ -6894,13 +6902,27 @@ document.addEventListener('DOMContentLoaded', () => {
             isPanning = false;
         } else if (dragState.type === 'resize') {
             const rect = dragState.target.getBoundingClientRect();
+            const currentLeft = parseFloat(dragState.target.style.left) || rect.left;
+            const currentTop = parseFloat(dragState.target.style.top) || rect.top;
             const newWidth = rect.width;
             const newHeight = rect.height;
-            // Optionally, you can snap to a grid or minimum size
+            
+            // Apply minimum size constraints while preserving position
             const minSize = 50;
             if (newWidth < minSize || newHeight < minSize) {
-                dragState.target.style.width = `${minSize}px`;
-                dragState.target.style.height = `${minSize}px`;
+                const constrainedWidth = Math.max(minSize, newWidth);
+                const constrainedHeight = Math.max(minSize, newHeight);
+                
+                // Only update dimensions, don't touch position
+                dragState.target.style.width = `${constrainedWidth}px`;
+                dragState.target.style.height = `${constrainedHeight}px`;
+                
+                // Update SVG inside if it exists
+                const svgImage = dragState.target.querySelector('svg');
+                if (svgImage) {
+                    svgImage.setAttribute('width', `${constrainedWidth}px`);
+                    svgImage.setAttribute('height', `${constrainedHeight}px`);
+                }
             }
         }
         // Reset all dragState properties
@@ -7047,12 +7069,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerX = mainBounds.x + mainBounds.width / 2;
             const centerY = mainBounds.y + mainBounds.height / 2;
             
-            // Calculate zoom level (fit the diagram with some padding)
+            // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const scaleX = viewportWidth / (mainBounds.width * 1.1); // 10% padding
-            const scaleY = viewportHeight / (mainBounds.height * 1.1);
-            const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 1:1
+            const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
+            const scaleY = viewportHeight / (mainBounds.height * 0.8);
+            const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
             
             // Reset and apply transformation
             userTx = 0;
@@ -7085,6 +7107,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     top: viStyle.top,
                     opacity: viStyle.opacity
                 });
+            }
+            
+            // Position miniature container next to metadata container
+            const metadataContainer = document.getElementById('metadata-container');
+            if (miniatureContainer && metadataContainer) {
+                const metadataRect = metadataContainer.getBoundingClientRect();
+                const margin = 16; // 16px margin between containers
+                
+                miniatureContainer.style.position = 'fixed';
+                miniatureContainer.style.left = `${metadataRect.right + margin}px`;
+                miniatureContainer.style.top = `${metadataRect.top}px`;
+                
+                console.log("Positioned miniature container next to metadata container");
             }
         } catch (error) {
             console.error("Error during SVG initialization:", error);

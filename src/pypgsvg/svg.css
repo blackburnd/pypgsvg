@@ -117,6 +117,28 @@
     cursor: pointer;
 }
 
+/* Make edges easier to click by increasing their click area */
+.edge path {
+    stroke-width: 8px; /* Invisible wider stroke for easier clicking */
+    stroke: transparent;
+    pointer-events: stroke;
+}
+
+.edge path[stroke]:not([stroke="transparent"]) {
+    stroke-width: 3px; /* Keep visible stroke thin */
+    pointer-events: none; /* Let the transparent wider path handle clicks */
+}
+
+/* Alternative approach: add hover effects to make edges more visible */
+.edge:hover path[stroke]:not([stroke="transparent"]) {
+    stroke-width: 4px;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+}
+
+.node:hover {
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.2));
+}
+
 /* Metadata Minimap Row */
 .metadata-minimap-row {
     width: 100%;
@@ -138,6 +160,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 10px;
     border-radius: 5px;
+    box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
 #selection-container container-content{

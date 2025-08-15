@@ -223,14 +223,31 @@ document.addEventListener('DOMContentLoaded', () => {
             nwHandle.addEventListener('mousedown', function(event) {
                 dragState.type = 'resize';
                 const rect = windowElem.getBoundingClientRect();
+                
+                // Ensure we have inline styles set for consistent positioning
+                if (!windowElem.style.left) {
+                    windowElem.style.left = `${rect.left}px`;
+                }
+                if (!windowElem.style.top) {
+                    windowElem.style.top = `${rect.top}px`;
+                }
+                if (!windowElem.style.width) {
+                    windowElem.style.width = `${windowElem.offsetWidth}px`;
+                }
+                if (!windowElem.style.height) {
+                    windowElem.style.height = `${windowElem.offsetHeight}px`;
+                }
+                
                 dragState.target = windowElem; // The target is the window, not the handle
                 dragState.handle = 'nw'; // Mark which handle we're using
                 dragState.startX = event.clientX;
                 dragState.startY = event.clientY;
-                dragState.startWidth = rect.width;
-                dragState.startHeight = rect.height;
-                dragState.startLeft = rect.left;
-                dragState.startTop = rect.top;
+                // Use consistent CSS dimensions instead of getBoundingClientRect
+                dragState.startWidth = parseFloat(windowElem.style.width);
+                dragState.startHeight = parseFloat(windowElem.style.height);
+                // Now we can safely use the inline style values
+                dragState.startLeft = parseFloat(windowElem.style.left);
+                dragState.startTop = parseFloat(windowElem.style.top);
                 windowElem.classList.add('resizing');
                 event.preventDefault();
                 event.stopPropagation();
@@ -241,12 +258,22 @@ document.addEventListener('DOMContentLoaded', () => {
             seHandle.addEventListener('mousedown', function(event) {
                 dragState.type = 'resize';
                 const rect = windowElem.getBoundingClientRect();
+                
+                // Ensure we have inline styles and use consistent CSS dimensions
+                if (!windowElem.style.width) {
+                    windowElem.style.width = `${windowElem.offsetWidth}px`;
+                }
+                if (!windowElem.style.height) {
+                    windowElem.style.height = `${windowElem.offsetHeight}px`;
+                }
+                
                 dragState.target = windowElem; // The target is the window, not the handle
                 dragState.handle = 'se'; // Mark which handle we're using
                 dragState.startX = event.clientX;
                 dragState.startY = event.clientY;
-                dragState.startWidth = rect.width;
-                dragState.startHeight = rect.height;
+                // Use the CSS dimensions instead of getBoundingClientRect
+                dragState.startWidth = parseFloat(windowElem.style.width);
+                dragState.startHeight = parseFloat(windowElem.style.height);
                 windowElem.classList.add('resizing');
                 event.preventDefault();
                 event.stopPropagation();
@@ -816,13 +843,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const miniatureHeader = document.getElementById('miniature-header');
     if (miniatureHeader) {
         miniatureHeader.addEventListener('mousedown', (event) => {
-            rect = miniatureContainer.getBoundingClientRect();
+            const rect = miniatureContainer.getBoundingClientRect();
+            
+            // Ensure we have inline styles set for consistent positioning
+            if (!miniatureContainer.style.left) {
+                miniatureContainer.style.left = `${rect.left}px`;
+            }
+            if (!miniatureContainer.style.top) {
+                miniatureContainer.style.top = `${rect.top}px`;
+            }
+            
             dragState.type = 'miniature';
             dragState.target = miniatureContainer;
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
-            dragState.offsetX = rect.left;
-            dragState.offsetY = rect.top;
+            // Now we can safely use the inline style values  
+            dragState.offsetX = parseFloat(miniatureContainer.style.left);
+            dragState.offsetY = parseFloat(miniatureContainer.style.top);
             dragState.target.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -830,6 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addWindowControls(miniatureContainer, { 
             buttons: { copy: false, edit: false }  // No copy or edit button
         });
+        makeResizable(miniatureContainer);
     }
     // Viewport indicator drag
     if (viewportIndicator) {
@@ -855,19 +893,31 @@ document.addEventListener('DOMContentLoaded', () => {
         addWindowControls(metadataContainer, { 
             buttons: { copy: true, edit: false }   // Copy button but no edit
         });
+        makeResizable(metadataContainer);
         metadataContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
             if (
                 event.target.closest('.window-controls') ||
                 event.target.tagName === 'BUTTON'
             ) return;
+            
+            const rect = metadataContainer.getBoundingClientRect();
+            
+            // Ensure we have inline styles set for consistent positioning
+            if (!metadataContainer.style.left) {
+                metadataContainer.style.left = `${rect.left}px`;
+            }
+            if (!metadataContainer.style.top) {
+                metadataContainer.style.top = `${rect.top}px`;
+            }
+            
             dragState.type = 'metadata';
             dragState.target = metadataContainer;
-            const rect = metadataContainer.getBoundingClientRect();
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
-            dragState.offsetX = rect.left;
-            dragState.offsetY = rect.top;
+            // Now we can safely use the inline style values
+            dragState.offsetX = parseFloat(metadataContainer.style.left);
+            dragState.offsetY = parseFloat(metadataContainer.style.top);
             metadataContainer.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
@@ -881,6 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addWindowControls(selectionContainer, { 
             buttons: { copy: false, edit: true }   // Edit button but no copy
         });
+        makeResizable(selectionContainer);
         // Modified selection window mousedown handler
         selectionContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
@@ -893,15 +944,26 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             event.stopPropagation();
 
-            // Create a separate drag state specifically for the window
-            // This avoids conflicts with the SVG pan state
+            // Get the container's current position
+            const rect = selectionContainer.getBoundingClientRect();
+            
+            // Ensure we have inline styles set for consistent positioning
+            if (!selectionContainer.style.left) {
+                selectionContainer.style.left = `${rect.left}px`;
+            }
+            if (!selectionContainer.style.top) {
+                selectionContainer.style.top = `${rect.top}px`;
+            }
+            
+            // Use the same approach as metadata container (which works perfectly)
             const windowDragState = {
                 type: 'selection-window',
                 target: selectionContainer,
                 startX: event.clientX,
                 startY: event.clientY,
-                offsetX: selectionContainer.getBoundingClientRect().left,
-                offsetY: selectionContainer.getBoundingClientRect().top
+                // Now we can safely use the inline style values
+                offsetX: parseFloat(selectionContainer.style.left),
+                offsetY: parseFloat(selectionContainer.style.top)
             };
             
             // Store this separate state
@@ -913,11 +975,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 moveEvent.preventDefault();
                 moveEvent.stopPropagation();
                 
-                const dx = moveEvent.clientX - windowDragState.startX + windowDragState.offsetX;
-                const dy = moveEvent.clientY - windowDragState.startY + windowDragState.offsetY;
+                // Use same calculation as metadata container: movement delta + original position
+                const dx = moveEvent.clientX - windowDragState.startX;
+                const dy = moveEvent.clientY - windowDragState.startY;
                 
-                selectionContainer.style.left = `${dx}px`;
-                selectionContainer.style.top = `${dy}px`;
+                const newX = windowDragState.offsetX + dx;
+                const newY = windowDragState.offsetY + dy;
+                
+                selectionContainer.style.left = `${newX}px`;
+                selectionContainer.style.top = `${newY}px`;
             };
             
             // Create window-specific mouseup handler
@@ -938,9 +1004,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
-        // Check if we're inside selection-container or its children
-        if (event.target.closest('#selection-container')) {
-            return; // Don't initiate pan if we're in the selection container
+        // Check if we're inside any of the overlay containers or their children
+        if (event.target.closest('#selection-container') || 
+            event.target.closest('#miniature-container') ||
+            event.target.closest('#metadata-container')) {
+            return; // Don't initiate pan if we're in these containers
         }
 
         event.preventDefault();
@@ -996,13 +1064,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 userTy += (dy * panX) / (userS * initialS);
                 applyTransform();
             }
-        } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
-            dx = event.clientX - dragState.startX + dragState.offsetX;
-            dy = event.clientY - dragState.startY + dragState.offsetY;
+        } else if (['miniature', 'metadata'].includes(dragState.type)) {
+            // Calculate movement delta and apply to original position
+            dx = event.clientX - dragState.startX;
+            dy = event.clientY - dragState.startY;
+            
+            const newX = dragState.offsetX + dx;
+            const newY = dragState.offsetY + dy;
 
-            //console.log(`Dragging ${dragState.type} to (${dx}, ${dy})`);
-            dragState.target.style.left = `${dx}px`;
-            dragState.target.style.top = `${dy}px`;
+            //console.log(`Dragging ${dragState.type} to (${newX}, ${newY})`);
+            dragState.target.style.left = `${newX}px`;
+            dragState.target.style.top = `${newY}px`;
 
         } else if (dragState.type === 'indicator') {
             event.preventDefault();
@@ -1075,13 +1147,27 @@ document.addEventListener('DOMContentLoaded', () => {
             isPanning = false;
         } else if (dragState.type === 'resize') {
             const rect = dragState.target.getBoundingClientRect();
+            const currentLeft = parseFloat(dragState.target.style.left) || rect.left;
+            const currentTop = parseFloat(dragState.target.style.top) || rect.top;
             const newWidth = rect.width;
             const newHeight = rect.height;
-            // Optionally, you can snap to a grid or minimum size
+            
+            // Apply minimum size constraints while preserving position
             const minSize = 50;
             if (newWidth < minSize || newHeight < minSize) {
-                dragState.target.style.width = `${minSize}px`;
-                dragState.target.style.height = `${minSize}px`;
+                const constrainedWidth = Math.max(minSize, newWidth);
+                const constrainedHeight = Math.max(minSize, newHeight);
+                
+                // Only update dimensions, don't touch position
+                dragState.target.style.width = `${constrainedWidth}px`;
+                dragState.target.style.height = `${constrainedHeight}px`;
+                
+                // Update SVG inside if it exists
+                const svgImage = dragState.target.querySelector('svg');
+                if (svgImage) {
+                    svgImage.setAttribute('width', `${constrainedWidth}px`);
+                    svgImage.setAttribute('height', `${constrainedHeight}px`);
+                }
             }
         }
         // Reset all dragState properties
@@ -1151,17 +1237,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.closest('svg')) {
             let clickedElement = event.target;
             let tableId = null, edgeId = null;
+            
+            // First, try to find a node or edge by traversing up the DOM tree
             while (clickedElement && clickedElement !== svg) {
                 if (clickedElement.classList && clickedElement.classList.contains('node')) {
-                    tableId = clickedElement.id; break;
+                    tableId = clickedElement.id; 
+                    break;
                 }
                 if (clickedElement.classList && clickedElement.classList.contains('edge')) {
-                    edgeId = clickedElement.id; break;
+                    edgeId = clickedElement.id; 
+                    break;
                 }
                 clickedElement = clickedElement.parentElement;
             }
+            
+            // If we didn't find a node/edge by class, try finding by ID pattern
+            if (!tableId && !edgeId) {
+                clickedElement = event.target;
+                while (clickedElement && clickedElement !== svg) {
+                    if (clickedElement.id && clickedElement.id.startsWith('edge-')) {
+                        edgeId = clickedElement.id;
+                        break;
+                    }
+                    // Check if this element's ID matches a known table
+                    if (clickedElement.id && tables[clickedElement.id]) {
+                        tableId = clickedElement.id;
+                        break;
+                    }
+                    clickedElement = clickedElement.parentElement;
+                }
+            }
+            
+            // Handle table click
             if (tableId && tables[tableId]) {
-                event.preventDefault(); event.stopPropagation();
+                event.preventDefault(); 
+                event.stopPropagation();
                 if (highlightedElementId === tableId) {
                     clearAllHighlights();
                 } else {
@@ -1175,8 +1285,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
+            
+            // Handle edge click
             if (edgeId && edges[edgeId]) {
-                event.preventDefault(); event.stopPropagation();
+                event.preventDefault(); 
+                event.stopPropagation();
                 if (highlightedElementId === edgeId) {
                     clearAllHighlights();
                 } else {
@@ -1228,12 +1341,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerX = mainBounds.x + mainBounds.width / 2;
             const centerY = mainBounds.y + mainBounds.height / 2;
             
-            // Calculate zoom level (fit the diagram with some padding)
+            // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const scaleX = viewportWidth / (mainBounds.width * 1.1); // 10% padding
-            const scaleY = viewportHeight / (mainBounds.height * 1.1);
-            const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 1:1
+            const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
+            const scaleY = viewportHeight / (mainBounds.height * 0.8);
+            const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
             
             // Reset and apply transformation
             userTx = 0;
@@ -1266,6 +1379,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     top: viStyle.top,
                     opacity: viStyle.opacity
                 });
+            }
+            
+            // Position miniature container next to metadata container
+            const metadataContainer = document.getElementById('metadata-container');
+            if (miniatureContainer && metadataContainer) {
+                const metadataRect = metadataContainer.getBoundingClientRect();
+                const margin = 16; // 16px margin between containers
+                
+                miniatureContainer.style.position = 'fixed';
+                miniatureContainer.style.left = `${metadataRect.right + margin}px`;
+                miniatureContainer.style.top = `${metadataRect.top}px`;
+                
+                console.log("Positioned miniature container next to metadata container");
+            }
+            
+            // Position selection container on the top right, opposite of metadata container
+            const selectionContainer = document.getElementById('selection-container');
+            if (selectionContainer && metadataContainer) {
+                const metadataRect = metadataContainer.getBoundingClientRect();
+                const margin = 20; // 20px margin from edge
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Set width to twice the metadata container width
+                const selectionWidth = metadataRect.width * 2;
+                
+                // Calculate max height (75% of viewport height)
+                const maxHeight = Math.floor(viewportHeight * 0.75);
+                
+                selectionContainer.style.position = 'fixed';
+                selectionContainer.style.width = `${selectionWidth}px`;
+                selectionContainer.style.maxHeight = `${maxHeight}px`;
+                selectionContainer.style.overflowY = 'auto'; // Add scrollbar if content overflows
+                selectionContainer.style.right = `${margin}px`; // Position from right edge
+                selectionContainer.style.top = `${metadataRect.top}px`; // Same top as metadata
+                
+                console.log("Positioned selection container on top right");
             }
         } catch (error) {
             console.error("Error during SVG initialization:", error);
