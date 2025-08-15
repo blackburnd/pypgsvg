@@ -179,6 +179,37 @@
     border-radius: 0 0 4px 0;
 }
 
+/* Add this CSS to make the resize handles visible and functional */
+.resize-handle-nw, .resize-handle-se {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background-color: rgba(200, 200, 200, 0.5);
+    border: 1px solid rgba(100, 100, 100, 0.5);
+    z-index: 10000;
+}
+
+.resize-handle-nw {
+    top: 0;
+    left: 0;
+    cursor: nwse-resize;
+}
+
+.resize-handle-se {
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+}
+
+.resizing {
+    user-select: none;
+    pointer-events: none;
+}
+
+.resizing * {
+    pointer-events: none;
+}
+
 /* Window Controls */
 .window-controls {
     display: flex;

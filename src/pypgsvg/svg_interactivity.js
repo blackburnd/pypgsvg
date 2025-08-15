@@ -1188,17 +1188,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Click on SVG background (not node/edge): zoom to point
+            // Click on SVG background (not node/edge): do nothing to prevent movement
             if (
                 event.target === svg ||
                 (!event.target.closest('.node') && !event.target.closest('.edge'))
             ) {
-                // Get mouse position relative to SVG
-                const pt = svg.createSVGPoint();
-                pt.x = event.clientX;
-                pt.y = event.clientY;
-                const svgP = pt.matrixTransform(mainGroup.getScreenCTM().inverse());
-                zoomToPoint(svgP.x, svgP.y, userS);
+                // Just stop propagation, don't move the view
                 event.stopPropagation();
                 return;
             }
