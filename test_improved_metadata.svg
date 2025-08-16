@@ -3617,7 +3617,7 @@
             </div>
             <div class="metadata-single">
                 <span class="label">Generated:</span>
-                <span class="value">2025-08-16 13:11:34</span>
+                <span class="value">2025-08-16 16:13:54</span>
             </div>
         </div>
 
@@ -3652,7 +3652,7 @@
         </div>
 
         <div class="metadata-section">
-            <h3>⚙️ Generation Parameters</h3>
+            <h3>⚙️ Graphviz Diagraph Parameters</h3>
             <div class="metadata-params">
                 <div class="param-row">
                     <span class="param-label">Rank Direction:</span>
@@ -6706,7 +6706,7 @@
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor;nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 
         </div>
@@ -8104,14 +8104,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 miniatureContainer.style.top = `${rect.top}px`;
             }
 
-            dragState.type = 'miniature';
-            dragState.target = miniatureContainer;
-            dragState.startX = event.clientX;
-            dragState.startY = event.clientY;
-            // Now we can safely use the inline style values
-            dragState.offsetX = parseFloat(miniatureContainer.style.left);
-            dragState.offsetY = parseFloat(miniatureContainer.style.top);
-            dragState.target.classList.add('dragging');
+            // Use the same isolated approach as selection container
+            const miniatureDragState = {
+                type: 'miniature-window',
+                target: miniatureContainer,
+                startX: event.clientX,
+                startY: event.clientY,
+                offsetX: parseFloat(miniatureContainer.style.left),
+                offsetY: parseFloat(miniatureContainer.style.top)
+            };
+
+            miniatureContainer.classList.add('dragging');
+
+            // Create miniature-specific mousemove handler
+            const handleMouseMove = (moveEvent) => {
+                moveEvent.preventDefault();
+                moveEvent.stopPropagation();
+
+                const dx = moveEvent.clientX - miniatureDragState.startX;
+                const dy = moveEvent.clientY - miniatureDragState.startY;
+
+                const newX = miniatureDragState.offsetX + dx;
+                const newY = miniatureDragState.offsetY + dy;
+
+                miniatureContainer.style.left = `${newX}px`;
+                miniatureContainer.style.top = `${newY}px`;
+            };
+
+            // Create miniature-specific mouseup handler
+            const handleMouseUp = (upEvent) => {
+                upEvent.preventDefault();
+                upEvent.stopPropagation();
+                miniatureContainer.classList.remove('dragging');
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            // Add temporary event listeners for this drag operation only
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+
             event.preventDefault();
             event.stopPropagation();
         });
@@ -8318,7 +8350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userTy += (dy * panX) / (userS * initialS);
                 applyTransform();
             }
-        } else if (['miniature', 'metadata'].includes(dragState.type)) {
+        } else if (['miniature', 'metadata', 'selection'].includes(dragState.type)) {
             // Calculate movement delta and apply to original position
             dx = event.clientX - dragState.startX;
             dy = event.clientY - dragState.startY;
@@ -8466,7 +8498,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Otherwise, handle zoom as normal
         event.preventDefault();
         const dir = event.deltaY < 0 ? 1 : -1;
-        const scaleAmount = 1 + dir * 0.1;
+        const scaleAmount = 1 + dir * 0.04;
         let newS = userS * scaleAmount;
         const minZoom = getMinZoomToFit();
         newS = Math.max(minZoom, Math.min(5, newS)); // Clamp to minZoom

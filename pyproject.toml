@@ -83,9 +83,19 @@ extend-exclude = '''
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --strict-markers --strict-config"
+addopts = [
+    "-ra",
+    "-q", 
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=10"
+]
 testpaths = [
-    "tests",
+    "tests/tests",
 ]
 python_files = [
     "test_*.py",
@@ -96,6 +106,12 @@ python_classes = [
 ]
 python_functions = [
     "test_*",
+]
+pythonpath = [
+    "src"
+]
+markers = [
+    "unit: marks tests as unit tests",
 ]
 
 [tool.coverage.run]

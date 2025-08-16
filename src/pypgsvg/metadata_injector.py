@@ -204,7 +204,7 @@ def inject_metadata_into_svg(
         </div>
 
         <div class="metadata-section">
-            <h3>⚙️ Generation Parameters</h3>
+            <h3>⚙️ Graphviz Diagraph Parameters</h3>
             <div class="metadata-params">
                 <div class="param-row">
                     <span class="param-label">Rank Direction:</span>
@@ -267,7 +267,7 @@ def inject_metadata_into_svg(
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor;nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
     instructions_html = '''
