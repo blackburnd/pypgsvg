@@ -20,9 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Window Controls ---
     // Update the addWindowControls function to take a buttons config parameter
     function addWindowControls(windowElem, options = {}) {
+        console.log('addWindowControls called for:', windowElem.id, 'with options:', options);
         if (!windowElem) return;
         let controls = windowElem.querySelector('.window-controls');
         if (!controls) {
+            console.log('No .window-controls found, creating one');
             controls = document.createElement('div');
             controls.className = 'window-controls';
             controls.style.position = 'absolute';
@@ -31,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.style.right = '2px';
             controls.style.zIndex = '10001';
             windowElem.appendChild(controls);
+        } else {
+            console.log('Found existing .window-controls');
         }
         
         const btnConfig = options.buttons || {};
@@ -65,23 +69,89 @@ document.addEventListener('DOMContentLoaded', () => {
         // Always add minimize button
         let minBtn = controls.querySelector('.minimize-btn');
         if (!minBtn) {
+            console.log('Creating minimize button');
             minBtn = document.createElement('button');
             minBtn.className = 'minimize-btn';
             minBtn.title = 'Minimize';
             minBtn.innerHTML = '–';
             controls.appendChild(minBtn);
+        } else {
+            console.log('Using existing minimize button');
         }
+        
+        // Always set up click handler (whether button is new or existing)
+        monclick = (container) => {
+            console.log('Minimize button clicked!', container);
+            container.classList.toggle('minimized');
+            
+            // Find all elements with container-content class within this container
+            let elementsToToggle = container.querySelectorAll('.container-content');
+            console.log('Elements to toggle:', elementsToToggle);
+            
+            if (container.classList.contains('minimized')) {
+                console.log('Minimizing - hiding container-content elements');
+                elementsToToggle.forEach(element => {
+                    // Store the original display value before hiding
+                    const currentDisplay = window.getComputedStyle(element).display;
+                    element.setAttribute('data-original-display', currentDisplay);
+                    element.style.display = 'none';
+                    console.log('Hidden element:', element, 'original display:', currentDisplay);
+                });
+                minBtn.innerHTML = '+';
+                minBtn.title = 'Restore';
+            } else {
+                console.log('Restoring - showing container-content elements');
+                elementsToToggle.forEach(element => {
+                    // Restore the original display value
+                    const originalDisplay = element.getAttribute('data-original-display');
+                    if (originalDisplay && originalDisplay !== 'none') {
+                        element.style.display = originalDisplay;
+                    } else {
+                        // Fallback to empty string to use CSS default
+                        element.style.display = '';
+                    }
+                    element.removeAttribute('data-original-display');
+                    console.log('Restored element:', element, 'to display:', originalDisplay || 'default');
+                });
+                minBtn.innerHTML = '–';
+                minBtn.title = 'Minimize';
+            }
+            if (options.onMinimize) options.onMinimize(container.classList.contains('minimized'));
+        };
+        
+        // Also add event listener as backup
+        minBtn.addEventListener('click', (e) => {
+            let target = e.target.parentElement.parentElement;
+            console.log('Minimize button addEventListener fired!', target);
+            e.preventDefault();
+            e.stopPropagation();
+            monclick(target);
+	});
+        
+        console.log('Set minimize click handler for', windowElem.id, '- button:', minBtn);
+        console.log('Button parent:', minBtn.parentElement, 'Button position:', window.getComputedStyle(minBtn));
         allControls.minBtn = minBtn;
         
         // Always add close button
         let closeBtn = controls.querySelector('.close-btn');
         if (!closeBtn) {
+            console.log('Creating close button');
             closeBtn = document.createElement('button');
             closeBtn.className = 'close-btn';
             closeBtn.title = 'Close';
             closeBtn.innerHTML = '×';
             controls.appendChild(closeBtn);
+        } else {
+            console.log('Using existing close button');
         }
+        
+
+        closeBtn.addEventListener('click', (e) => {
+            windowElem.style.display = 'none';
+            console.log('Close button addEventListener fired!', windowElem);
+        });
+        
+        console.log('Set close click handler for', windowElem.id, '- button:', closeBtn);
         allControls.closeBtn = closeBtn;
 
         // Set up event handlers
@@ -185,29 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
-        // Minimize button handler
-        minBtn.onclick = (e) => {
-            e.stopPropagation();
-            windowElem.classList.toggle('minimized');
-            const content = windowElem.querySelector('.window-content');
-            if (windowElem.classList.contains('minimized')) {
-                if (content) content.style.display = 'none';
-                minBtn.innerHTML = '+';
-            } else {
-                if (content) content.style.display = '';
-                minBtn.innerHTML = '–';
-            }
-            if (options.onMinimize) options.onMinimize(windowElem.classList.contains('minimized'));
-        };
-        
-        // Close button handler
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            e.target.destroyRecursive = true;
-            windowElem.style.display = 'none';
-            if (options.onClose) options.onClose();
-        };
-        
         controls.addEventListener('mousedown', e => e.stopPropagation());
         controls.addEventListener('click', e => e.stopPropagation());
         
@@ -252,6 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 event.stopPropagation();
             });
+            
+            // Prevent click events on resize handle
+            nwHandle.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            });
         }
         
         if (seHandle) {
@@ -275,6 +328,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 dragState.startWidth = parseFloat(windowElem.style.width);
                 dragState.startHeight = parseFloat(windowElem.style.height);
                 windowElem.classList.add('resizing');
+                event.preventDefault();
+                event.stopPropagation();
+            });
+            
+            // Prevent click events on resize handle
+            seHandle.addEventListener('click', function(event) {
                 event.preventDefault();
                 event.stopPropagation();
             });
@@ -309,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalTy = (userTy * initialS) + initialTy;
         mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
         requestAnimationFrame(updateViewportIndicator);
+        requestAnimationFrame(updateSelectionContainerPosition);
     };
 
     const updateViewportIndicator = () => {
@@ -335,12 +395,181 @@ document.addEventListener('DOMContentLoaded', () => {
         viewportIndicator.style.width = `${Math.max(0, Math.min(1, relWidth)) * 100}%`;
         viewportIndicator.style.height = `${Math.max(0, Math.min(1, relHeight)) * 100}%`;
     };
-    const onViewportChange = () => requestAnimationFrame(updateViewportIndicator);
+
+    const updateSelectionContainerPosition = () => {
+        const selectionContainer = document.getElementById('selection-container');
+        const metadataContainer = document.getElementById('metadata-container');
+        const miniatureContainer = document.getElementById('miniature-container');
+        
+        if (selectionContainer && metadataContainer && miniatureContainer) {
+            const miniatureRect = miniatureContainer.getBoundingClientRect();
+            const margin = 16; // Same margin as other containers
+            
+            // Set width to be similar to metadata container
+            const metadataRect = metadataContainer.getBoundingClientRect();
+            const selectionWidth = metadataRect.width * 1.5;
+            
+            // Calculate max height (75% of viewport height)
+            const maxHeight = Math.floor(window.innerHeight * 0.75);
+            
+            selectionContainer.style.position = 'fixed';
+            selectionContainer.style.width = `${selectionWidth}px`;
+            selectionContainer.style.maxHeight = `${maxHeight}px`;
+            selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
+            selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
+            selectionContainer.style.zIndex = '10001';
+        }
+    };
+
+    const onViewportChange = () => {
+        requestAnimationFrame(updateViewportIndicator);
+        requestAnimationFrame(updateSelectionContainerPosition);
+    };
 
     // --- Highlighting ---
     const GREY_COLOR = "#cccccc"; // color for non-highlighted elements
 
-    const setElementColor = (elem, color, isHighlighted = false) => {
+    // Helper function to convert hex color to rgba with specified opacity
+    const hexToRgba = (hex, alpha = 1.0) => {
+        // Remove # if present
+        hex = hex.replace('#', '');
+        
+        // Handle 3-digit hex
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        
+        // Extract RGB values
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    // Helper function to convert RGB to HLS
+    const rgbToHls = (r, g, b) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return [h, l, s];
+    };
+
+    // Helper function to convert HLS to RGB
+    const hlsToRgb = (h, l, s) => {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    };
+
+    // Helper function to saturate a hex color
+    const saturateColor = (hexColor, saturationFactor = 2.0) => {
+        // Validate input
+        if (!hexColor || typeof hexColor !== 'string') {
+            console.warn('Invalid hex color:', hexColor);
+            return '#cccccc';
+        }
+        
+        // Remove # if present
+        let hex = hexColor.replace('#', '');
+        
+        // Handle 3-digit hex
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        
+        // Validate hex format
+        if (hex.length !== 6 || !/^[0-9A-Fa-f]+$/.test(hex)) {
+            console.warn('Invalid hex format:', hexColor, 'processed as:', hex);
+            return hexColor; // Return original if invalid
+        }
+        
+        // Convert hex to RGB
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        // Validate RGB values
+        if (isNaN(r) || isNaN(g) || isNaN(b)) {
+            console.warn('Invalid RGB values:', r, g, b, 'from hex:', hexColor);
+            return hexColor;
+        }
+        
+        // Convert RGB to HLS
+        const [h, l, s] = rgbToHls(r, g, b);
+        
+        // Increase saturation, clamping to valid range
+        const newS = Math.min(1, Math.max(0, s * saturationFactor));
+        
+        // Convert back to RGB
+        const [newR, newG, newB] = hlsToRgb(h, l, newS);
+        
+        // Validate final RGB values
+        if (isNaN(newR) || isNaN(newG) || isNaN(newB)) {
+            console.warn('Invalid final RGB values:', newR, newG, newB);
+            return hexColor;
+        }
+        
+        // Clamp to valid range
+        const clampedR = Math.max(0, Math.min(255, Math.round(newR)));
+        const clampedG = Math.max(0, Math.min(255, Math.round(newG)));
+        const clampedB = Math.max(0, Math.min(255, Math.round(newB)));
+        
+        // Convert back to hex
+        const finalHex = `#${clampedR.toString(16).padStart(2, '0')}${clampedG.toString(16).padStart(2, '0')}${clampedB.toString(16).padStart(2, '0')}`;
+        
+        return finalHex;
+    };
+
+    const getElementColor = (elem) => {
+        if (!elem || !elem.id) return '#cccccc';
+        
+        const nodeId = elem.id.replace('mini-', '');
+        
+        if (elem.classList && elem.classList.contains('node')) {
+            return tables[nodeId]?.defaultColor || '#cccccc';
+        }
+        
+        if (elem.classList && elem.classList.contains('edge')) {
+            return edges[nodeId]?.defaultColor || '#cccccc';
+        }
+        
+        return '#cccccc';
+    };
+
+    // Function to apply visual emphasis effects for selection container hovers
+    const setSaturationEffect = (elem, saturationFactor = 2.0, restore = false) => {
         if (!elem) return;
         let miniElem = null;
         const nodeId = elem.id;
@@ -350,25 +579,169 @@ document.addEventListener('DOMContentLoaded', () => {
             const miniNodeId = 'mini-' + nodeId;
             miniElem = document.getElementById(miniNodeId);
             if (miniElem) {
-                setElementColor(miniElem, 'red', isHighlighted)
+                setSaturationEffect(miniElem, saturationFactor, restore);
+            }
+        }
+
+        if (elem.classList && elem.classList.contains('node')) {
+            if (restore) {
+                // Remove visual emphasis
+                elem.style.removeProperty('filter');
+                elem.removeAttribute('transform');
+                // Clear any stored original transform
+                if (elem.dataset.originalTransform) {
+                    elem.setAttribute('transform', elem.dataset.originalTransform);
+                    delete elem.dataset.originalTransform;
+                }
+            } else {
+                // Add visual emphasis - make the table more obvious
+                elem.style.filter = 'brightness(1.3) contrast(1.2) drop-shadow(0px 0px 8px rgba(255,255,0,0.5))';
+                
+                // Store original transform if it exists
+                const originalTransform = elem.getAttribute('transform');
+                if (originalTransform) {
+                    elem.dataset.originalTransform = originalTransform;
+                }
+                
+                // For SVG elements, use SVG transform attribute for scaling
+                const bbox = elem.getBBox();
+                const centerX = bbox.x + bbox.width / 2;
+                const centerY = bbox.y + bbox.height / 2;
+                
+                const scaleTransform = `translate(${centerX}, ${centerY}) scale(1.1) translate(${-centerX}, ${-centerY})`;
+                const newTransform = originalTransform ? `${originalTransform} ${scaleTransform}` : scaleTransform;
+                elem.setAttribute('transform', newTransform);
+            }
+        }
+
+        if (elem.classList && elem.classList.contains('edge')) {
+            if (restore) {
+                // Remove edge emphasis
+                const paths = elem.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.removeProperty('filter');
+                    path.style.removeProperty('stroke-width');
+                });
+            } else {
+                // Add edge emphasis
+                const paths = elem.querySelectorAll('path');
+                paths.forEach(path => {
+                    path.style.filter = 'brightness(1.4) contrast(1.3)';
+                    const currentWidth = path.getAttribute('stroke-width') || '3';
+                    path.style.strokeWidth = (parseFloat(currentWidth) * 1.5) + 'px';
+                    path.style.transition = 'all 0.2s ease';
+                });
+            }
+        }
+    };
+
+    // Function to apply saturation effects specifically for edges
+    const setEdgeSaturationEffect = (edgeElement, saturationFactor = 2.0, restore = false) => {
+        if (!edgeElement) return;
+        
+        const baseColor = getElementColor(edgeElement);
+        const paths = edgeElement.querySelectorAll('path');
+        
+        paths.forEach((path) => {
+            // Store original styles if not already stored
+            if (!path.dataset.originalStroke) {
+                path.dataset.originalStroke = path.getAttribute('stroke') || baseColor;
+            }
+            if (!path.dataset.originalStrokeWidth) {
+                path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '3';
+            }
+            
+            if (restore) {
+                // Restore original stroke color and width
+                path.setAttribute('stroke', path.dataset.originalStroke);
+                path.setAttribute('stroke-width', path.dataset.originalStrokeWidth);
+            } else {
+                // Apply saturated stroke color and slightly increased width
+                const saturatedColor = saturateColor(baseColor, saturationFactor);
+                path.setAttribute('stroke', saturatedColor);
+                
+                // Slightly increase stroke width for better visibility
+                const originalWidth = parseFloat(path.dataset.originalStrokeWidth);
+                path.setAttribute('stroke-width', (originalWidth * 1.5).toString());
+            }
+        });
+    };
+
+    const setElementColor = (elem, color, isHighlighted = false, isInActiveSelection = false) => {
+        if (!elem) return;
+        let miniElem = null;
+        const nodeId = elem.id;
+        let isMini = nodeId.indexOf('mini-') != -1;
+
+        if (!isMini) {
+            const miniNodeId = 'mini-' + nodeId;
+            miniElem = document.getElementById(miniNodeId);
+            if (miniElem) {
+                setElementColor(miniElem, color, isHighlighted, isInActiveSelection)
             }
         }
         if (elem.classList && elem.classList.contains('node')) {
-            elem.setAttribute('opacity', isHighlighted ? '1' : '0.5');
-            const polygons = elem.querySelectorAll('polygon');
-            polygons.forEach(polygon => {
-                if (polygon.type !== 'title') {
-                    if (isMini) {
-                        polygon.setAttribute('fill', isHighlighted ? color : 'white');
-                    }
+            // Set opacity based on selection state
+            let opacity = '1';
+            if (highlightedElementId !== null) {
+                // Something is highlighted
+                if (isHighlighted || isInActiveSelection) {
+                    opacity = '1'; // Full opacity for highlighted elements
+                } else {
+                    opacity = '0.2'; // Reduced opacity for non-highlighted elements
                 }
+            } else {
+                opacity = '1'; // Full opacity when nothing is highlighted
+            }
+            elem.setAttribute('opacity', opacity);
+            
+            const polygons = elem.querySelectorAll('polygon');
+            
+            // Get the table's header color for background with reduced opacity
+            const tableColor = tables[nodeId.replace('mini-', '')]?.defaultColor || color;
+            const backgroundColorWithOpacity = hexToRgba(tableColor, 0.1);
+            
+            polygons.forEach((polygon, index) => {
+                const currentFill = polygon.getAttribute('fill');
+                
+                // Store original fill if not already stored
+                if (!polygon.dataset.originalFill) {
+                    polygon.dataset.originalFill = currentFill || 'white';
+                }
+                
+                // Only modify white/transparent polygons (content areas)
+                // NEVER touch any colored polygons (headers) - leave them completely alone
+                const isContentPolygon = currentFill === 'white' || currentFill === 'none' || currentFill === 'transparent' || !currentFill;
+                
+                if (isContentPolygon && isHighlighted) {
+                    // Only change content polygons when highlighting
+                    polygon.setAttribute('fill', backgroundColorWithOpacity);
+                } else if (isContentPolygon && !isHighlighted) {
+                    // Restore content polygons to their original color instead of forcing to white
+                    polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
+                }
+                // If it's a colored polygon (header), we NEVER touch it at all
             })
         }
 
         if (elem.classList && elem.classList.contains('edge')) {
+            // Set opacity based on selection state  
+            let opacity = '1';
+            if (highlightedElementId !== null) {
+                // Something is highlighted
+                if (isHighlighted || isInActiveSelection) {
+                    opacity = '1'; // Full opacity for highlighted elements
+                } else {
+                    opacity = '0.2'; // Reduced opacity for non-highlighted elements
+                }
+            } else {
+                opacity = '1'; // Full opacity when nothing is highlighted
+            }
+            elem.setAttribute('opacity', opacity);
+            
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
-                polygon.setAttribute('stroke-width', isHighlighted ? '15' : '3');
+                polygon.setAttribute('stroke-width', isHighlighted ? '10' : '3');
                 if (isMini) {
                     polygon.setAttribute('fill', isHighlighted ? color : GREY_COLOR);
                 }
@@ -377,99 +750,107 @@ document.addEventListener('DOMContentLoaded', () => {
             const edgeId = elem.id;
             const connectedTables = edges[edgeId]?.tables || [];
 
-
             const paths = elem.querySelectorAll('path');
 
             if (paths.length > 0) {
-                //paths[0].setAttribute('stroke', colorA);
-                paths[0].setAttribute('stroke-width', isHighlighted ? '16' : '1');
+                paths[0].setAttribute('stroke-width', isHighlighted ? '20' : '8');
                 paths[0].setAttribute('opacity', '1');
-
-                // Set marker shapes to thick stroke when highlighted
-                if (isHighlighted) {
-                    // Get marker elements by ID and set their stroke-width
-                    const svgDoc = svg.ownerDocument || document;
-                }
             }
             if (paths.length > 1) {
-                //paths[1].setAttribute('stroke', colorB);
-                paths[1].setAttribute('stroke-width', isHighlighted ? '7' : '1');
+                paths[1].setAttribute('stroke-width', isHighlighted ? '10' : '3');
                 paths[1].setAttribute('opacity', '1');
             }
             if (paths.length === 1) {
-                //paths[0].setAttribute('stroke', colorA);
-                paths[0].setAttribute('stroke-width', isHighlighted ? '3' : '1');
+                paths[0].setAttribute('stroke-width', isHighlighted ? '5' : '1');
                 paths[0].setAttribute('opacity', '1');
             }
-
         }
     };
 
 
     const highlightElements = (tableIds, edgeIds, event) => {
-        // Highlight selected tables/edges
+        // Set the highlighted element ID
+        if (tableIds.length > 0) {
+            highlightedElementId = tableIds[0];
+        } else if (edgeIds.length > 0) {
+            highlightedElementId = edgeIds[0];
+        }
+
+        // First, reduce opacity of ALL elements
+        Object.keys(tables).forEach(id => {
+            const tableElement = document.getElementById(id);
+            const miniTableElement = document.getElementById('mini-' + id);
+            const isInSelection = tableIds.includes(id);
+            
+            if (tableElement) {
+                setElementColor(tableElement, tables[id].defaultColor, false, isInSelection);
+                if (isInSelection) {
+                    tableElement.classList.add('highlighted');
+                } else {
+                    tableElement.classList.remove('highlighted');
+                }
+            }
+            if (miniTableElement) {
+                setElementColor(miniTableElement, tables[id].defaultColor, false, isInSelection);
+                if (isInSelection) {
+                    miniTableElement.classList.add('highlighted');
+                } else {
+                    miniTableElement.classList.remove('highlighted');
+                }
+            }
+        });
+
+        Object.keys(edges).forEach(id => {
+            const edgeElement = document.getElementById(id);
+            const miniEdgeElement = document.getElementById('mini-' + id);
+            const isInSelection = edgeIds.includes(id);
+            
+            if (edgeElement) {
+                setElementColor(edgeElement, getElementColor(edgeElement), false, isInSelection);
+                if (isInSelection) {
+                    edgeElement.classList.add('highlighted');
+                } else {
+                    edgeElement.classList.remove('highlighted');
+                }
+            }
+            if (miniEdgeElement) {
+                setElementColor(miniEdgeElement, getElementColor(miniEdgeElement), false, isInSelection);
+                if (isInSelection) {
+                    miniEdgeElement.classList.add('highlighted');
+                } else {
+                    miniEdgeElement.classList.remove('highlighted');
+                }
+            }
+        });
+
+        // Then, highlight the selected elements with full intensity
         tableIds.forEach(id => {
             const tableElement = document.getElementById(id);
             const miniTableElement = document.getElementById('mini-' + id);
             if (!tableElement) return;
 
-            // Get the background color from the title element
-            const titleElement = tableElement.querySelector('title');
-            backgroundColor = tables[id].defaultColor || '#712e2eff'; // Default to white if no color defin
-            // Highlight the table
-            tableElement.setAttribute('opacity', '1');
-            tableElement.classList.add('highlighted');
-
-            miniTableElement.setAttribute('opacity', '1');
-            miniTableElement.classList.add('highlighted');
-
-            // Apply the background color to all text elements in the table
-            miniTableElement.querySelectorAll('text').forEach(textElem => {
-                textElem.style.fill = 'black'; // Ensure text is readable
-                textElem.style.fill = backgroundColor; // Set background color
-            });
+            // Get the table's default color for highlighting
+            const tableColor = tables[id].defaultColor || '#712e2eff';
+            
+            // Highlight with full intensity
+            setElementColor(tableElement, tableColor, true, true);
+            if (miniTableElement) {
+                setElementColor(miniTableElement, tableColor, true, true);
+            }
         });
+
         edgeIds.forEach(id => {
             let edgeElement = document.getElementById(id);
             let miniEdgeElement = document.getElementById('mini-' + id);
             if (!edgeElement) return;
 
-            // Highlight the edge
-            edgeElement.classList.add('highlighted');
-            edgeElement.setAttribute('opacity', '1');
-
-            miniEdgeElement.setAttribute('fill', edges[id].defaultColor || '#712e2eff');
-            miniEdgeElement.setAttribute('opacity', '1');
-            miniEdgeElement.classList.add('highlighted');
-
-            // Adjust stroke widths for paths
-            let paths = edgeElement.querySelectorAll('path');
-            if (paths.length > 0) {
-                paths[0].setAttribute('stroke-width', '16');
-            }
-            if (paths.length > 1) {
-                paths[1].setAttribute('stroke-width', '7');
-                paths[1].setAttribute('opacity', '1');
-            }
-            if (paths.length === 1) {
-                paths[0].setAttribute('stroke-width', '3');
-                paths[0].setAttribute('opacity', '1');
-            }
-
-            // Adjust stroke widths for mini paths
-            let mpaths = miniEdgeElement.querySelectorAll('path');
-            if (mpaths.length > 0) {
-                mpaths[0].setAttribute('stroke-width', '24');
-            }
-            if (mpaths.length > 1) {
-                mpaths[1].setAttribute('stroke-width', '10');
-                mpaths[1].setAttribute('opacity', '1');
-            }
-            if (mpaths.length === 1) {
-                mpaths[0].setAttribute('stroke-width', '5');
-                mpaths[0].setAttribute('opacity', '1');
+            // Highlight with full intensity
+            setElementColor(edgeElement, getElementColor(edgeElement), true, true);
+            if (miniEdgeElement) {
+                setElementColor(miniEdgeElement, getElementColor(edgeElement), true, true);
             }
         });
+
         showSelectionWindow(tableIds, edgeIds, event);
     };
 
@@ -477,8 +858,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function showSelectionWindow(selectedTables, selectedEdges, event) {
         const selectionContainer = document.getElementById('selection-container');
         if (!selectionContainer) return;
+        
+        // Force visibility with strong inline styles
         selectionContainer.style.display = 'block';
         selectionContainer.style.position = 'fixed';
+        selectionContainer.style.zIndex = '10001';
+        selectionContainer.style.background = 'rgba(168, 188, 220, 0.98)';
+        selectionContainer.style.border = '2px solid #000';
+        selectionContainer.style.padding = '10px';
+        selectionContainer.style.borderRadius = '5px';
+        selectionContainer.style.minWidth = '300px';
+        selectionContainer.style.minHeight = '200px';
+        
         const inner = selectionContainer.querySelector('#selection-inner-container');
         if (!inner) return;
 
@@ -486,7 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedTables.length) {
             let this_table = selectedTables[0];
             selection_header = document.getElementById('selection-header');
-            selection_header.setAttribute('innerHTML', `Selected Table: ${this_table}`);
+            selection_header.innerHTML = `Selected Table: ${this_table}`;
             
             // Create table entries with data attributes for hover effects
             html += '<div><b>Related Tables:</b><br/>';
@@ -505,7 +896,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
                     // Add edge-name class and data-edge-id attribute
-                    html += `<li class="edge-name" data-edge-id="${edgeId}"><pre>${edge.fkText}</pre></li>`;
+                    // Escape the fkText to prevent template literal issues by using innerHTML instead
+                    const listItem = document.createElement('li');
+                    listItem.className = 'edge-name';
+                    listItem.setAttribute('data-edge-id', edgeId);
+                    const preElement = document.createElement('pre');
+                    preElement.textContent = edge.fkText; // Use textContent to avoid HTML parsing issues
+                    listItem.appendChild(preElement);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.appendChild(listItem);
+                    html += tempDiv.innerHTML;
                 } else {
                     html += `<li class="edge-name" data-edge-id="${edgeId}">${edgeId}</li>`;
                 }
@@ -520,82 +920,57 @@ document.addEventListener('DOMContentLoaded', () => {
         tableNames.forEach(tableNameSpan => {
             const tableId = tableNameSpan.getAttribute('data-table-id');
             
-            // Mouseover event - highlight the table
+            // Mouseover event - apply saturation effect instead of highlighting
             tableNameSpan.addEventListener('mouseover', () => {
                 // Get the table element in the SVG
                 const tableElement = document.getElementById(tableId);
                 const miniTableElement = document.getElementById('mini-' + tableId);
                 
                 if (tableElement) {
-                    // Store original background for restoration
-                    if (!tableElement.dataset.originalBackground) {
-                        const polygons = tableElement.querySelectorAll('polygon');
-                        polygons.forEach(polygon => {
-                            if (!polygon.dataset.originalFill) {
-                                polygon.dataset.originalFill = polygon.getAttribute('fill') || 'white';
-                            }
-                        });
-                    }
-                    
-                    // Apply highlighting
-                    const backgroundColor = tables[tableId].defaultColor || '#712e2eff';
-                    const polygons = tableElement.querySelectorAll('polygon');
-                    polygons.forEach(polygon => {
-                        // Only change non-header polygons
-                        if (!polygon.classList.contains('title')) {
-                            polygon.setAttribute('fill', backgroundColor);
-                        }
-                    });
-                    
-                    // Increase opacity for better visibility
-                    tableElement.setAttribute('opacity', '1');
+                    // Apply saturation effect with double saturation (2.0 factor)
+                    setSaturationEffect(tableElement, 2.0, false);
                 }
                 
-                // Also highlight the miniature version
+                // Also apply to the miniature version
                 if (miniTableElement) {
-                    // Store original background for restoration
-                    if (!miniTableElement.dataset.originalBackground) {
-                        const miniPolygons = miniTableElement.querySelectorAll('polygon');
-                        miniPolygons.forEach(polygon => {
-                            if (!polygon.dataset.originalFill) {
-                                polygon.dataset.originalFill = polygon.getAttribute('fill') || 'white';
-                            }
-                        });
-                    }
-                    
-                    // Apply highlighting to miniature
-                    const backgroundColor = tables[tableId].defaultColor || '#712e2eff';
-                    const miniPolygons = miniTableElement.querySelectorAll('polygon');
-                    miniPolygons.forEach(polygon => {
-                        polygon.setAttribute('fill', backgroundColor);
-                    });
-                    
-                    // Increase opacity for better visibility
-                    miniTableElement.setAttribute('opacity', '1');
+                    setSaturationEffect(miniTableElement, 2.0, false);
                 }
             });
             
-            // Mouseout event - restore original background
-            tableNameSpan.addEventListener('mouseout', () => {
+            // Mouseout event - restore original appearance
+            tableNameSpan.addEventListener('mouseout', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const tableElement = document.getElementById(tableId);
                 const miniTableElement = document.getElementById('mini-' + tableId);
                 
                 if (tableElement) {
-                    const polygons = tableElement.querySelectorAll('polygon');
-                    polygons.forEach(polygon => {
-                        // Only reset non-header polygons
-                        if (!polygon.classList.contains('title')) {
-                            polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
-                        }
-                    });
+                    setSaturationEffect(tableElement, 2.0, true);
+                    
+                    // If this table should still be highlighted, ensure highlighting is maintained
+                    if (highlightedElementId && 
+                        (highlightedElementId === tableId || 
+                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId => 
+                             edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
+                        // Re-apply highlighting to maintain background colors
+                        tableElement.classList.add('highlighted');
+                        setElementColor(tableElement, tables[tableId].defaultColor, true, true);
+                    }
                 }
                 
                 // Also restore the miniature version
                 if (miniTableElement) {
-                    const miniPolygons = miniTableElement.querySelectorAll('polygon');
-                    miniPolygons.forEach(polygon => {
-                        polygon.setAttribute('fill', polygon.dataset.originalFill || 'white');
-                    });
+                    setSaturationEffect(miniTableElement, 2.0, true);
+                    
+                    // Maintain highlighting for mini version too
+                    if (highlightedElementId && 
+                        (highlightedElementId === tableId || 
+                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId => 
+                             edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
+                        miniTableElement.classList.add('highlighted');
+                        setElementColor(miniTableElement, tables[tableId].defaultColor, true, true);
+                    }
                 }
             });
             
@@ -639,146 +1014,53 @@ document.addEventListener('DOMContentLoaded', () => {
         edgeNames.forEach(edgeNameLi => {
             const edgeId = edgeNameLi.getAttribute('data-edge-id');
             
-            // Mouseover event - highlight the edge
+            // Mouseover event - apply saturation effect to the edge
             edgeNameLi.addEventListener('mouseover', () => {
-                // First reduce opacity of ALL edges in the graph
-                Object.keys(edges).forEach(currEdgeId => {
-                    const currEdgeElement = document.getElementById(currEdgeId);
-                    const currMiniEdgeElement = document.getElementById('mini-' + currEdgeId);
-                    
-                    if (currEdgeElement) {
-                        // Store original opacity if not already stored
-                        if (!currEdgeElement.dataset.originalOpacity) {
-                            currEdgeElement.dataset.originalOpacity = currEdgeElement.getAttribute('opacity') || '1';
-                        }
-                        // Reduce opacity for all edges
-                        currEdgeElement.setAttribute('opacity', '0.2');
-                    }
-                    
-                    if (currMiniEdgeElement) {
-                        // Store original opacity for miniature
-                        if (!currMiniEdgeElement.dataset.originalOpacity) {
-                            currMiniEdgeElement.dataset.originalOpacity = currMiniEdgeElement.getAttribute('opacity') || '1';
-                        }
-                        // Reduce opacity for all mini edges
-                        currMiniEdgeElement.setAttribute('opacity', '0.2');
-                    }
-                });
-                
-                // Now highlight just the edge we're hovering over
                 const edgeElement = document.getElementById(edgeId);
                 const miniEdgeElement = document.getElementById('mini-' + edgeId);
                 
                 if (edgeElement) {
-                    // Store original styles for restoration if not already stored
-                    if (!edgeElement.dataset.originalStyles) {
-                        const paths = edgeElement.querySelectorAll('path');
-                        paths.forEach((path, index) => {
-                            path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '1';
-                            path.dataset.originalOpacity = path.getAttribute('opacity') || '1';
-                        });
-                        edgeElement.dataset.originalStyles = 'saved';
-                    }
-                    
-                    // Apply highlighting to the hovered edge
-                    const paths = edgeElement.querySelectorAll('path');
-                    if (paths.length > 0) {
-                        paths[0].setAttribute('stroke-width', '16');
-                    }
-                    if (paths.length > 1) {
-                        paths[1].setAttribute('stroke-width', '7');
-                        paths[1].setAttribute('opacity', '1');
-                    }
-                    if (paths.length === 1) {
-                        paths[0].setAttribute('stroke-width', '3');
-                        paths[0].setAttribute('opacity', '1');
-                    }
-                    
-                    // Set this edge to full opacity
-                    edgeElement.setAttribute('opacity', '1');
+                    setEdgeSaturationEffect(edgeElement, 2.0, false);
                 }
                 
-                // Also highlight the miniature edge
                 if (miniEdgeElement) {
-                    // Store original styles for mini edge
-                    if (!miniEdgeElement.dataset.originalStyles) {
-                        const miniPaths = miniEdgeElement.querySelectorAll('path');
-                        miniPaths.forEach((path, index) => {
-                            path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '1';
-                            path.dataset.originalOpacity = path.getAttribute('opacity') || '1';
-                        });
-                        miniEdgeElement.dataset.originalStyles = 'saved';
-                    }
-                    
-                    // Apply highlighting to mini edge
-                    const miniPaths = miniEdgeElement.querySelectorAll('path');
-                    if (miniPaths.length > 0) {
-                        miniPaths[0].setAttribute('stroke-width', '6'); // Smaller for mini
-                    }
-                    if (miniPaths.length > 1) {
-                        miniPaths[1].setAttribute('stroke-width', '3'); // Smaller for mini
-                        miniPaths[1].setAttribute('opacity', '1');
-                    }
-                    if (miniPaths.length === 1) {
-                        miniPaths[0].setAttribute('stroke-width', '2'); // Smaller for mini
-                        miniPaths[0].setAttribute('opacity', '1');
-                    }
-                    
-                    // Set miniature edge to full opacity
-                    miniEdgeElement.setAttribute('opacity', '1');
+                    setEdgeSaturationEffect(miniEdgeElement, 2.0, false);
                 }
             });
             
-            // Mouseout event - restore original styles for all edges
-            edgeNameLi.addEventListener('mouseout', () => {
-                // Restore opacity for all edges
-                Object.keys(edges).forEach(currEdgeId => {
-                    const currEdgeElement = document.getElementById(currEdgeId);
-                    const currMiniEdgeElement = document.getElementById('mini-' + currEdgeId);
-                    
-                    if (currEdgeElement && currEdgeElement.dataset.originalOpacity) {
-                        currEdgeElement.setAttribute('opacity', currEdgeElement.dataset.originalOpacity);
-                    }
-                    
-                    if (currMiniEdgeElement && currMiniEdgeElement.dataset.originalOpacity) {
-                        currMiniEdgeElement.setAttribute('opacity', currMiniEdgeElement.dataset.originalOpacity);
-                    }
-                });
+            // Mouseout event - restore original edge appearance
+            edgeNameLi.addEventListener('mouseout', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Restore specific styles for the edge we were hovering over
                 const edgeElement = document.getElementById(edgeId);
                 const miniEdgeElement = document.getElementById('mini-' + edgeId);
                 
-                if (edgeElement && edgeElement.dataset.originalStyles) {
-                    const paths = edgeElement.querySelectorAll('path');
-                    paths.forEach((path, index) => {
-                        path.setAttribute('stroke-width', path.dataset.originalStrokeWidth || '1');
-                        path.setAttribute('opacity', path.dataset.originalOpacity || '1');
-                    });
+                if (edgeElement) {
+                    setEdgeSaturationEffect(edgeElement, 2.0, true);
                 }
                 
-                if (miniEdgeElement && miniEdgeElement.dataset.originalStyles) {
-                    const miniPaths = miniEdgeElement.querySelectorAll('path');
-                    miniPaths.forEach((path, index) => {
-                        path.setAttribute('stroke-width', path.dataset.originalStrokeWidth || '1');
-                        path.setAttribute('opacity', path.dataset.originalOpacity || '1');
-                    });
+                if (miniEdgeElement) {
+                    setEdgeSaturationEffect(miniEdgeElement, 2.0, true);
                 }
             });
         });
 
-        // Get
-        const computedStyle = window.getComputedStyle(selectionContainer);
-        const containerWidth = parseFloat(computedStyle.width);
-        const containerHeight = parseFloat(computedStyle.height);
-        rect = selectionContainer.getBoundingClientRect();
-        const left = window.innerWidth - (containerWidth * 2);
+        // Only position the container if it hasn't been positioned by the user yet
+        // Check if the container has been moved from its initial right-based positioning
+        if (!selectionContainer.style.left) {
+            const computedStyle = window.getComputedStyle(selectionContainer);
+            const containerWidth = parseFloat(computedStyle.width);
+            const containerHeight = parseFloat(computedStyle.height);
+            const margin = 20; // 20px margin from edge
+            const left = window.innerWidth - containerWidth - margin;
 
-        selectionContainer.style.position = 'fixed';
-        selectionContainer.style.left = `${left}px`;
-        selectionContainer.style.right = 'auto';
-        selectionContainer.style.top = `30px`;
-        selectionContainer.style.bottom = 'auto';
+            selectionContainer.style.position = 'fixed';
+            selectionContainer.style.left = `${left}px`;
+            selectionContainer.style.right = 'auto';
+            selectionContainer.style.top = `30px`;
+            selectionContainer.style.bottom = 'auto';
+        }
     }
 
     function hideSelectionWindow() {
@@ -791,22 +1073,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const clearAllHighlights = () => {
+        // Don't clear highlights during drag operations
+        if (dragState.type !== null) {
+            return;
+        }
+        
+        // Also check if selection-container is being dragged (it has its own drag system)
+        const selectionContainer = document.getElementById('selection-container');
+        if (selectionContainer && selectionContainer._dragState) {
+            return;
+        }
+        
+        highlightedElementId = null; // Clear the highlighted element ID first
+        
         Object.keys(tables).forEach(id => {
             const tableElement = document.getElementById(id);
+            const miniTableElement = document.getElementById('mini-' + id);
             if (tableElement) {
-                if ('highlighted' in tableElement.classList) {
-                    tableElement.classList.remove('highlighted');
-                }
-                setElementColor(tableElement, tables[id].desaturatedColor, false);
+                tableElement.classList.remove('highlighted');
+                setElementColor(tableElement, tables[id].defaultColor, false, false);
+            }
+            if (miniTableElement) {
+                miniTableElement.classList.remove('highlighted');
+                setElementColor(miniTableElement, tables[id].defaultColor, false, false);
             }
         });
         Object.keys(edges).forEach(id => {
             const edgeElement = document.getElementById(id);
+            const miniEdgeElement = document.getElementById('mini-' + id);
             if (edgeElement) {
-                if ('highlighted' in edgeElement.classList) {
-                    edgeElement.classList.remove('highlighted');
-                }
-                setElementColor(edgeElement, edges[id].desaturatedColor, false);
+                edgeElement.classList.remove('highlighted');
+                setElementColor(edgeElement, edges[id].defaultColor, false, false);
+            }
+            if (miniEdgeElement) {
+                miniEdgeElement.classList.remove('highlighted');
+                setElementColor(miniEdgeElement, edges[id].defaultColor, false, false);
             }
         });
         hideSelectionWindow();
@@ -843,6 +1144,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const miniatureHeader = document.getElementById('miniature-header');
     if (miniatureHeader) {
         miniatureHeader.addEventListener('mousedown', (event) => {
+            // Prevent drag if clicking on controls/buttons
+            if (
+                event.target.closest('.window-controls') ||
+                event.target.tagName === 'BUTTON'
+            ) {
+                console.log('Button clicked in miniature header, skipping drag');
+                return;
+            }
+            
             const rect = miniatureContainer.getBoundingClientRect();
             
             // Ensure we have inline styles set for consistent positioning
@@ -863,9 +1173,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.target.classList.add('dragging');
             event.preventDefault();
             event.stopPropagation();
-        });
-        addWindowControls(miniatureContainer, { 
-            buttons: { copy: false, edit: false }  // No copy or edit button
         });
         makeResizable(miniatureContainer);
     }
@@ -890,9 +1197,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Metadata box drag (whole container)
     const metadataContainer = document.getElementById('metadata-container');
     if (metadataContainer) {
-        addWindowControls(metadataContainer, { 
-            buttons: { copy: true, edit: false }   // Copy button but no edit
-        });
         makeResizable(metadataContainer);
         metadataContainer.addEventListener('mousedown', (event) => {
             // Prevent drag if clicking on controls/buttons
@@ -928,9 +1232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectionContainer = document.getElementById('selection-container');
     const selectionInner = document.getElementById('selection-inner-container');
     if (selectionContainer) {
-        addWindowControls(selectionContainer, { 
-            buttons: { copy: false, edit: true }   // Edit button but no copy
-        });
         makeResizable(selectionContainer);
         // Modified selection window mousedown handler
         selectionContainer.addEventListener('mousedown', (event) => {
@@ -988,6 +1289,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Create window-specific mouseup handler
             const handleMouseUp = (upEvent) => {
+                upEvent.preventDefault();
+                upEvent.stopPropagation();
                 selectionContainer.classList.remove('dragging');
                 window.removeEventListener('mousemove', handleMouseMove);
                 window.removeEventListener('mouseup', handleMouseUp);
@@ -1045,6 +1348,16 @@ document.addEventListener('DOMContentLoaded', () => {
         startY = dragState.startY;
 
         if (!dragState.type) return;
+        
+        // Track that we moved during drag (for any drag type)
+        if (startX !== undefined && startY !== undefined) {
+            const dx = Math.abs(event.clientX - startX);
+            const dy = Math.abs(event.clientY - startY);
+            if (dx > dragThreshold || dy > dragThreshold) {
+                dragDidMove = true;
+            }
+        }
+        
         if (dragState.type === 'pan') {
             if (!isPanning && startX !== undefined && startY !== undefined) {
                 dx = Math.abs(event.clientX - startX);
@@ -1135,9 +1448,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Track if we actually moved during drag (to distinguish from simple clicks)
+    let dragDidMove = false;
+
     // --- MOUSE UP HANDLER ---
     window.addEventListener('mouseup', (event) => {
         if (!dragState.type) return;
+        
+        // Prevent click events after drag operations
+        event.preventDefault();
+        event.stopPropagation();
+        
         if (dragState.target) {
             dragState.target.classList.remove('dragging');
             dragState.target.classList.remove('resizing');
@@ -1174,6 +1495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dragState.type = null;
         dragState.target = null;
         dragState.handle = null;
+        dragDidMove = false;
     });
 
     // --- Other UI Events ---
@@ -1189,6 +1511,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     svg.addEventListener('wheel', (event) => {
+        // Check if mouse is over selection container - if so, let it scroll naturally
+        const selectionContainer = document.getElementById('selection-container');
+        if (selectionContainer && event.target.closest('#selection-container')) {
+            // Don't prevent default - let the selection container scroll
+            return;
+        }
+        
+        // Check if mouse is over other containers that might need scrolling
+        if (event.target.closest('#metadata-container')) {
+            return;
+        }
+        
+        // Otherwise, handle zoom as normal
         event.preventDefault();
         const dir = event.deltaY < 0 ? 1 : -1;
         const scaleAmount = 1 + dir * 0.1;
@@ -1219,20 +1554,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Consolidated event listeners
     document.addEventListener('click', function (event) {
-        if (event.target.classList.contains('minimize-btn')) {
-            const btn = event.target;
-            const contents = btn.parentNode.parentNode.childNodes;
-            btn.innerHTML = btn.innerHTML === '+' ? '–' : '+';
-            contents.forEach(content => {
-                if (content.nodeType !== Node.ELEMENT_NODE) return;
-                if (content.classList.contains('container-content')) {
-                    content.style.display = content.style.display === 'none' ? '' : 'none';
-                }
-            });
-            event.stopPropagation();
-            return;
-        }
-
         // SVG highlight click handler
         if (event.target.closest('svg')) {
             let clickedElement = event.target;
@@ -1301,18 +1622,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Click on SVG background (not node/edge): do nothing to prevent movement
+            // Click on SVG background (not node/edge and not in containers): clear all highlights
             if (
                 event.target === svg ||
-                (!event.target.closest('.node') && !event.target.closest('.edge'))
+                (!event.target.closest('.node') && 
+                 !event.target.closest('.edge') &&
+                 !event.target.closest('#selection-container') &&
+                 !event.target.closest('#metadata-container') &&
+                 !event.target.closest('#miniature-container'))
             ) {
-                // Just stop propagation, don't move the view
+                // Clear all highlights and restore original state
+                clearAllHighlights();
                 event.stopPropagation();
                 return;
             }
         }
 
     });
+    
+    // Function to enhance edge clickability by adding invisible click areas
+    function enhanceEdgeClickability() {
+        const edges = svg.querySelectorAll('.edge');
+        edges.forEach(edge => {
+            const paths = edge.querySelectorAll('path');
+            paths.forEach(path => {
+                // Create a copy of the path with wider stroke for easier clicking
+                const clickPath = path.cloneNode(true);
+                clickPath.style.stroke = 'transparent';
+                clickPath.style.strokeWidth = '12px'; // Much wider for easier clicking
+                clickPath.style.fill = 'none';
+                clickPath.style.pointerEvents = 'stroke';
+                clickPath.style.cursor = 'pointer';
+                
+                // Insert the click path before the visible path
+                edge.insertBefore(clickPath, path);
+                
+                // Make the original path non-interactive so the click path handles clicks
+                path.style.pointerEvents = 'none';
+            });
+        });
+        console.log("Enhanced edge clickability for", edges.length, "edges");
+    }
   
 
     function initializeSvgView() {
@@ -1361,6 +1711,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Force viewport indicator update
             updateViewportIndicator();
             
+            // Enhance edge clickability by adding invisible click areas
+            enhanceEdgeClickability();
+            
             // Ensure viewport indicator is visible
             if (viewportIndicator) {
                 viewportIndicator.style.display = 'block';
@@ -1394,29 +1747,95 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Positioned miniature container next to metadata container");
             }
             
-            // Position selection container on the top right, opposite of metadata container
+            // Position selection container to the right of the miniature container
             const selectionContainer = document.getElementById('selection-container');
-            if (selectionContainer && metadataContainer) {
-                const metadataRect = metadataContainer.getBoundingClientRect();
-                const margin = 20; // 20px margin from edge
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
+            if (selectionContainer && metadataContainer && miniatureContainer) {
+                const miniatureRect = miniatureContainer.getBoundingClientRect();
+                const margin = 16; // Same margin as other containers
                 
-                // Set width to twice the metadata container width
-                const selectionWidth = metadataRect.width * 2;
+                // Set width to be similar to metadata container
+                const metadataRect = metadataContainer.getBoundingClientRect();
+                const selectionWidth = metadataRect.width * 1.5;
                 
                 // Calculate max height (75% of viewport height)
-                const maxHeight = Math.floor(viewportHeight * 0.75);
+                const maxHeight = Math.floor(window.innerHeight * 0.75);
                 
                 selectionContainer.style.position = 'fixed';
                 selectionContainer.style.width = `${selectionWidth}px`;
                 selectionContainer.style.maxHeight = `${maxHeight}px`;
-                selectionContainer.style.overflowY = 'auto'; // Add scrollbar if content overflows
-                selectionContainer.style.right = `${margin}px`; // Position from right edge
-                selectionContainer.style.top = `${metadataRect.top}px`; // Same top as metadata
+                selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
+                selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
+                selectionContainer.style.zIndex = '10001';
                 
-                console.log("Positioned selection container on top right");
+                console.log("Positioned selection container to the right of miniature container", {
+                    left: miniatureRect.right + margin,
+                    top: miniatureRect.top,
+                    width: selectionWidth,
+                    maxHeight: maxHeight
+                });
             }
+            
+            // Add browser zoom level to metadata
+            const addBrowserZoomToMetadata = () => {
+                const metadataInner = document.querySelector('.metadata-inner-container ul');
+                if (metadataInner) {
+                    // Remove existing browser zoom entry if it exists
+                    const existingZoomItem = metadataInner.querySelector('.browser-zoom-item');
+                    if (existingZoomItem) {
+                        existingZoomItem.remove();
+                    }
+                    
+                    // Calculate browser zoom level
+                    const browserZoom = Math.round(window.devicePixelRatio * 100);
+                    
+                    // Create new browser zoom item
+                    const zoomItem = document.createElement('li');
+                    zoomItem.className = 'browser-zoom-item';
+                    zoomItem.innerHTML = `Browser Zoom: ${browserZoom}%`;
+                    
+                    // Add it to the metadata list
+                    metadataInner.appendChild(zoomItem);
+                }
+            };
+            
+            // Add browser zoom to metadata initially
+            addBrowserZoomToMetadata();
+            
+            // Update browser zoom when window is resized/zoomed
+            window.addEventListener('resize', addBrowserZoomToMetadata);
+            
+            // Initialize window controls for all containers
+            console.log('Initializing window controls...');
+            if (metadataContainer) {
+                console.log('Found metadataContainer, adding controls');
+                addWindowControls(metadataContainer, { 
+                    buttons: { copy: true, edit: false }
+                });
+                makeResizable(metadataContainer);
+            } else {
+                console.log('metadataContainer not found');
+            }
+            
+            if (miniatureContainer) {
+                console.log('Found miniatureContainer, adding controls');
+                addWindowControls(miniatureContainer, { 
+                    buttons: { copy: false, edit: false }
+                });
+                makeResizable(miniatureContainer);
+            } else {
+                console.log('miniatureContainer not found');
+            }
+            
+            if (selectionContainer) {
+                console.log('Found selectionContainer, adding controls');
+                addWindowControls(selectionContainer, { 
+                    buttons: { copy: false, edit: true }
+                });
+                makeResizable(selectionContainer);
+            } else {
+                console.log('selectionContainer not found');
+            }
+            
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);
@@ -1427,15 +1846,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOMContentLoaded fired");
         // Small delay to ensure SVG is fully parsed
-        setTimeout(initializeSvgView, 300);
+        setTimeout(initializeSvgView, 300);ß
         
         // Also initialize when window is resized
         window.addEventListener('resize', () => {
             // Debounce the resize event
             if (window.resizeTimer) clearTimeout(window.resizeTimer);
             window.resizeTimer = setTimeout(() => {
-                console.log("Window resized, updating viewport indicator");
+                console.log("Window resized, updating viewport indicator and selection container");
                 updateViewportIndicator();
+                updateSelectionContainerPosition();
             }, 250);
         });
     });

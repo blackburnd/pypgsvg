@@ -9,6 +9,8 @@ Samples/example_output_erd.svg
 Samples/sample_schema_erd.svg
 Samples/schema.dump
 Samples/schema_erd.svg
+Samples/test_highlighting.svg
+Samples/test_highlighting2.svg
 src/__init__.py
 src/pypgsvg.py
 src/pypgsvg/__init__.py

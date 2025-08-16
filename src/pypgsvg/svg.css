@@ -43,7 +43,8 @@
 }
 
 .miniature-container.minimized,
-.metadata-container.minimized {
+.metadata-container.minimized,
+.selection-box.minimized {
     height: auto !important;
     min-height: 0 !important;
     min-width: 0 !important;
@@ -117,26 +118,13 @@
     cursor: pointer;
 }
 
-/* Make edges easier to click by increasing their click area */
-.edge path {
-    stroke-width: 8px; /* Invisible wider stroke for easier clicking */
-    stroke: transparent;
-    pointer-events: stroke;
-}
-
-.edge path[stroke]:not([stroke="transparent"]) {
-    stroke-width: 3px; /* Keep visible stroke thin */
-    pointer-events: none; /* Let the transparent wider path handle clicks */
-}
-
-/* Alternative approach: add hover effects to make edges more visible */
-.edge:hover path[stroke]:not([stroke="transparent"]) {
-    stroke-width: 4px;
-    filter: drop-shadow(0 0 2px rgba(0,0,0,0.3));
+/* Add hover effects to make nodes and edges more visible when selectable */
+.edge:hover {
+    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
 }
 
 .node:hover {
-    filter: drop-shadow(0 0 3px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 0 3px rgba(0, 0, 255, 0.3));
 }
 
 /* Metadata Minimap Row */
@@ -161,17 +149,17 @@
     padding: 10px;
     border-radius: 5px;
     box-sizing: border-box; /* Include padding and border in width calculation */
+    overflow: hidden; /* Remove outer scrollbar - only inner should scroll */
+    max-height: 80vh; /* Limit height to 80% of viewport height */
 }
 
-#selection-container container-content{
-    position: fixed;
-    font-size: -2rem;
-    opacity: 0.85;
-    border: 1px solid #000;
-    z-index: 10000;
+#selection-container .container-content{
+    position: relative;
+    font-size: 0.9rem;
+    opacity: 1;
     cursor: grab;
     pointer-events: auto;
-    margin-top: 3rem;
+    padding-top: 1rem;
 }
 
 #selection-container.dragging {
@@ -269,11 +257,13 @@
 
 /* Add these to your existing CSS */
 #selection-inner-container {
-    overflow: hidden; /* Prevents content from spilling out */
+    overflow-y: auto;  /* Enable vertical scrolling for inner content */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
     width: 100%;      /* Ensures it fills the container */
     height: 100%;     /* Ensures it fills the container */
     box-sizing: border-box;
     word-wrap: break-word;  /* Breaks long words to prevent horizontal overflow */
+    max-height: inherit; /* Inherit max-height from parent */
 }
 
 /* Make pre tags wrap text to prevent code blocks from overflowing */
