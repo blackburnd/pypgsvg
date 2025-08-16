@@ -112,8 +112,8 @@ def test_generate_erd_metadata_fields(simple_schema):
         assert os.path.exists(svg_path)
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
-        # Metadata fields
-        assert "Source:" in svg_content
+        # Metadata fields - updated to match new HTML structure
+        assert "File:" in svg_content  # Changed from "Source:" to "File:"
         assert "Generated" in svg_content
 
 def test_generate_erd_graph_data_json(simple_schema):

@@ -17,14 +17,89 @@ document.addEventListener('DOMContentLoaded', () => {
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
 
+    // --- Utility Functions ---
+    function fallbackCopyTextToClipboard(text, button) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                button.innerHTML = '✓';
+                button.title = 'Copied!';
+                setTimeout(() => {
+                    button.innerHTML = '📋';
+                    button.title = 'Copy to clipboard';
+                }, 2000);
+            } else {
+                console.error('Fallback: Oops, unable to copy');
+            }
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function downloadTextAsFile(text, filename) {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+
+        // Create HTML anchor element explicitly
+        const a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+
+        // Find a suitable parent element (body, html, or documentElement)
+        let parentElement = document.body;
+        if (!parentElement) {
+            parentElement = document.documentElement;
+        }
+        if (!parentElement) {
+            parentElement = document.querySelector('html');
+        }
+        if (!parentElement) {
+            // Fallback: try to find any element we can append to
+            parentElement = document.querySelector('svg') || document.firstElementChild;
+        }
+
+        if (parentElement) {
+            parentElement.appendChild(a);
+            a.click();
+            parentElement.removeChild(a);
+        } else {
+            // Last resort: try direct click without appending
+            a.click();
+        }
+
+        // Clean up
+        window.URL.revokeObjectURL(url);
+    }
+
     // --- Window Controls ---
     // Update the addWindowControls function to take a buttons config parameter
     function addWindowControls(windowElem, options = {}) {
-        console.log('addWindowControls called for:', windowElem.id, 'with options:', options);
+        // Helper function to remove emojis from text
+        function removeEmojis(text) {
+            // Remove common emojis used in the interface
+            return text
+                .replace(/📊|⚡|🔗|🔑|→|•/g, '')  // Remove specific emojis
+                .replace(/\s+/g, ' ')  // Normalize whitespace
+                .trim();
+        }
+
         if (!windowElem) return;
         let controls = windowElem.querySelector('.window-controls');
         if (!controls) {
-            console.log('No .window-controls found, creating one');
             controls = document.createElement('div');
             controls.className = 'window-controls';
             controls.style.position = 'absolute';
@@ -33,26 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.style.right = '2px';
             controls.style.zIndex = '10001';
             windowElem.appendChild(controls);
-        } else {
-            console.log('Found existing .window-controls');
-        }
-        
+        } 
+
         const btnConfig = options.buttons || {};
         const allControls = {};
-        
-        // Only add edit button if specified in options
-        if (btnConfig.edit) {
-            let editBtn = controls.querySelector('.edit-btn');
-            if (!editBtn) {
-                editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.title = 'Edit content';
-                editBtn.innerHTML = '✏️';  // Pencil emoji
-                controls.appendChild(editBtn);
-            }
-            allControls.editBtn = editBtn;
-        }
-        
+
         // Only add copy button if specified in options
         if (btnConfig.copy) {
             let copyBtn = controls.querySelector('.copy-btn');
@@ -65,42 +125,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             allControls.copyBtn = copyBtn;
         }
-        
+
+        // Only add download button if specified in options
+        if (btnConfig.download) {
+            let downloadBtn = controls.querySelector('.download-btn');
+            if (!downloadBtn) {
+                downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.title = 'Download as file';
+                downloadBtn.innerHTML = '💾';
+                controls.appendChild(downloadBtn);
+            }
+            allControls.downloadBtn = downloadBtn;
+        }
+
         // Always add minimize button
         let minBtn = controls.querySelector('.minimize-btn');
         if (!minBtn) {
-            console.log('Creating minimize button');
             minBtn = document.createElement('button');
             minBtn.className = 'minimize-btn';
             minBtn.title = 'Minimize';
             minBtn.innerHTML = '–';
             controls.appendChild(minBtn);
-        } else {
-            console.log('Using existing minimize button');
-        }
-        
-        // Always set up click handler (whether button is new or existing)
+        } 
+
         monclick = (container) => {
-            console.log('Minimize button clicked!', container);
             container.classList.toggle('minimized');
-            
+
             // Find all elements with container-content class within this container
             let elementsToToggle = container.querySelectorAll('.container-content');
-            console.log('Elements to toggle:', elementsToToggle);
-            
+
             if (container.classList.contains('minimized')) {
-                console.log('Minimizing - hiding container-content elements');
                 elementsToToggle.forEach(element => {
                     // Store the original display value before hiding
                     const currentDisplay = window.getComputedStyle(element).display;
                     element.setAttribute('data-original-display', currentDisplay);
                     element.style.display = 'none';
-                    console.log('Hidden element:', element, 'original display:', currentDisplay);
                 });
                 minBtn.innerHTML = '+';
                 minBtn.title = 'Restore';
             } else {
-                console.log('Restoring - showing container-content elements');
                 elementsToToggle.forEach(element => {
                     // Restore the original display value
                     const originalDisplay = element.getAttribute('data-original-display');
@@ -111,153 +175,292 @@ document.addEventListener('DOMContentLoaded', () => {
                         element.style.display = '';
                     }
                     element.removeAttribute('data-original-display');
-                    console.log('Restored element:', element, 'to display:', originalDisplay || 'default');
                 });
                 minBtn.innerHTML = '–';
                 minBtn.title = 'Minimize';
             }
             if (options.onMinimize) options.onMinimize(container.classList.contains('minimized'));
         };
-        
+
         // Also add event listener as backup
         minBtn.addEventListener('click', (e) => {
             let target = e.target.parentElement.parentElement;
-            console.log('Minimize button addEventListener fired!', target);
             e.preventDefault();
             e.stopPropagation();
             monclick(target);
-	});
-        
-        console.log('Set minimize click handler for', windowElem.id, '- button:', minBtn);
-        console.log('Button parent:', minBtn.parentElement, 'Button position:', window.getComputedStyle(minBtn));
+        });
         allControls.minBtn = minBtn;
-        
+
         // Always add close button
         let closeBtn = controls.querySelector('.close-btn');
         if (!closeBtn) {
-            console.log('Creating close button');
             closeBtn = document.createElement('button');
             closeBtn.className = 'close-btn';
             closeBtn.title = 'Close';
             closeBtn.innerHTML = '×';
             controls.appendChild(closeBtn);
-        } else {
-            console.log('Using existing close button');
-        }
-        
+        } 
 
         closeBtn.addEventListener('click', (e) => {
             windowElem.style.display = 'none';
-            console.log('Close button addEventListener fired!', windowElem);
         });
-        
-        console.log('Set close click handler for', windowElem.id, '- button:', closeBtn);
+
         allControls.closeBtn = closeBtn;
 
-        // Set up event handlers
-        
-        // Edit button handler (only for selection window)
-        if (allControls.editBtn) {
-            allControls.editBtn.onclick = (e) => {
+        if (allControls.copyBtn) {
+            allControls.copyBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
-                
-                // Find the inner container
-                const innerContainer = windowElem.querySelector('#selection-inner-container');
-                if (!innerContainer) return;
-                
-                // Skip if textarea already exists
-                if (innerContainer.querySelector('textarea')) return;
-                
-                // Save the original content
-                const originalContent = innerContainer.innerHTML;
-                let text = innerContainer.innerText || innerContainer.textContent || '';
-                
-                // Create textarea
-                const rect = innerContainer.getBoundingClientRect();
-                const width = rect.width;
-                const height = rect.height;
-                
-                const XHTML_NS = "http://www.w3.org/1999/xhtml";
-                const textarea = document.createElementNS(XHTML_NS, 'textarea');
-                textarea.value = text;
-                textarea.setAttribute('aria-label', 'Edit selection details');
-                textarea.setAttribute('style', 
-                    `width:${width}px;height:${height}px;box-sizing:border-box;font-family:inherit;font-size:inherit;resize:vertical;`
-                );
-                
-                // Replace content with textarea
-                innerContainer.innerHTML = '';
-                innerContainer.appendChild(textarea);
-                textarea.focus();
-                textarea.select();
-                
-                // Stop event propagation
-                function stopEvent(e) {
-                    e.stopPropagation();
+
+                let copyText = '';
+                const containerId = windowElem.id;
+
+                if (containerId === 'metadata-container') {
+                    // For metadata container, copy the structured content
+                    const sections = windowElem.querySelectorAll('.metadata-section');
+                    sections.forEach(section => {
+                        const title = section.querySelector('h3')?.textContent || '';
+                        if (title) {
+                            copyText += `${title}\n${'='.repeat(title.length)}\n`;
+                        }
+
+                        // Extract metadata items
+                        const items = section.querySelectorAll('.metadata-item');
+                        items.forEach(item => {
+                            const label = item.querySelector('.label')?.textContent || '';
+                            const value = item.querySelector('.value')?.textContent || '';
+                            if (label && value) {
+                                copyText += `${label}: ${value}\n`;
+                            }
+                        });
+
+                        // Extract single metadata items
+                        const singleItems = section.querySelectorAll('.metadata-single');
+                        singleItems.forEach(item => {
+                            const label = item.querySelector('.label')?.textContent || '';
+                            const value = item.querySelector('.value')?.textContent || '';
+                            if (label && value) {
+                                copyText += `${label}: ${value}\n`;
+                            }
+                        });
+
+                        // Extract parameter rows
+                        const paramRows = section.querySelectorAll('.param-row');
+                        paramRows.forEach(row => {
+                            const label = row.querySelector('.param-label')?.textContent || '';
+                            const value = row.querySelector('.param-value')?.textContent || '';
+                            if (label && value) {
+                                copyText += `${label} ${value}\n`;
+                            }
+                        });
+
+                        copyText += '\n';
+                    });
+                } else if (containerId === 'selection-container') {
+                    // For selection container, copy the organized content
+                    const innerContainer = windowElem.querySelector('#selection-inner-container');
+                    if (innerContainer) {
+                        const sections = innerContainer.querySelectorAll('.selection-section');
+                        sections.forEach(section => {
+                            const title = section.querySelector('h3')?.textContent || '';
+                            if (title) {
+                                const cleanTitle = removeEmojis(title);
+                                copyText += `${cleanTitle}\n${'='.repeat(cleanTitle.length)}\n`;
+                            }
+
+                            // Extract table names
+                            const tableNames = section.querySelectorAll('.table-name');
+                            tableNames.forEach(tableName => {
+                                copyText += `${tableName.textContent}\n`;
+                            });
+
+                            // Extract edge information
+                            const edgeNames = section.querySelectorAll('.edge-name');
+                            edgeNames.forEach(edgeName => {
+                                const h4 = edgeName.querySelector('h4');
+                                const pre = edgeName.querySelector('pre');
+                                if (h4) {
+                                    const cleanH4 = removeEmojis(h4.textContent);
+                                    copyText += `${cleanH4}\n`;
+                                }
+                                if (pre) {
+                                    copyText += `${pre.textContent}\n`;
+                                }
+                            });
+
+                            // Extract trigger information
+                            const triggerInfos = section.querySelectorAll('.trigger-info');
+                            triggerInfos.forEach(triggerInfo => {
+                                const triggerName = triggerInfo.querySelector('.trigger-name')?.textContent || '';
+                                const triggerEvent = triggerInfo.querySelector('.trigger-event')?.textContent || '';
+                                if (triggerName && triggerEvent) {
+                                    copyText += `${triggerName}: ${triggerEvent}\n`;
+                                }
+                                // Also get any additional function info
+                                const functionDiv = triggerInfo.querySelector('div[style*="font-size: 0.8rem"]');
+                                if (functionDiv) {
+                                    const cleanFunction = removeEmojis(functionDiv.textContent);
+                                    copyText += `  ${cleanFunction}\n`;
+                                }
+                            });
+
+                            copyText += '\n';
+                        });
+                    }
+                } else {
+                    // Fallback: copy all text content
+                    const textContent = windowElem.textContent || windowElem.innerText || '';
+                    copyText = textContent.trim();
                 }
-                
-                textarea.addEventListener('mousedown', stopEvent, true);
-                textarea.addEventListener('mousemove', stopEvent, true);
-                textarea.addEventListener('mouseup', stopEvent, true);
-                textarea.addEventListener('keydown', stopEvent, true);
-                textarea.addEventListener('keyup', stopEvent, true);
-                textarea.addEventListener('wheel', stopEvent, true);
-                
-                // Restore content on blur
-                textarea.addEventListener('blur', function() {
-                    innerContainer.innerHTML = originalContent;
-                    
-                    // Reattach table and edge event listeners
-                    const tableNames = innerContainer.querySelectorAll('.table-name');
-                    tableNames.forEach(tableName => {
-                        const tableId = tableName.getAttribute('data-table-id');
-                        // Re-attach all event handlers...
-                        // (Your existing code for attaching event handlers)
+
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(copyText).then(() => {
+                        // Visual feedback
+                        allControls.copyBtn.innerHTML = '✓';
+                        allControls.copyBtn.title = 'Copied!';
+                        setTimeout(() => {
+                            allControls.copyBtn.innerHTML = '📋';
+                            allControls.copyBtn.title = 'Copy to clipboard';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy to clipboard:', err);
+                        // Fallback for older browsers
+                        fallbackCopyTextToClipboard(copyText, allControls.copyBtn);
                     });
-                    
-                    const edgeNames = innerContainer.querySelectorAll('.edge-name');
-                    edgeNames.forEach(edgeName => {
-                        const edgeId = edgeName.getAttribute('data-edge-id');
-                        // Re-attach all event handlers...
-                        // (Your existing code for attaching event handlers)
-                    });
-                });
-            };
+                } else {
+                    // Fallback for older browsers
+                    fallbackCopyTextToClipboard(copyText, allControls.copyBtn);
+                }
+            });
         }
 
-        // Copy button handler (for metadata/miniature)
-        if (allControls.copyBtn) {
-            allControls.copyBtn.onclick = (e) => {
+        // Download button handler (for metadata/selection)
+        if (allControls.downloadBtn) {
+            allControls.downloadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
-                // Your existing copy-to-clipboard code
-                const selectedTables = Array.from(document.querySelectorAll('.table-name.selected')).map(el => el.dataset.tableId);
-                const selectedEdges = Array.from(document.querySelectorAll('.edge-name.selected')).map(el => el.dataset.edgeId);
-                let copyText = '';
-                
-                // Rest of your copying logic...
-                if (selectedTables.length) {
-                    copyText += 'Tables:\n';
-                    selectedTables.forEach(id => {
-                        const table = tables[id];
-                        if (table) {
-                            copyText += `- ${id}: ${table.label || ''}\n`;
+
+                let downloadText = '';
+                let filename = 'container-content.txt';
+                const containerId = windowElem.id;
+
+                if (containerId === 'metadata-container') {
+                    filename = 'database-metadata.txt';
+                    // For metadata container, copy the structured content
+                    const sections = windowElem.querySelectorAll('.metadata-section');
+                    sections.forEach(section => {
+                        const title = section.querySelector('h3')?.textContent || '';
+                        if (title) {
+                            downloadText += `${title}\n${'='.repeat(title.length)}\n`;
                         }
+
+                        // Extract metadata items
+                        const items = section.querySelectorAll('.metadata-item');
+                        items.forEach(item => {
+                            const label = item.querySelector('.label')?.textContent || '';
+                            const value = item.querySelector('.value')?.textContent || '';
+                            if (label && value) {
+                                downloadText += `${label}: ${value}\n`;
+                            }
+                        });
+
+                        // Extract single metadata items
+                        const singleItems = section.querySelectorAll('.metadata-single');
+                        singleItems.forEach(item => {
+                            const label = item.querySelector('.label')?.textContent || '';
+                            const value = item.querySelector('.value')?.textContent || '';
+                            if (label && value) {
+                                downloadText += `${label}: ${value}\n`;
+                            }
+                        });
+
+                        // Extract parameter rows
+                        const paramRows = section.querySelectorAll('.param-row');
+                        paramRows.forEach(row => {
+                            const label = row.querySelector('.param-label')?.textContent || '';
+                            const value = row.querySelector('.param-value')?.textContent || '';
+                            if (label && value) {
+                                downloadText += `${label} ${value}\n`;
+                            }
+                        });
+
+                        downloadText += '\n';
                     });
+                } else if (containerId === 'selection-container') {
+                    filename = 'selection-details.txt';
+                    // For selection container, copy the organized content
+                    const innerContainer = windowElem.querySelector('#selection-inner-container');
+                    if (innerContainer) {
+                        const sections = innerContainer.querySelectorAll('.selection-section');
+                        sections.forEach(section => {
+                            const title = section.querySelector('h3')?.textContent || '';
+                            if (title) {
+                                const cleanTitle = removeEmojis(title);
+                                downloadText += `${cleanTitle}\n${'='.repeat(cleanTitle.length)}\n`;
+                            }
+
+                            // Extract table names
+                            const tableNames = section.querySelectorAll('.table-name');
+                            tableNames.forEach(tableName => {
+                                downloadText += `${tableName.textContent}\n`;
+                            });
+
+                            // Extract edge information
+                            const edgeNames = section.querySelectorAll('.edge-name');
+                            edgeNames.forEach(edgeName => {
+                                const h4 = edgeName.querySelector('h4');
+                                const pre = edgeName.querySelector('pre');
+                                if (h4) {
+                                    const cleanH4 = removeEmojis(h4.textContent);
+                                    downloadText += `${cleanH4}\n`;
+                                }
+                                if (pre) {
+                                    downloadText += `${pre.textContent}\n`;
+                                }
+                            });
+
+                            // Extract trigger information
+                            const triggerInfos = section.querySelectorAll('.trigger-info');
+                            triggerInfos.forEach(triggerInfo => {
+                                const triggerName = triggerInfo.querySelector('.trigger-name')?.textContent || '';
+                                const triggerEvent = triggerInfo.querySelector('.trigger-event')?.textContent || '';
+                                if (triggerName && triggerEvent) {
+                                    downloadText += `${triggerName}: ${triggerEvent}\n`;
+                                }
+                                // Also get any additional function info
+                                const functionDiv = triggerInfo.querySelector('div[style*="font-size: 0.8rem"]');
+                                if (functionDiv) {
+                                    const cleanFunction = removeEmojis(functionDiv.textContent);
+                                    downloadText += `  ${cleanFunction}\n`;
+                                }
+                            });
+
+                            downloadText += '\n';
+                        });
+                    }
+                } else {
+                    // Fallback: copy all text content
+                    const textContent = windowElem.textContent || windowElem.innerText || '';
+                    downloadText = textContent.trim();
                 }
-                
-                // Copy to clipboard
-                navigator.clipboard.writeText(copyText).then(() => {
-                    allControls.copyBtn.classList.add('copied');
-                    setTimeout(() => {
-                        allControls.copyBtn.classList.remove('copied');
-                    }, 2000);
-                });
-            };
+
+                // Download the file
+                downloadTextAsFile(downloadText, filename);
+
+                // Visual feedback
+                allControls.downloadBtn.innerHTML = '✓';
+                allControls.downloadBtn.title = 'Downloaded!';
+                setTimeout(() => {
+                    allControls.downloadBtn.innerHTML = '💾';
+                    allControls.downloadBtn.title = 'Download as file';
+                }, 2000);
+            });
         }
 
         controls.addEventListener('mousedown', e => e.stopPropagation());
         controls.addEventListener('click', e => e.stopPropagation());
-        
+
         return allControls;
     }
 
@@ -265,12 +468,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get both handles
         const nwHandle = windowElem.querySelector('#resize_handle_nw');
         const seHandle = windowElem.querySelector('#resize_handle_se');
-        
+
         if (nwHandle) {
             nwHandle.addEventListener('mousedown', function(event) {
                 dragState.type = 'resize';
                 const rect = windowElem.getBoundingClientRect();
-                
+
                 // Ensure we have inline styles set for consistent positioning
                 if (!windowElem.style.left) {
                     windowElem.style.left = `${rect.left}px`;
@@ -284,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!windowElem.style.height) {
                     windowElem.style.height = `${windowElem.offsetHeight}px`;
                 }
-                
+
                 dragState.target = windowElem; // The target is the window, not the handle
                 dragState.handle = 'nw'; // Mark which handle we're using
                 dragState.startX = event.clientX;
@@ -299,19 +502,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 event.stopPropagation();
             });
-            
+
             // Prevent click events on resize handle
             nwHandle.addEventListener('click', function(event) {
                 event.preventDefault();
                 event.stopPropagation();
             });
         }
-        
+
         if (seHandle) {
             seHandle.addEventListener('mousedown', function(event) {
                 dragState.type = 'resize';
                 const rect = windowElem.getBoundingClientRect();
-                
+
                 // Ensure we have inline styles and use consistent CSS dimensions
                 if (!windowElem.style.width) {
                     windowElem.style.width = `${windowElem.offsetWidth}px`;
@@ -319,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!windowElem.style.height) {
                     windowElem.style.height = `${windowElem.offsetHeight}px`;
                 }
-                
+
                 dragState.target = windowElem; // The target is the window, not the handle
                 dragState.handle = 'se'; // Mark which handle we're using
                 dragState.startX = event.clientX;
@@ -331,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
                 event.stopPropagation();
             });
-            
+
             // Prevent click events on resize handle
             seHandle.addEventListener('click', function(event) {
                 event.preventDefault();
@@ -400,18 +603,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectionContainer = document.getElementById('selection-container');
         const metadataContainer = document.getElementById('metadata-container');
         const miniatureContainer = document.getElementById('miniature-container');
-        
+
         if (selectionContainer && metadataContainer && miniatureContainer) {
             const miniatureRect = miniatureContainer.getBoundingClientRect();
             const margin = 16; // Same margin as other containers
-            
+
             // Set width to be similar to metadata container
             const metadataRect = metadataContainer.getBoundingClientRect();
             const selectionWidth = metadataRect.width * 1.5;
-            
+
             // Calculate max height (75% of viewport height)
             const maxHeight = Math.floor(window.innerHeight * 0.75);
-            
+
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
             selectionContainer.style.maxHeight = `${maxHeight}px`;
@@ -433,17 +636,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const hexToRgba = (hex, alpha = 1.0) => {
         // Remove # if present
         hex = hex.replace('#', '');
-        
+
         // Handle 3-digit hex
         if (hex.length === 3) {
             hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         }
-        
+
         // Extract RGB values
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-        
+
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     };
 
@@ -500,71 +703,71 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Invalid hex color:', hexColor);
             return '#cccccc';
         }
-        
+
         // Remove # if present
         let hex = hexColor.replace('#', '');
-        
+
         // Handle 3-digit hex
         if (hex.length === 3) {
             hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         }
-        
+
         // Validate hex format
         if (hex.length !== 6 || !/^[0-9A-Fa-f]+$/.test(hex)) {
             console.warn('Invalid hex format:', hexColor, 'processed as:', hex);
             return hexColor; // Return original if invalid
         }
-        
+
         // Convert hex to RGB
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-        
+
         // Validate RGB values
         if (isNaN(r) || isNaN(g) || isNaN(b)) {
             console.warn('Invalid RGB values:', r, g, b, 'from hex:', hexColor);
             return hexColor;
         }
-        
+
         // Convert RGB to HLS
         const [h, l, s] = rgbToHls(r, g, b);
-        
+
         // Increase saturation, clamping to valid range
         const newS = Math.min(1, Math.max(0, s * saturationFactor));
-        
+
         // Convert back to RGB
         const [newR, newG, newB] = hlsToRgb(h, l, newS);
-        
+
         // Validate final RGB values
         if (isNaN(newR) || isNaN(newG) || isNaN(newB)) {
             console.warn('Invalid final RGB values:', newR, newG, newB);
             return hexColor;
         }
-        
+
         // Clamp to valid range
         const clampedR = Math.max(0, Math.min(255, Math.round(newR)));
         const clampedG = Math.max(0, Math.min(255, Math.round(newG)));
         const clampedB = Math.max(0, Math.min(255, Math.round(newB)));
-        
+
         // Convert back to hex
         const finalHex = `#${clampedR.toString(16).padStart(2, '0')}${clampedG.toString(16).padStart(2, '0')}${clampedB.toString(16).padStart(2, '0')}`;
-        
+
         return finalHex;
     };
 
     const getElementColor = (elem) => {
         if (!elem || !elem.id) return '#cccccc';
-        
+
         const nodeId = elem.id.replace('mini-', '');
-        
+
         if (elem.classList && elem.classList.contains('node')) {
             return tables[nodeId]?.defaultColor || '#cccccc';
         }
-        
+
         if (elem.classList && elem.classList.contains('edge')) {
             return edges[nodeId]?.defaultColor || '#cccccc';
         }
-        
+
         return '#cccccc';
     };
 
@@ -596,18 +799,18 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Add visual emphasis - make the table more obvious
                 elem.style.filter = 'brightness(1.3) contrast(1.2) drop-shadow(0px 0px 8px rgba(255,255,0,0.5))';
-                
+
                 // Store original transform if it exists
                 const originalTransform = elem.getAttribute('transform');
                 if (originalTransform) {
                     elem.dataset.originalTransform = originalTransform;
                 }
-                
+
                 // For SVG elements, use SVG transform attribute for scaling
                 const bbox = elem.getBBox();
                 const centerX = bbox.x + bbox.width / 2;
                 const centerY = bbox.y + bbox.height / 2;
-                
+
                 const scaleTransform = `translate(${centerX}, ${centerY}) scale(1.1) translate(${-centerX}, ${-centerY})`;
                 const newTransform = originalTransform ? `${originalTransform} ${scaleTransform}` : scaleTransform;
                 elem.setAttribute('transform', newTransform);
@@ -638,10 +841,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to apply saturation effects specifically for edges
     const setEdgeSaturationEffect = (edgeElement, saturationFactor = 2.0, restore = false) => {
         if (!edgeElement) return;
-        
+
         const baseColor = getElementColor(edgeElement);
         const paths = edgeElement.querySelectorAll('path');
-        
+
         paths.forEach((path) => {
             // Store original styles if not already stored
             if (!path.dataset.originalStroke) {
@@ -650,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!path.dataset.originalStrokeWidth) {
                 path.dataset.originalStrokeWidth = path.getAttribute('stroke-width') || '3';
             }
-            
+
             if (restore) {
                 // Restore original stroke color and width
                 path.setAttribute('stroke', path.dataset.originalStroke);
@@ -659,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Apply saturated stroke color and slightly increased width
                 const saturatedColor = saturateColor(baseColor, saturationFactor);
                 path.setAttribute('stroke', saturatedColor);
-                
+
                 // Slightly increase stroke width for better visibility
                 const originalWidth = parseFloat(path.dataset.originalStrokeWidth);
                 path.setAttribute('stroke-width', (originalWidth * 1.5).toString());
@@ -694,25 +897,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 opacity = '1'; // Full opacity when nothing is highlighted
             }
             elem.setAttribute('opacity', opacity);
-            
+
             const polygons = elem.querySelectorAll('polygon');
-            
+
             // Get the table's header color for background with reduced opacity
             const tableColor = tables[nodeId.replace('mini-', '')]?.defaultColor || color;
             const backgroundColorWithOpacity = hexToRgba(tableColor, 0.1);
-            
+
             polygons.forEach((polygon, index) => {
                 const currentFill = polygon.getAttribute('fill');
-                
+
                 // Store original fill if not already stored
                 if (!polygon.dataset.originalFill) {
                     polygon.dataset.originalFill = currentFill || 'white';
                 }
-                
+
                 // Only modify white/transparent polygons (content areas)
                 // NEVER touch any colored polygons (headers) - leave them completely alone
                 const isContentPolygon = currentFill === 'white' || currentFill === 'none' || currentFill === 'transparent' || !currentFill;
-                
+
                 if (isContentPolygon && isHighlighted) {
                     // Only change content polygons when highlighting
                     polygon.setAttribute('fill', backgroundColorWithOpacity);
@@ -725,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (elem.classList && elem.classList.contains('edge')) {
-            // Set opacity based on selection state  
+            // Set opacity based on selection state
             let opacity = '1';
             if (highlightedElementId !== null) {
                 // Something is highlighted
@@ -738,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 opacity = '1'; // Full opacity when nothing is highlighted
             }
             elem.setAttribute('opacity', opacity);
-            
+
             const polygons = elem.querySelectorAll('polygon');
             polygons.forEach(polygon => {
                 polygon.setAttribute('stroke-width', isHighlighted ? '10' : '3');
@@ -781,7 +984,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tableElement = document.getElementById(id);
             const miniTableElement = document.getElementById('mini-' + id);
             const isInSelection = tableIds.includes(id);
-            
+
             if (tableElement) {
                 setElementColor(tableElement, tables[id].defaultColor, false, isInSelection);
                 if (isInSelection) {
@@ -804,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const edgeElement = document.getElementById(id);
             const miniEdgeElement = document.getElementById('mini-' + id);
             const isInSelection = edgeIds.includes(id);
-            
+
             if (edgeElement) {
                 setElementColor(edgeElement, getElementColor(edgeElement), false, isInSelection);
                 if (isInSelection) {
@@ -831,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Get the table's default color for highlighting
             const tableColor = tables[id].defaultColor || '#712e2eff';
-            
+
             // Highlight with full intensity
             setElementColor(tableElement, tableColor, true, true);
             if (miniTableElement) {
@@ -858,141 +1061,153 @@ document.addEventListener('DOMContentLoaded', () => {
     function showSelectionWindow(selectedTables, selectedEdges, event) {
         const selectionContainer = document.getElementById('selection-container');
         if (!selectionContainer) return;
-        
+
         // Force visibility with strong inline styles
         selectionContainer.style.display = 'block';
         selectionContainer.style.position = 'fixed';
         selectionContainer.style.zIndex = '10001';
-        selectionContainer.style.background = 'rgba(168, 188, 220, 0.98)';
-        selectionContainer.style.border = '2px solid #000';
-        selectionContainer.style.padding = '10px';
-        selectionContainer.style.borderRadius = '5px';
-        selectionContainer.style.minWidth = '300px';
-        selectionContainer.style.minHeight = '200px';
-        
+
         const inner = selectionContainer.querySelector('#selection-inner-container');
-        if (!inner) return;
+        const selection_header = document.getElementById('selection-header');
+        if (!inner || !selection_header) return;
 
         let html = '';
+
         if (selectedTables.length) {
-            let this_table = selectedTables[0];
-            selection_header = document.getElementById('selection-header');
-            selection_header.innerHTML = `Selected Table: ${this_table}`;
-            
-            // Create table entries with data attributes for hover effects
-            html += '<div><b>Related Tables:</b><br/>';
-            selectedTables.forEach(tableId => {
-                // Add data-table-id attribute for event handling
-                html += `<span class="table-name" data-table-id="${tableId}">${tableId}</span><br/>`;
+            let primaryTable = selectedTables[0];
+            selection_header.innerHTML = `📋 ${primaryTable}`;
+
+            // Table Information Section
+            html += '<div class="selection-section">';
+            html += '<h3>📊 Selected Tables</h3>';
+            selectedTables.forEach((tableId, index) => {
+                const tableData = graphData.tables[tableId];
+                if (index === 0) {
+                    html += `<div style="margin-bottom: 12px;">`;
+                    html += `<span class="table-name" data-table-id="${tableId}" style="font-size: 1.1rem; font-weight: 600;">${tableId}</span>`;
+                } else {
+                    html += `<span class="table-name" data-table-id="${tableId}">${tableId}</span>`;
+                }
+                if (index === 0) html += `</div>`;
             });
             html += '</div>';
+
+            // Add table details for the primary table
+            const primaryTableData = graphData.tables[primaryTable];
+            if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers.length > 0) {
+                html += '<div class="selection-section">';
+                html += '<h3>⚡ Triggers</h3>';
+                primaryTableData.triggers.forEach(trigger => {
+                    html += '<div class="trigger-info">';
+                    html += `<span class="trigger-name">${trigger.trigger_name}</span>`;
+                    html += `<span class="trigger-event">${trigger.event}</span>`;
+                    if (trigger.function) {
+                        html += `<div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 2px;">→ ${trigger.function}${trigger.function_args ? '(' + trigger.function_args + ')' : '()'}</div>`;
+                    }
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
         }
 
-        // Update the foreign keys section in showSelectionWindow function
-
+        // Foreign Keys Section
         if (selectedEdges.length) {
-            html += '<div id="selected_edges"><b>Foreign Keys:</b><ul>';
+            html += '<div class="selection-section">';
+            html += '<h3>🔗 Foreign Key Relationships</h3>';
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
-                    // Add edge-name class and data-edge-id attribute
-                    // Escape the fkText to prevent template literal issues by using innerHTML instead
-                    const listItem = document.createElement('li');
-                    listItem.className = 'edge-name';
-                    listItem.setAttribute('data-edge-id', edgeId);
-                    const preElement = document.createElement('pre');
-                    preElement.textContent = edge.fkText; // Use textContent to avoid HTML parsing issues
-                    listItem.appendChild(preElement);
-                    const tempDiv = document.createElement('div');
-                    tempDiv.appendChild(listItem);
-                    html += tempDiv.innerHTML;
+                    html += `<div class="edge-name" data-edge-id="${edgeId}">`;
+                    html += `<h4>🔑 ${edge.fromColumn} → ${edge.toColumn}</h4>`;
+                    html += `<pre>${edge.fkText}</pre>`;
+                    html += '</div>';
                 } else {
-                    html += `<li class="edge-name" data-edge-id="${edgeId}">${edgeId}</li>`;
+                    html += `<div class="edge-name" data-edge-id="${edgeId}">${edgeId}</div>`;
                 }
             }
-            html += '</ul></div>';
+            html += '</div>';
         }
-        
+
         inner.innerHTML = html;
 
         // Add hover event listeners to table names
         const tableNames = inner.querySelectorAll('.table-name');
         tableNames.forEach(tableNameSpan => {
             const tableId = tableNameSpan.getAttribute('data-table-id');
-            
+
             // Mouseover event - apply saturation effect instead of highlighting
             tableNameSpan.addEventListener('mouseover', () => {
                 // Get the table element in the SVG
                 const tableElement = document.getElementById(tableId);
                 const miniTableElement = document.getElementById('mini-' + tableId);
-                
+
                 if (tableElement) {
                     // Apply saturation effect with double saturation (2.0 factor)
                     setSaturationEffect(tableElement, 2.0, false);
                 }
-                
+
                 // Also apply to the miniature version
                 if (miniTableElement) {
                     setSaturationEffect(miniTableElement, 2.0, false);
                 }
             });
-            
+
             // Mouseout event - restore original appearance
             tableNameSpan.addEventListener('mouseout', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const tableElement = document.getElementById(tableId);
                 const miniTableElement = document.getElementById('mini-' + tableId);
-                
+
                 if (tableElement) {
                     setSaturationEffect(tableElement, 2.0, true);
-                    
+
                     // If this table should still be highlighted, ensure highlighting is maintained
-                    if (highlightedElementId && 
-                        (highlightedElementId === tableId || 
-                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId => 
+                    if (highlightedElementId &&
+                        (highlightedElementId === tableId ||
+                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId =>
                              edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
                         // Re-apply highlighting to maintain background colors
                         tableElement.classList.add('highlighted');
                         setElementColor(tableElement, tables[tableId].defaultColor, true, true);
                     }
                 }
-                
+
                 // Also restore the miniature version
                 if (miniTableElement) {
                     setSaturationEffect(miniTableElement, 2.0, true);
-                    
+
                     // Maintain highlighting for mini version too
-                    if (highlightedElementId && 
-                        (highlightedElementId === tableId || 
-                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId => 
+                    if (highlightedElementId &&
+                        (highlightedElementId === tableId ||
+                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId =>
                              edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
                         miniTableElement.classList.add('highlighted');
                         setElementColor(miniTableElement, tables[tableId].defaultColor, true, true);
                     }
                 }
             });
-            
+
             // ADD THE NEW CLICK HANDLER HERE
             tableNameSpan.addEventListener('click', (e) => {
                 e.preventDefault(); // Prevent scrolling
                 e.stopPropagation();
-                
+
                 // Clear any existing highlights
                 clearAllHighlights();
-                
+
                 // Set this table as the highlighted element
                 highlightedElementId = tableId;
-                
+
                 // Get connected edges and tables (same logic as SVG click handler)
                 const connectedEdges = tables[tableId].edges;
                 const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
                 const uniqueTables = [...new Set(connectedTables)];
-                
+
                 // Highlight everything
                 highlightElements(uniqueTables, connectedEdges);
-                
+
                 // Center view on the selected table
                 const tableElement = document.getElementById(tableId);
                 if (tableElement) {
@@ -1004,7 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Center the view on the table, maintaining current zoom level
                     zoomToPoint(centerX, centerY, userS);
                 }
-                
+
                 // No need to call showSelectionWindow again since we're already in it
             });
         });
@@ -1013,33 +1228,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const edgeNames = inner.querySelectorAll('.edge-name');
         edgeNames.forEach(edgeNameLi => {
             const edgeId = edgeNameLi.getAttribute('data-edge-id');
-            
+
             // Mouseover event - apply saturation effect to the edge
             edgeNameLi.addEventListener('mouseover', () => {
                 const edgeElement = document.getElementById(edgeId);
                 const miniEdgeElement = document.getElementById('mini-' + edgeId);
-                
+
                 if (edgeElement) {
                     setEdgeSaturationEffect(edgeElement, 2.0, false);
                 }
-                
+
                 if (miniEdgeElement) {
                     setEdgeSaturationEffect(miniEdgeElement, 2.0, false);
                 }
             });
-            
+
             // Mouseout event - restore original edge appearance
             edgeNameLi.addEventListener('mouseout', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const edgeElement = document.getElementById(edgeId);
                 const miniEdgeElement = document.getElementById('mini-' + edgeId);
-                
+
                 if (edgeElement) {
                     setEdgeSaturationEffect(edgeElement, 2.0, true);
                 }
-                
+
                 if (miniEdgeElement) {
                     setEdgeSaturationEffect(miniEdgeElement, 2.0, true);
                 }
@@ -1077,15 +1292,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dragState.type !== null) {
             return;
         }
-        
+
         // Also check if selection-container is being dragged (it has its own drag system)
         const selectionContainer = document.getElementById('selection-container');
         if (selectionContainer && selectionContainer._dragState) {
             return;
         }
-        
+
         highlightedElementId = null; // Clear the highlighted element ID first
-        
+
         Object.keys(tables).forEach(id => {
             const tableElement = document.getElementById(id);
             const miniTableElement = document.getElementById('mini-' + id);
@@ -1149,12 +1364,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.target.closest('.window-controls') ||
                 event.target.tagName === 'BUTTON'
             ) {
-                console.log('Button clicked in miniature header, skipping drag');
                 return;
             }
-            
+
             const rect = miniatureContainer.getBoundingClientRect();
-            
+
             // Ensure we have inline styles set for consistent positioning
             if (!miniatureContainer.style.left) {
                 miniatureContainer.style.left = `${rect.left}px`;
@@ -1162,12 +1376,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!miniatureContainer.style.top) {
                 miniatureContainer.style.top = `${rect.top}px`;
             }
-            
+
             dragState.type = 'miniature';
             dragState.target = miniatureContainer;
             dragState.startX = event.clientX;
             dragState.startY = event.clientY;
-            // Now we can safely use the inline style values  
+            // Now we can safely use the inline style values
             dragState.offsetX = parseFloat(miniatureContainer.style.left);
             dragState.offsetY = parseFloat(miniatureContainer.style.top);
             dragState.target.classList.add('dragging');
@@ -1204,9 +1418,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.target.closest('.window-controls') ||
                 event.target.tagName === 'BUTTON'
             ) return;
-            
+
             const rect = metadataContainer.getBoundingClientRect();
-            
+
             // Ensure we have inline styles set for consistent positioning
             if (!metadataContainer.style.left) {
                 metadataContainer.style.left = `${rect.left}px`;
@@ -1214,7 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!metadataContainer.style.top) {
                 metadataContainer.style.top = `${rect.top}px`;
             }
-            
+
             dragState.type = 'metadata';
             dragState.target = metadataContainer;
             dragState.startX = event.clientX;
@@ -1247,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Get the container's current position
             const rect = selectionContainer.getBoundingClientRect();
-            
+
             // Ensure we have inline styles set for consistent positioning
             if (!selectionContainer.style.left) {
                 selectionContainer.style.left = `${rect.left}px`;
@@ -1255,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!selectionContainer.style.top) {
                 selectionContainer.style.top = `${rect.top}px`;
             }
-            
+
             // Use the same approach as metadata container (which works perfectly)
             const windowDragState = {
                 type: 'selection-window',
@@ -1266,27 +1480,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 offsetX: parseFloat(selectionContainer.style.left),
                 offsetY: parseFloat(selectionContainer.style.top)
             };
-            
+
             // Store this separate state
             selectionContainer._dragState = windowDragState;
             selectionContainer.classList.add('dragging');
-            
+
             // Create window-specific mousemove handler that won't interfere with SVG
             const handleMouseMove = (moveEvent) => {
                 moveEvent.preventDefault();
                 moveEvent.stopPropagation();
-                
+
                 // Use same calculation as metadata container: movement delta + original position
                 const dx = moveEvent.clientX - windowDragState.startX;
                 const dy = moveEvent.clientY - windowDragState.startY;
-                
+
                 const newX = windowDragState.offsetX + dx;
                 const newY = windowDragState.offsetY + dy;
-                
+
                 selectionContainer.style.left = `${newX}px`;
                 selectionContainer.style.top = `${newY}px`;
             };
-            
+
             // Create window-specific mouseup handler
             const handleMouseUp = (upEvent) => {
                 upEvent.preventDefault();
@@ -1296,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.removeEventListener('mouseup', handleMouseUp);
                 selectionContainer._dragState = null;
             };
-            
+
             // Add temporary event listeners for this drag operation only
             window.addEventListener('mousemove', handleMouseMove);
             window.addEventListener('mouseup', handleMouseUp);
@@ -1308,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // SVG panning (background drag)
     svg.addEventListener('mousedown', (event) => {
         // Check if we're inside any of the overlay containers or their children
-        if (event.target.closest('#selection-container') || 
+        if (event.target.closest('#selection-container') ||
             event.target.closest('#miniature-container') ||
             event.target.closest('#metadata-container')) {
             return; // Don't initiate pan if we're in these containers
@@ -1348,7 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startY = dragState.startY;
 
         if (!dragState.type) return;
-        
+
         // Track that we moved during drag (for any drag type)
         if (startX !== undefined && startY !== undefined) {
             const dx = Math.abs(event.clientX - startX);
@@ -1357,7 +1571,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dragDidMove = true;
             }
         }
-        
+
         if (dragState.type === 'pan') {
             if (!isPanning && startX !== undefined && startY !== undefined) {
                 dx = Math.abs(event.clientX - startX);
@@ -1381,11 +1595,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculate movement delta and apply to original position
             dx = event.clientX - dragState.startX;
             dy = event.clientY - dragState.startY;
-            
+
             const newX = dragState.offsetX + dx;
             const newY = dragState.offsetY + dy;
 
-            //console.log(`Dragging ${dragState.type} to (${newX}, ${newY})`);
             dragState.target.style.left = `${newX}px`;
             dragState.target.style.top = `${newY}px`;
 
@@ -1408,39 +1621,39 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dragState.type === 'resize') {
             event.preventDefault();
             event.stopPropagation();
-            
+
             // Calculate how much the mouse has moved
             const dx = event.clientX - dragState.startX;
             const dy = event.clientY - dragState.startY;
-            
+
             // Get the SVG element inside the container
             const container = dragState.target;
             const svgImage = container.querySelector('svg');
-            
+
             // Calculate new dimensions based on which handle is being dragged
             let newWidth, newHeight, newLeft, newTop;
-            
+
             if (dragState.handle === 'nw') {
                 // Northwest handle: resize and reposition
                 newWidth = Math.max(100, dragState.startWidth - dx);
                 newHeight = Math.max(80, dragState.startHeight - dy);
                 newLeft = dragState.startLeft + (dragState.startWidth - newWidth);
                 newTop = dragState.startTop + (dragState.startHeight - newHeight);
-                
+
                 // Update position
                 container.style.left = `${newLeft}px`;
                 container.style.top = `${newTop}px`;
-            } 
+            }
             else if (dragState.handle === 'se') {
                 // Southeast handle: just resize
                 newWidth = Math.max(100, dragState.startWidth + dx);
                 newHeight = Math.max(80, dragState.startHeight + dy);
             }
-            
+
             // Update dimensions for both container and SVG
             container.style.width = `${newWidth}px`;
             container.style.height = `${newHeight}px`;
-            
+
             if (svgImage) {
                 svgImage.setAttribute('width', `${newWidth}px`);
                 svgImage.setAttribute('height', `${newHeight}px`);
@@ -1454,11 +1667,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MOUSE UP HANDLER ---
     window.addEventListener('mouseup', (event) => {
         if (!dragState.type) return;
-        
+
         // Prevent click events after drag operations
         event.preventDefault();
         event.stopPropagation();
-        
+
         if (dragState.target) {
             dragState.target.classList.remove('dragging');
             dragState.target.classList.remove('resizing');
@@ -1472,17 +1685,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentTop = parseFloat(dragState.target.style.top) || rect.top;
             const newWidth = rect.width;
             const newHeight = rect.height;
-            
+
             // Apply minimum size constraints while preserving position
             const minSize = 50;
             if (newWidth < minSize || newHeight < minSize) {
                 const constrainedWidth = Math.max(minSize, newWidth);
                 const constrainedHeight = Math.max(minSize, newHeight);
-                
+
                 // Only update dimensions, don't touch position
                 dragState.target.style.width = `${constrainedWidth}px`;
                 dragState.target.style.height = `${constrainedHeight}px`;
-                
+
                 // Update SVG inside if it exists
                 const svgImage = dragState.target.querySelector('svg');
                 if (svgImage) {
@@ -1517,12 +1730,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Don't prevent default - let the selection container scroll
             return;
         }
-        
+
         // Check if mouse is over other containers that might need scrolling
         if (event.target.closest('#metadata-container')) {
             return;
         }
-        
+
         // Otherwise, handle zoom as normal
         event.preventDefault();
         const dir = event.deltaY < 0 ? 1 : -1;
@@ -1558,20 +1771,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.closest('svg')) {
             let clickedElement = event.target;
             let tableId = null, edgeId = null;
-            
+
             // First, try to find a node or edge by traversing up the DOM tree
             while (clickedElement && clickedElement !== svg) {
                 if (clickedElement.classList && clickedElement.classList.contains('node')) {
-                    tableId = clickedElement.id; 
+                    tableId = clickedElement.id;
                     break;
                 }
                 if (clickedElement.classList && clickedElement.classList.contains('edge')) {
-                    edgeId = clickedElement.id; 
+                    edgeId = clickedElement.id;
                     break;
                 }
                 clickedElement = clickedElement.parentElement;
             }
-            
+
             // If we didn't find a node/edge by class, try finding by ID pattern
             if (!tableId && !edgeId) {
                 clickedElement = event.target;
@@ -1588,10 +1801,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     clickedElement = clickedElement.parentElement;
                 }
             }
-            
+
             // Handle table click
             if (tableId && tables[tableId]) {
-                event.preventDefault(); 
+                event.preventDefault();
                 event.stopPropagation();
                 if (highlightedElementId === tableId) {
                     clearAllHighlights();
@@ -1606,10 +1819,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            
+
             // Handle edge click
             if (edgeId && edges[edgeId]) {
-                event.preventDefault(); 
+                event.preventDefault();
                 event.stopPropagation();
                 if (highlightedElementId === edgeId) {
                     clearAllHighlights();
@@ -1625,7 +1838,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Click on SVG background (not node/edge and not in containers): clear all highlights
             if (
                 event.target === svg ||
-                (!event.target.closest('.node') && 
+                (!event.target.closest('.node') &&
                  !event.target.closest('.edge') &&
                  !event.target.closest('#selection-container') &&
                  !event.target.closest('#metadata-container') &&
@@ -1639,7 +1852,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
     });
-    
+
     // Function to enhance edge clickability by adding invisible click areas
     function enhanceEdgeClickability() {
         const edges = svg.querySelectorAll('.edge');
@@ -1653,67 +1866,59 @@ document.addEventListener('DOMContentLoaded', () => {
                 clickPath.style.fill = 'none';
                 clickPath.style.pointerEvents = 'stroke';
                 clickPath.style.cursor = 'pointer';
-                
+
                 // Insert the click path before the visible path
                 edge.insertBefore(clickPath, path);
-                
+
                 // Make the original path non-interactive so the click path handles clicks
                 path.style.pointerEvents = 'none';
             });
         });
-        console.log("Enhanced edge clickability for", edges.length, "edges");
     }
-  
+
 
     function initializeSvgView() {
-        console.log("Starting SVG initialization...");
-        
-        // Ensure all required elements exist
+
         if (!svg || !mainGroup || !miniatureContainer || !viewportIndicator || !getMainERDBounds()) {
-            console.log("SVG elements not ready, retrying in 200ms...");
             setTimeout(initializeSvgView, 200);
             return;
         }
-        
+
         try {
             // Get bounds and verify they're valid
             const mainBounds = getMainERDBounds();
-            if (!mainBounds || typeof mainBounds !== 'object' || 
+            if (!mainBounds || typeof mainBounds !== 'object' ||
                 mainBounds.width <= 0 || mainBounds.height <= 0) {
-                console.log("Invalid SVG bounds, retrying in 200ms...");
                 setTimeout(initializeSvgView, 200);
                 return;
             }
-            
-            console.log("SVG bounds:", mainBounds);
-            
+
             // Calculate center of the diagram
             const centerX = mainBounds.x + mainBounds.width / 2;
             const centerY = mainBounds.y + mainBounds.height / 2;
-            
+
             // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
             const scaleY = viewportHeight / (mainBounds.height * 0.8);
             const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
-            
+
             // Reset and apply transformation
             userTx = 0;
             userTy = 0;
             userS = scale;
-            
-            console.log(`Centering at (${centerX}, ${centerY}) with scale ${scale}`);
-            
+
+
             // Use zoomToPoint for consistent positioning
             zoomToPoint(centerX, centerY, scale);
-            
+
             // Force viewport indicator update
             updateViewportIndicator();
-            
+
             // Enhance edge clickability by adding invisible click areas
             enhanceEdgeClickability();
-            
+
             // Ensure viewport indicator is visible
             if (viewportIndicator) {
                 viewportIndicator.style.display = 'block';
@@ -1721,60 +1926,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewportIndicator.style.border = '2px solid #ff4081';
                 viewportIndicator.style.backgroundColor = 'rgba(255, 64, 129, 0.2)';
                 viewportIndicator.style.pointerEvents = 'all';
-                
+
                 // Add this debug to check viewport indicator dimensions
                 const viStyle = window.getComputedStyle(viewportIndicator);
-                console.log("Viewport indicator styles:", {
-                    display: viStyle.display,
-                    width: viStyle.width,
-                    height: viStyle.height,
-                    left: viStyle.left,
-                    top: viStyle.top,
-                    opacity: viStyle.opacity
-                });
             }
-            
+
             // Position miniature container next to metadata container
             const metadataContainer = document.getElementById('metadata-container');
             if (miniatureContainer && metadataContainer) {
                 const metadataRect = metadataContainer.getBoundingClientRect();
                 const margin = 16; // 16px margin between containers
-                
+
                 miniatureContainer.style.position = 'fixed';
                 miniatureContainer.style.left = `${metadataRect.right + margin}px`;
                 miniatureContainer.style.top = `${metadataRect.top}px`;
-                
-                console.log("Positioned miniature container next to metadata container");
+
             }
-            
+
             // Position selection container to the right of the miniature container
             const selectionContainer = document.getElementById('selection-container');
             if (selectionContainer && metadataContainer && miniatureContainer) {
                 const miniatureRect = miniatureContainer.getBoundingClientRect();
                 const margin = 16; // Same margin as other containers
-                
+
                 // Set width to be similar to metadata container
                 const metadataRect = metadataContainer.getBoundingClientRect();
                 const selectionWidth = metadataRect.width * 1.5;
-                
+
                 // Calculate max height (75% of viewport height)
                 const maxHeight = Math.floor(window.innerHeight * 0.75);
-                
+
                 selectionContainer.style.position = 'fixed';
                 selectionContainer.style.width = `${selectionWidth}px`;
                 selectionContainer.style.maxHeight = `${maxHeight}px`;
                 selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
                 selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
                 selectionContainer.style.zIndex = '10001';
-                
-                console.log("Positioned selection container to the right of miniature container", {
-                    left: miniatureRect.right + margin,
-                    top: miniatureRect.top,
-                    width: selectionWidth,
-                    maxHeight: maxHeight
-                });
+
             }
-            
+
             // Add browser zoom level to metadata
             const addBrowserZoomToMetadata = () => {
                 const metadataInner = document.querySelector('.metadata-inner-container ul');
@@ -1784,58 +1974,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (existingZoomItem) {
                         existingZoomItem.remove();
                     }
-                    
+
                     // Calculate browser zoom level
                     const browserZoom = Math.round(window.devicePixelRatio * 100);
-                    
+
                     // Create new browser zoom item
                     const zoomItem = document.createElement('li');
                     zoomItem.className = 'browser-zoom-item';
                     zoomItem.innerHTML = `Browser Zoom: ${browserZoom}%`;
-                    
+
                     // Add it to the metadata list
                     metadataInner.appendChild(zoomItem);
                 }
             };
-            
+
             // Add browser zoom to metadata initially
             addBrowserZoomToMetadata();
-            
+
             // Update browser zoom when window is resized/zoomed
             window.addEventListener('resize', addBrowserZoomToMetadata);
-            
+
             // Initialize window controls for all containers
-            console.log('Initializing window controls...');
             if (metadataContainer) {
-                console.log('Found metadataContainer, adding controls');
-                addWindowControls(metadataContainer, { 
-                    buttons: { copy: true, edit: false }
+                addWindowControls(metadataContainer, {
+                    buttons: { copy: true, download: true, edit: false }
                 });
                 makeResizable(metadataContainer);
-            } else {
-                console.log('metadataContainer not found');
-            }
-            
+            } 
+
             if (miniatureContainer) {
-                console.log('Found miniatureContainer, adding controls');
-                addWindowControls(miniatureContainer, { 
+                addWindowControls(miniatureContainer, {
                     buttons: { copy: false, edit: false }
                 });
                 makeResizable(miniatureContainer);
-            } else {
-                console.log('miniatureContainer not found');
-            }
-            
+            } 
+
             if (selectionContainer) {
-                console.log('Found selectionContainer, adding controls');
-                addWindowControls(selectionContainer, { 
-                    buttons: { copy: false, edit: true }
+                addWindowControls(selectionContainer, {
+                    buttons: { copy: true, download: true, edit: true }
                 });
                 makeResizable(selectionContainer);
-            } else {
-                console.log('selectionContainer not found');
-            }
-            
+            } 
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);
@@ -1844,16 +2023,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Primary initialization on DOMContentLoaded
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOMContentLoaded fired");
         // Small delay to ensure SVG is fully parsed
-        setTimeout(initializeSvgView, 300);ß
-        
+        setTimeout(initializeSvgView, 300);
+
         // Also initialize when window is resized
         window.addEventListener('resize', () => {
             // Debounce the resize event
             if (window.resizeTimer) clearTimeout(window.resizeTimer);
             window.resizeTimer = setTimeout(() => {
-                console.log("Window resized, updating viewport indicator and selection container");
                 updateViewportIndicator();
                 updateSelectionContainerPosition();
             }, 250);
@@ -1862,7 +2039,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Backup initialization for cases when DOMContentLoaded already fired
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        console.log("Document already loaded, initializing directly");
         setTimeout(initializeSvgView, 300);
     }
 });

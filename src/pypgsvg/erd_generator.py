@@ -203,15 +203,43 @@ def generate_erd_with_graphviz(
         )
         # Table background rows (desaturated color)
         for column in cols['columns']:
+            # Build column display with icons
+            column_icons = ""
+            
+            # Add primary key icon if this is a primary key
+            if column.get('is_primary_key', False):
+                pk_key = "&#128273;"  # Unicode key 🔑
+                column_icons += (
+                    f'<FONT COLOR="#FFD700" POINT-SIZE="16">'
+                    f'{pk_key}</FONT> '
+                )
+            
+            # Add foreign key icon if this is a foreign key
+            if column.get('is_foreign_key', False):
+                fk_key = "&#128273;"  # Unicode key 🔑
+                column_icons += (
+                    f'<FONT COLOR="#4169E1" POINT-SIZE="14">'
+                    f'{fk_key}</FONT>'
+                    f'<FONT COLOR="#4169E1" POINT-SIZE="10">FK</FONT> '
+                )
+            
+            # Add column name and type
+            column_info = f'{column["name"]} ({column["type"]})'
+            column_display = column_icons + column_info
+            
             label += (
-                f'<TR><TD ALIGN="left" PORT="{sanitize_label(column["name"])}"><FONT POINT-SIZE="18">{column["name"]} ({column["type"]})</FONT></TD></TR>'
+                f'<TR><TD ALIGN="left" '
+                f'PORT="{sanitize_label(column["name"])}">'
+                f'<FONT POINT-SIZE="18">{column_display}</FONT></TD></TR>'
             )
         label += '</TABLE>>'
 
-        dot.node(safe_table_name, label=label, id=safe_table_name, shape=node_shape, style=node_style)
+        dot.node(safe_table_name, label=label, id=safe_table_name, 
+                 shape=node_shape, style=node_style)
 
     # --- Update edge creation to use parallel splines ---
-    for i, (ltbl, col, rtbl, rcol, _line, triggers, constraints) in enumerate(filtered_foreign_keys):
+    for i, (ltbl, col, rtbl, rcol, _line, 
+            triggers, constraints) in enumerate(filtered_foreign_keys):
         edge_id = f"edge-{i}"
         safe_ltbl = sanitize_label(ltbl)
         safe_rtbl = sanitize_label(rtbl)

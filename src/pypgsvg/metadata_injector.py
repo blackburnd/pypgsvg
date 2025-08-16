@@ -153,12 +153,105 @@ def inject_metadata_into_svg(
     # HTML overlays
     metadata_html = f"""
 <div class='metadata-container container' id='metadata-container'>
-    <div class='header'>Metadata</div>
+    <div class='header'>📊 Database Metadata</div>
     <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
     <div class='metadata-inner-container container-content'>
-    <ul>
-        {''.join(f'<li>{line}</li>' for line in metadata_lines)}
-    </ul>
+        
+        <div class="metadata-section">
+            <h3>📁 Source Information</h3>
+            <div class="metadata-single">
+                <span class="label">File:</span>
+                <span class="value">{file_info['filename']}</span>
+            </div>
+            <div class="metadata-single">
+                <span class="label">Size:</span>
+                <span class="value">{file_info['filesize']}</span>
+            </div>
+            <div class="metadata-single">
+                <span class="label">Generated:</span>
+                <span class="value">{file_info['generated']}</span>
+            </div>
+        </div>
+
+        <div class="metadata-section">
+            <h3>🗃️ Schema Statistics</h3>
+            <div class="metadata-grid">
+                <div class="metadata-item">
+                    <span class="label">Tables</span>
+                    <span class="value">{total_tables}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="label">Columns</span>
+                    <span class="value">{total_columns}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="label">Foreign Keys</span>
+                    <span class="value">{total_foreign_keys}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="label">Connections</span>
+                    <span class="value">{total_edges}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="label">Triggers</span>
+                    <span class="value">{len(triggers)}</span>
+                </div>
+                <div class="metadata-item">
+                    <span class="label">Standalone</span>
+                    <span class="value">{'Yes' if show_standalone else 'Hidden'}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="metadata-section">
+            <h3>⚙️ Generation Parameters</h3>
+            <div class="metadata-params">
+                <div class="param-row">
+                    <span class="param-label">Rank Direction:</span>
+                    <span class="param-value">{rankdir}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Pack Mode:</span>
+                    <span class="param-value">{packmode}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Edge Separation:</span>
+                    <span class="param-value">{esep}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Font Family:</span>
+                    <span class="param-value">{fontname}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Font Size:</span>
+                    <span class="param-value">{fontsize}pt</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Node Font:</span>
+                    <span class="param-value">{node_fontsize}pt</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Edge Font:</span>
+                    <span class="param-value">{edge_fontsize}pt</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Node Style:</span>
+                    <span class="param-value">{node_style}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Node Shape:</span>
+                    <span class="param-value">{node_shape}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Node Separation:</span>
+                    <span class="param-value">{node_sep}</span>
+                </div>
+                <div class="param-row">
+                    <span class="param-label">Rank Separation:</span>
+                    <span class="param-value">{rank_sep}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 """

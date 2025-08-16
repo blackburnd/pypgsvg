@@ -8,6 +8,7 @@ def parse_sql_dump(sql_dump):
     tables = {}
     foreign_keys = []
     triggers = {}
+    primary_keys = {}  # Track primary key columns per table
     parsing_errors = []
 
     # Table creation pattern
@@ -19,6 +20,12 @@ def parse_sql_dump(sql_dump):
     # Foreign key definition in ALTER TABLE
     alter_fk_pattern = re.compile(
         r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+([\w.]+)\s*\((.*?)\)(?:\s+NOT VALID)?(?:\s+ON DELETE ([\w\s]+))?(?:\s+ON UPDATE ([\w\s]+))?;",
+        re.S | re.I
+    )
+
+    # Primary key definition in ALTER TABLE
+    alter_pk_pattern = re.compile(
+        r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+PRIMARY KEY\s*\((.*?)\);",
         re.S | re.I
     )
 
@@ -76,14 +83,16 @@ def parse_sql_dump(sql_dump):
                             column_type = ' '.join(type_words) if type_words else parts[1].strip('"')
                         columns.append({"name": column_name,
                                         'type': column_type,
-                                        'line': _line})
+                                        'line': _line,
+                                        'is_primary_key': False,  # Will be set later
+                                        'is_foreign_key': False}) # Will be set later
 
                         # --- Detect inline REFERENCES ---
                         fk_match = inline_fk_pattern.search(_line)
                         if fk_match:
                             ref_table = fk_match.group(1)
                             ref_column = fk_match.group(2)
-                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, {}, {}))
+                            foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, {}, None))
 
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
@@ -103,6 +112,43 @@ def parse_sql_dump(sql_dump):
                 foreign_keys.append((table_name, fk_column, ref_table, ref_column, _line, triggers, constraints))
             else:
                 parsing_errors.append(f"FK parsing issue: {match.group(0)}")
+
+        # Extract primary keys from ALTER TABLE
+        for match in alter_pk_pattern.finditer(sql_dump):
+            table_name = match.group(1).strip('"')
+            pk_columns = [col.strip().strip('"') 
+                         for col in match.group(2).split(',')]
+            primary_keys[table_name] = pk_columns
+
+        # Also detect inline PRIMARY KEY declarations
+        for table_name, table_data in tables.items():
+            table_lines = table_data['lines']
+            # Look for inline PRIMARY KEY declarations
+            inline_pk_pattern = re.compile(
+                r'PRIMARY\s+KEY\s*\(([^)]+)\)', re.I)
+            pk_match = inline_pk_pattern.search(table_lines)
+            if pk_match:
+                pk_columns = [col.strip().strip('"') 
+                             for col in pk_match.group(1).split(',')]
+                if table_name not in primary_keys:
+                    primary_keys[table_name] = pk_columns
+
+        # Mark primary key and foreign key columns
+        for table_name, table_data in tables.items():
+            for column in table_data['columns']:
+                column_name = column['name']
+                # Mark primary key columns
+                if (table_name in primary_keys and 
+                    column_name in primary_keys[table_name]):
+                    column['is_primary_key'] = True
+                # Mark foreign key columns
+                for (fk_table, fk_column, ref_table, 
+                     ref_column, _, _, _) in foreign_keys:
+                    if fk_table == table_name and fk_column == column_name:
+                        column['is_foreign_key'] = True
+                        column['references'] = {
+                            'table': ref_table, 'column': ref_column
+                        }
 
         # Extract triggers (with and without args)
         for match in trigger_pattern.finditer(sql_dump):
@@ -161,7 +207,7 @@ def extract_constraint_info(foreign_keys):
             _constraints[ltbl] = []
         constraints = _constraints[ltbl]
         # Clean up the constraint line by removing ALTER TABLE syntax
-        constraint_line = _line.strip()  
+        constraint_line = _line.strip()
         # Extract just the constraint definition part
         if "ADD CONSTRAINT" in constraint_line:
             # Find the constraint name and definition
