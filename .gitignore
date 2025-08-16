@@ -6,3 +6,4 @@ tests/
 /src/pypgsvg.egg-info
 /src/pypgsvg.egg-info
 /src/pypgsvg.egg-info
+test_miniature_functionality.svg

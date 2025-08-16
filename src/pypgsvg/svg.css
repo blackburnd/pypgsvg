@@ -136,7 +136,7 @@
     position: absolute !important;
     display: block !important;
     border: 2px solid #ff4081 !important;
-    background-color: rgba(255, 64, 129, 0.2) !important;
+    background-color: rgba(255, 64, 129, 0.1) !important;
     opacity: 1 !important;
     pointer-events: all !important;
     z-index: 1000 !important;

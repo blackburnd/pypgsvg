@@ -829,7 +829,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add edge emphasis
                 const paths = elem.querySelectorAll('path');
                 paths.forEach(path => {
-                    path.style.filter = 'brightness(1.4) contrast(1.3)';
+                    path.style.filter = 'brightness(1.6) contrast(1.9)';
                     const currentWidth = path.getAttribute('stroke-width') || '3';
                     path.style.strokeWidth = (parseFloat(currentWidth) * 1.5) + 'px';
                     path.style.transition = 'all 0.2s ease';
