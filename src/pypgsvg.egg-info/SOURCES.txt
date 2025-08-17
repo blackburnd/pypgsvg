@@ -4,10 +4,8 @@ README.md
 pyproject.toml
 requirements.txt
 setup.py
-Samples/database_diagram.svg
-Samples/example_output_erd.svg
-Samples/sample_schema_erd.svg
-Samples/schema.dump
+Samples/complex_schema.dump
+Samples/complex_schema.svg
 Samples/schema_erd.svg
 src/__init__.py
 src/pypgsvg.py

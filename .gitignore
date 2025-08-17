@@ -11,3 +11,4 @@ src/pypgsvg/.\#svg.css
 src/pypgsvg/.\#svg_interactivity.js
 *.js#
 *.css#
+/src/pypgsvg.egg-info
