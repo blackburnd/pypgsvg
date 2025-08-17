@@ -266,8 +266,10 @@ def inject_metadata_into_svg(
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle ne" id="resize_handle_ne" style="position:absolute;right:2px;top:24px;width:16px;height:16px;cursor:ne-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle sw" id="resize_handle_sw" style="position:absolute;left:2px;bottom:2px;width:16px;height:16px;cursor:sw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
     instructions_html = '''
@@ -276,14 +278,17 @@ def inject_metadata_into_svg(
     </div>
     '''
     selection_html = f'''
-<div id="selection-container" class="selection-box container" style="display:none">
+<div id="selection-container" class="selection-container container" 
+     style="display:none">
   <div class="header" id="selection-header"></div>
       <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
   <div class="selection-container container-content" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle resize-handle-nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle resize-handle-se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:nwse-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle ne" id="resize_handle_ne" style="position:absolute;right:2px;top:24px;width:16px;height:16px;cursor:ne-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle sw" id="resize_handle_sw" style="position:absolute;left:2px;bottom:2px;width:16px;height:16px;cursor:sw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
     all_overlays_html = f"""
@@ -325,24 +330,98 @@ def inject_metadata_into_svg(
 
 def inject_marker_defs(svg_content):
     """
-    Injects enlarged and normal arrowhead/tail marker definitions into the SVG <defs> section.
-    If <defs> does not exist, it will be created.
+    Injects enhanced arrowhead/tail marker definitions and gradient patterns
+    into the SVG <defs> section. If <defs> does not exist, it will be created.
     """
     marker_defs = """
-    <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="6" refY="2"
+    <!-- Modern Arrowhead Markers -->
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3"
       orient="auto" markerUnits="strokeWidth">
-      <polygon points="0 0, 6 2, 0 4" />
+      <polygon points="0 0, 8 3, 0 6"
+               style="fill: inherit; stroke: inherit; stroke-width: 0.5;
+                      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));" />
     </marker>
-    <marker id="arrowhead-large" markerWidth="12" markerHeight="8" refX="12" refY="4"
+
+    <marker id="arrowhead-large" markerWidth="14" markerHeight="10"
+      refX="14" refY="5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 14 5, 0 10"
+               style="fill: inherit; stroke: inherit; stroke-width: 0.5;
+                      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));" />
+    </marker>
+
+    <!-- Enhanced Arrow with Curved Design -->
+    <marker id="arrowhead-curved" markerWidth="10" markerHeight="8"
+      refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 Q 5 4 0 8 L 10 4 Z"
+            style="fill: inherit; stroke: inherit; stroke-width: 0.3;
+                   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));" />
+    </marker>
+
+    <!-- Diamond Marker for Special Relationships -->
+    <marker id="diamond" markerWidth="10" markerHeight="10" refX="5" refY="5"
       orient="auto" markerUnits="strokeWidth">
-      <polygon points="0 0, 12 4, 0 8" />
+      <polygon points="5 0, 10 5, 5 10, 0 5"
+               style="fill: #ffffff; stroke: inherit; stroke-width: 1.5;
+                      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));" />
     </marker>
+
+    <!-- Circle Marker for Self-References -->
+    <marker id="circle" markerWidth="8" markerHeight="8" refX="4" refY="4"
+      orient="auto" markerUnits="strokeWidth">
+      <circle cx="4" cy="4" r="3"
+              style="fill: #ffffff; stroke: inherit; stroke-width: 1.5;
+                     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));" />
+    </marker>
+
+    <!-- Gradient Definitions for Enhanced Visual Appeal -->
+    <linearGradient id="tableGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"
+            style="stop-color: rgba(255,255,255,0.3); stop-opacity: 1" />
+      <stop offset="100%"
+            style="stop-color: rgba(0,0,0,0.1); stop-opacity: 1" />
+    </linearGradient>
+
+    <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color: inherit; stop-opacity: 0.8" />
+      <stop offset="50%" style="stop-color: inherit; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: inherit; stop-opacity: 0.8" />
+    </linearGradient>
+
+    <!-- Pattern Definitions for Different Edge Types -->
+    <pattern id="dots" patternUnits="userSpaceOnUse" width="8" height="8">
+      <circle cx="4" cy="4" r="1" fill="currentColor" opacity="0.6" />
+    </pattern>
+
+    <pattern id="dashes" patternUnits="userSpaceOnUse" width="12" height="4">
+      <rect x="0" y="1" width="8" height="2" fill="currentColor"
+            opacity="0.8" />
+    </pattern>
+
+    <!-- Filter Definitions for Enhanced Visual Effects -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="subtle-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+
+    <filter id="table-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.2"/>
+    </filter>
     """
 
     # Find <defs> and inject, or create <defs> if not present
     if '<defs>' in svg_content:
-        svg_content = re.sub(r'(<defs[^>]*>)', r'\1' + marker_defs, svg_content, count=1)
+        svg_content = re.sub(r'(<defs[^>]*>)', r'\1' + marker_defs,
+                             svg_content, count=1)
     else:
         # Insert <defs> after <svg ...>
-        svg_content = re.sub(r'(<svg[^>]*>)', r'\1\n<defs>' + marker_defs + '</defs>', svg_content, count=1)
+        svg_content = re.sub(r'(<svg[^>]*>)',
+                             r'\1\n<defs>' + marker_defs + '</defs>',
+                             svg_content, count=1)
     return svg_content

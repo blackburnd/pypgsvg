@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragThreshold = 5;
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
+    let selectionContainerManuallyPositioned = false; // Flag to track if user has manually positioned selection container
     
     
 
@@ -616,26 +617,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const metadataContainer = document.getElementById('metadata-container');
         const miniatureContainer = document.getElementById('miniature-container');
 
+        console.log('updateSelectionContainerPosition called', {
+            selectionContainer: !!selectionContainer,
+            metadataContainer: !!metadataContainer,
+            miniatureContainer: !!miniatureContainer,
+            manuallyPositioned: selectionContainerManuallyPositioned
+        });
+
+        // Don't auto-position if user has manually moved the selection container
+        if (selectionContainerManuallyPositioned) {
+            console.log('Selection container manually positioned, skipping auto-positioning');
+            return;
+        }
+
         if (selectionContainer && metadataContainer && miniatureContainer) {
             const miniatureRect = miniatureContainer.getBoundingClientRect();
+            const metadataRect = metadataContainer.getBoundingClientRect();
             const margin = 16; // Same margin as other containers
 
             // Set width to be similar to metadata container
-            const metadataRect = metadataContainer.getBoundingClientRect();
             const selectionWidth = metadataRect.width * 1.5;
 
             // Calculate max height (75% of viewport height)
             const viewport = getViewportDimensions();
             const maxHeight = Math.floor(viewport.height * 0.75);
-            console.log(`UpdateSelectionPosition: viewport=${viewport.width}x${viewport.height}, maxHeight=${maxHeight}`);
+            
+            const leftPos = miniatureRect.right + margin;
+            const topPos = miniatureRect.top;
+            
+            console.log(`Selection container positioning:`, {
+                viewport: `${viewport.width}x${viewport.height}`,
+                miniatureRect: miniatureRect,
+                leftPos,
+                topPos,
+                selectionWidth,
+                maxHeight
+            });
+            
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
             selectionContainer.style.maxHeight = `${maxHeight}px`;
-            selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
-            selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
+            selectionContainer.style.left = `${leftPos}px`;
+            selectionContainer.style.top = `${topPos}px`;
             selectionContainer.style.zIndex = '10001';
-            console.log(`Selection container positioned at left: ${miniatureRect.right + margin}px, top: ${miniatureRect.top}px`);
-
+            
+            console.log(`Selection container positioned at left: ${leftPos}px, top: ${topPos}px`);
         }
     };
 
@@ -970,16 +996,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const paths = elem.querySelectorAll('path');
 
-            if (paths.length > 0) {
-                paths[0].setAttribute('stroke-width', isHighlighted ? '20' : '8');
-                paths[0].setAttribute('opacity', '1');
-            }
+            // Enhanced parallel edge handling - double width for all paths when highlighted
             if (paths.length > 1) {
-                paths[1].setAttribute('stroke-width', isHighlighted ? '10' : '3');
-                paths[1].setAttribute('opacity', '1');
-            }
-            if (paths.length === 1) {
-                paths[0].setAttribute('stroke-width', isHighlighted ? '5' : '1');
+                // Multiple parallel edges between same tables
+                if (isHighlighted) {
+                    // When highlighted, make both edges more prominent with doubled width
+                    paths[0].setAttribute('stroke-width', '16'); // Primary edge: doubled from 8
+                    paths[1].setAttribute('stroke-width', '12'); // Secondary edge: doubled from 6
+                } else {
+                    // Normal state for parallel edges
+                    paths[0].setAttribute('stroke-width', '8');
+                    paths[1].setAttribute('stroke-width', '6');
+                }
+                paths.forEach(path => path.setAttribute('opacity', '1'));
+            } else if (paths.length === 1) {
+                // Single edge
+                if (isHighlighted) {
+                    paths[0].setAttribute('stroke-width', '10'); // Doubled from 5
+                } else {
+                    paths[0].setAttribute('stroke-width', '5');
+                }
                 paths[0].setAttribute('opacity', '1');
             }
         }
@@ -1077,10 +1113,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectionContainer = document.getElementById('selection-container');
         if (!selectionContainer) return;
 
+        // Check if the selection window was previously hidden
+        const wasHidden = selectionContainer.style.display === 'none' || 
+                         window.getComputedStyle(selectionContainer).display === 'none';
+
         // Force visibility with strong inline styles
         selectionContainer.style.display = 'block';
         selectionContainer.style.position = 'fixed';
         selectionContainer.style.zIndex = '10001';
+
+        // Reset manual positioning flag only if window was previously hidden
+        // This allows auto-positioning on first show but preserves manual positioning during interactions
+        if (wasHidden) {
+            selectionContainerManuallyPositioned = false;
+        }
 
         const inner = selectionContainer.querySelector('#selection-inner-container');
         const selection_header = document.getElementById('selection-header');
@@ -1145,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inner.innerHTML = html;
 
-        // Add hover event listeners to table names
+        // Add click event listeners to table names (mouseover effects removed for performance)
         const tableNames = inner.querySelectorAll('.table-name');
         tableNames.forEach(tableNameSpan => {
             const tableId = tableNameSpan.getAttribute('data-table-id');
@@ -1239,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Add hover event listeners to edge names
+        // Add click event listeners to edge names (mouseover effects removed for performance)
         const edgeNames = inner.querySelectorAll('.edge-name');
         edgeNames.forEach(edgeNameLi => {
             const edgeId = edgeNameLi.getAttribute('data-edge-id');
@@ -1510,6 +1556,9 @@ document.addEventListener('DOMContentLoaded', () => {
             dragState.offsetX = parseFloat(selectionContainer.style.left);
             dragState.offsetY = parseFloat(selectionContainer.style.top);
 
+            // Mark that user has manually positioned the selection container
+            selectionContainerManuallyPositioned = true;
+
             selectionContainer.classList.add('dragging');
         });
     }
@@ -1601,19 +1650,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else if (dragState.type === 'indicator') {
             event.preventDefault();
+            event.stopPropagation();
+            
             const miniRect = miniatureContainer.getBoundingClientRect();
-
-            const rect = miniatureContainer.getBoundingClientRect();
-            const relX = (event.clientX - rect.left) / rect.width;
-            const relY = (event.clientY - rect.top) / rect.height;
+            
+            // Clamp mouse position to miniature container bounds
+            const clampedX = Math.max(miniRect.left, Math.min(miniRect.right, event.clientX));
+            const clampedY = Math.max(miniRect.top, Math.min(miniRect.bottom, event.clientY));
+            
+            // Calculate relative position within the clamped bounds
+            const relX = (clampedX - miniRect.left) / miniRect.width;
+            const relY = (clampedY - miniRect.top) / miniRect.height;
+            
+            // Additional safety clamping to ensure we stay within 0-1 range
+            const safeRelX = Math.max(0, Math.min(1, relX));
+            const safeRelY = Math.max(0, Math.min(1, relY));
 
             // Get main SVG bounds
             const mainBounds = getMainERDBounds();
-            const targetX = mainBounds.x + relX * mainBounds.width;
-            const targetY = mainBounds.y + relY * mainBounds.height;
-            // Zoom to the clicked point (use a sensible zoom level, e.g. 1)
+            const targetX = mainBounds.x + safeRelX * mainBounds.width;
+            const targetY = mainBounds.y + safeRelY * mainBounds.height;
+            
+            // Zoom to the calculated point
             zoomToPoint(targetX, targetY, userS);
-            event.stopPropagation();
 
         } else if (dragState.type === 'resize') {
             event.preventDefault();
@@ -1942,28 +2001,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             }
 
-            // Position selection container to the right of the miniature container
-            const selectionContainer = document.getElementById('selection-container');
-            if (selectionContainer && metadataContainer && miniatureContainer) {
-                const miniatureRect = miniatureContainer.getBoundingClientRect();
-                const margin = 16; // Same margin as other containers
-
-                // Set width to be similar to metadata container
-                const metadataRect = metadataContainer.getBoundingClientRect();
-                const selectionWidth = metadataRect.width * 1.5;
-
-                // Calculate max height (75% of viewport height)
-                const viewport = getViewportDimensions();
-                const maxHeight = Math.floor(viewport.height * 0.75);
-
-                selectionContainer.style.position = 'fixed';
-                selectionContainer.style.width = `${selectionWidth}px`;
-                selectionContainer.style.maxHeight = `${maxHeight}px`;
-                selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
-                selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
-                selectionContainer.style.zIndex = '10001';
-
-            }
+            // Position containers
+            updateSelectionContainerPosition();
 
             // Add browser zoom level to metadata
             const addBrowserZoomToMetadata = () => {

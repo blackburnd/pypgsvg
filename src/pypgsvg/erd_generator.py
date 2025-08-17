@@ -237,7 +237,7 @@ def generate_erd_with_graphviz(
         dot.node(safe_table_name, label=label, id=safe_table_name, 
                  shape=node_shape, style=node_style)
 
-    # --- Update edge creation to use parallel splines ---
+    # --- Update edge creation to use parallel splines with enhanced styling
     for i, (ltbl, col, rtbl, rcol, _line, 
             triggers, constraints) in enumerate(filtered_foreign_keys):
         edge_id = f"edge-{i}"
@@ -258,11 +258,34 @@ def generate_erd_with_graphviz(
         # Use Graphviz's color="A:B" syntax for parallel splines
         color1 = table_colors[ltbl]
         color2 = table_colors[rtbl]
+        
+        # Determine arrow style based on relationship characteristics
+        edge_attrs = {
+            "id": f"edge-{i}",
+            "color": f"{color1}:{color2}",
+            "style": "solid",
+            "penwidth": "2.5"
+        }
+        
+        # Check for self-referencing relationships
+        if ltbl == rtbl:
+            edge_attrs["arrowhead"] = "dot"
+            edge_attrs["style"] = "dashed"
+        # Check for cascade constraints
+        elif any("CASCADE" in str(c) for c in constraints):
+            edge_attrs["arrowhead"] = "vee"
+            edge_attrs["penwidth"] = "3"
+        # Check for triggers on the relationship
+        elif triggers:
+            edge_attrs["arrowhead"] = "diamond"
+            edge_attrs["style"] = "bold"
+        else:
+            edge_attrs["arrowhead"] = "vee"
+
         dot.edge(
             f"{safe_ltbl}:{col}:e",
             f"{safe_rtbl}:{rcol}:w",
-            id=f"edge-{i}",
-            color=f"{color1}:{color2}"
+            **edge_attrs
         )
 
     actual_svg_path = output_file + ".svg"

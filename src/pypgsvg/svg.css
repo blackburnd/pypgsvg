@@ -2,6 +2,9 @@
 #main-svg {
     overflow: contain;
     display: block;
+    /* Performance optimizations */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 #main-svg.grabbing {
@@ -192,6 +195,8 @@
 }
 
 /* Add hover effects to make nodes and edges more visible when selectable */
+/* Disabled to prevent unwanted mouseover events */
+/* 
 .edge:hover {
     filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
 }
@@ -199,6 +204,7 @@
 .node:hover {
     filter: drop-shadow(0 0 3px rgba(0, 0, 255, 0.3));
 }
+*/
 
 /* Metadata Minimap Row */
 .metadata-minimap-row {
@@ -213,9 +219,9 @@
 /* Selection Container */
 #selection-container {
     position: fixed !important;
-    top: 30px !important;
-    left: auto !important;
-    bottom: auto !important;
+    top: 30px;
+    left: auto;
+    bottom: auto;
     z-index: 999999 !important;
     pointer-events: auto !important;
     cursor: grab;
@@ -293,7 +299,7 @@
 }
 
 /* Add this CSS to make the resize handles visible and functional */
-.resize-handle-nw, .resize-handle-se {
+.resize-handle {
     position: absolute;
     width: 14px;
     height: 14px;
@@ -302,16 +308,28 @@
     z-index: 10000;
 }
 
-.resize-handle-nw {
+.resize-handle.nw {
     top: 0;
     left: 0;
-    cursor: nwse-resize;
+    cursor:nw-resize;
 }
 
-.resize-handle-se {
+.resize-handle.ne {
+    top: 0;
+    right: 0;
+    cursor:ne-resize;
+}
+
+.resize-handle.sw {
+    bottom: 0;
+    left: 0;
+    cursor:sw-resize;
+}
+
+.resize-handle.se {
     bottom: 0;
     right: 0;
-    cursor: nwse-resize;
+    cursor:se-resize;
 }
 
 .resizing {
@@ -610,4 +628,201 @@
 .table-name:hover, .edge-name:hover {
     background-color: rgba(200, 200, 200, 0.5); /* More visible hover effect */
     text-decoration: underline;
+}
+
+/* ===============================
+   MODERN SVG TABLE STYLING
+   =============================== */
+
+/* Enhanced table styling for main ERD - NO hover effects */
+#main-erd-group .node {
+    filter: none;
+    transition: none;
+    will-change: auto;
+}
+
+/* Table border styling - make borders much more visible */
+#main-erd-group .node polygon[stroke="black"] {
+    stroke: #000000 !important;
+    stroke-width: 1 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Enhanced table cell styling with better spacing */
+#main-erd-group .node polygon {
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    shape-rendering: crispEdges;
+}
+
+/* Table row polygons - stronger internal borders for better separation */
+#main-erd-group .node polygon[fill="none"] {
+    stroke: #333333 !important;
+    stroke-width: 1.5 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Header row styling - make headers more prominent */
+#main-erd-group .node polygon[fill*="#"] + polygon[fill="none"][stroke="black"] {
+    stroke: #000000 !important;
+    stroke-width: 1 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Table header text styling - remove effects that cause fuzziness */
+#main-erd-group .node text[font-size="24"] {
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    fill: #000000 !important;
+    stroke: none !important;
+    /* Better positioning for headers */
+    dominant-baseline: middle;
+    text-anchor: start;
+    transform: translateX(12px);
+}
+
+/* Column text styling - remove effects that cause fuzziness */
+#main-erd-group .node text[font-size="18"] {
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
+    fill: #222222 !important;
+    stroke: none !important;
+}
+
+/* Remove all text effects that cause fuzziness */
+#main-erd-group .node text {
+    text-anchor: start !important;
+    dominant-baseline: central;
+    text-rendering: optimizeLegibility;
+    shape-rendering: crispEdges;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace !important;
+}
+
+/* Add proper text positioning and spacing for table content */
+#main-erd-group .node text {
+    alignment-baseline: middle;
+    baseline-shift: 0;
+}
+
+/* Ensure adequate spacing between text and table borders */
+#main-erd-group .node text[x] {
+    /* Add left margin by adjusting x position */
+    transform: translateX(8px);
+}
+
+/* Table cell text positioning - prevent overlap with borders */
+#main-erd-group .node text[font-size="18"] {
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
+    fill: #222222 !important;
+    stroke: none !important;
+    /* Add vertical centering and horizontal margin */
+    dominant-baseline: middle;
+    text-anchor: start;
+}
+
+/* Create visual breathing room around table cells - clean borders */
+#main-erd-group .node polygon[fill="none"] {
+    stroke: #555555 !important;
+    stroke-width: 1.2 !important;
+    stroke-opacity: 1 !important;
+}
+
+
+
+/* ===============================
+   MODERN SVG EDGE STYLING
+   =============================== */
+
+
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+*/
+
+/* Enhanced path styling for edges - NO hover effects */
+#main-erd-group .edge path {
+    stroke-width: 5 !important;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: none;
+    will-change: auto;
+}
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover path {
+    stroke-width: 4 !important;
+    filter: brightness(1.2);
+}
+*/
+
+
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover polygon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+*/
+
+/* Parallel edge enhancement - make multiple edges between same tables with equal thickness */
+#main-erd-group .edge path[stroke-width="3"] {
+    stroke-width: 5 !important;
+    stroke-dasharray: none;
+    opacity: 0.9;
+}
+
+/* Enhanced parallel edge styling - different widths for equal visual distribution */
+#main-erd-group .edge:nth-child(even) path {
+    stroke-dasharray: none;
+    opacity: 0.95;
+    stroke-width: 6 !important;
+    /* Make even edges (background) slightly thicker */
+}
+
+#main-erd-group .edge:nth-child(odd) path {
+    opacity: 1;
+    stroke-width: 3.5 !important;
+    /* Make odd edges (foreground) thinner so they sit on top */
+}
+
+/* Third and subsequent parallel edges use medium thickness */
+#main-erd-group .edge:nth-child(3n) path {
+    stroke-dasharray: 8,4,2,4;
+    opacity: 0.9;
+    stroke-width: 4.5 !important;
+}
+
+/* Special styling for highlighted edges - doubled thickness */
+#main-erd-group .edge path[stroke-width="16"],
+#main-erd-group .edge path[stroke-width="12"],
+#main-erd-group .edge path[stroke-width="10"] {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 1 !important;
+}
+
+/* ===============================
+   MINIATURE ERD STYLING
+   =============================== */
+
+/* Enhanced miniature container styling */
+.miniature-container svg {
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+/* Miniature edge styling - NO hover effects */
+.miniature-container .edge path {
+    stroke-width: 3 !important;
+    opacity: 0.8;
+}
+
+/* Miniature text scaling */
+.miniature-container text {
+    font-size: 0.8em !important;
 }

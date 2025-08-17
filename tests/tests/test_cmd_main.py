@@ -95,10 +95,12 @@ def test_main_erd_generation_exception(tmp_path, fake_sql):
 
 def test_main_mock_with_real_schema_dump(tmp_path):
     # Path to the real schema.dump file
-    schema_dump_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../Samples/schema.dump"))
+    schema_dump_path = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "../../Samples/complex_schema.dump"))
     
     # Ensure the file exists
-    assert os.path.exists(schema_dump_path), f"Schema dump file not found at {schema_dump_path}"
+    assert os.path.exists(schema_dump_path), \
+        f"Schema dump file not found at {schema_dump_path}"
     
     # Read the content of the schema.dump file
     with open(schema_dump_path, "r") as schema_file:
@@ -110,7 +112,8 @@ def test_main_mock_with_real_schema_dump(tmp_path):
     
     # Run the test
     with patch("sys.stdout", out):
-        with run_main_with_args(args, mock_file_content=schema_content) as (mfile, mparse, mgen, mweb):
+        with run_main_with_args(args, mock_file_content=schema_content) as \
+                (mfile, mparse, mgen, mweb):
             mainmod.main()
             assert mgen.called
             assert "Successfully generated ERD" in out.getvalue()
@@ -118,10 +121,12 @@ def test_main_mock_with_real_schema_dump(tmp_path):
 
 def test_main_full_functionality_with_real_schema_dump(tmp_path):
     # Path to the real schema.dump file
-    schema_dump_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../Samples/schema.dump"))
+    schema_dump_path = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "../../Samples/complex_schema.dump"))
     
     # Ensure the file exists
-    assert os.path.exists(schema_dump_path), f"Schema dump file not found at {schema_dump_path}"
+    assert os.path.exists(schema_dump_path), \
+        f"Schema dump file not found at {schema_dump_path}"
     
     # Prepare output and arguments
     out = io.StringIO()
