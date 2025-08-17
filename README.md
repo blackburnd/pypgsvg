@@ -1,6 +1,7 @@
 # pypgsvg - Lightweight PostgreSQL ERD Generator
 
-`pypgsvg` is a **lightweight, enterprise-ready** Python tool that generates interactive Entity Relationship Diagrams (ERDs) from PostgreSQL schema dump files. With **only Graphviz as a dependency**, it's perfect for enterprise scripting, CI/CD pipelines, and rapid deployment scenarios.
+`pypgsvg` is a **lightweight** Python tool that generates a JS/CSS/SVG interactive Entity Relationship Diagrams (ERDs) from PostgreSQL schema dump files. With **only Graphviz as a dependency**, manually run or place in CI/CD pipelines, fast rapid deployment verification scenarios.
+
 
 ## �️ Screenshots & Examples
 
@@ -11,8 +12,6 @@
 ### 🎬 Interactive Features Demo
 ![Interactive Animation](https://live.staticflickr.com/65535/54725569515_1a265e1695_o.gif)
 *Live demonstration of drag, resize, and navigation features*
-
-[![View on Flickr](https://img.shields.io/badge/View%20on-Flickr-0063dc?style=flat-square)](https://flic.kr/p/2ro7A4J)
 
 ### 🗺️ Miniature Overview Navigation
 ![Miniature Overview](Samples/miniature.png)
