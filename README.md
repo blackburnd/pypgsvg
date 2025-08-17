@@ -2,7 +2,35 @@
 
 `pypgsvg` is a **lightweight, enterprise-ready** Python tool that generates interactive Entity Relationship Diagrams (ERDs) from PostgreSQL schema dump files. With **only Graphviz as a dependency**, it's perfect for enterprise scripting, CI/CD pipelines, and rapid deployment scenarios.
 
-## 🚀 Enterprise Features
+## �️ Screenshots & Examples
+
+### 📊 Complete ERD Example
+![Complex Schema ERD](Samples/complex_schema.png)
+*Example of a complex database schema with multiple relationships and interactive features*
+
+### 🎬 Interactive Features Demo
+![Interactive Animation](https://live.staticflickr.com/65535/54725569515_1a265e1695_o.gif)
+*Live demonstration of drag, resize, and navigation features*
+
+[![View on Flickr](https://img.shields.io/badge/View%20on-Flickr-0063dc?style=flat-square)](https://flic.kr/p/2ro7A4J)
+
+### 🗺️ Miniature Overview Navigation
+![Miniature Overview](Samples/miniature.png)
+*Interactive minimap for navigating large schemas with viewport indicator*
+
+### 📋 Metadata Information Panel
+![Metadata Panel](Samples/metadata.png)
+*Comprehensive schema statistics and generation parameters*
+
+### 🎯 Selection & Details Panel
+![Selection Panel](Samples/selection.png)
+*View detailed SQL for selected tables, foreign keys, and triggers*
+
+### 📈 Basic Schema Example
+![Basic Example](Samples/example.png)
+*Simple schema showing core functionality and clean output*
+
+## �🚀 Enterprise Features
 
 - **Zero-dependency Python tool** (except Graphviz)
 - **Interactive SVG output** with navigation and selection tools
@@ -162,6 +190,134 @@ else:
 
 ---
 
+## ⚙️ Complete Command-Line Reference
+
+### Core Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `input_file` | **Required** | - | Path to the PostgreSQL dump file |
+| `-o, --output` | String | `schema_erd` | Output file name (without extension) |
+| `--view` | Flag | `false` | Open the generated SVG in a browser |
+| `--show-standalone` | String | `true` | Show/hide tables with no foreign key relationships |
+
+### Layout & Positioning
+
+| Argument | Type | Default | Options | Description |
+|----------|------|---------|---------|-------------|
+| `--packmode` | String | `array` | `array`, `cluster`, `graph` | **Graphviz packmode** - Controls how components are packed together |
+| `--rankdir` | String | `TB` | `TB`, `LR`, `BT`, `RL` | **Graphviz rankdir** - Graph direction (Top-Bottom, Left-Right, etc.) |
+| `--esep` | String | `8` | Any number | **Graphviz esep** - Edge separation distance in points |
+| `--node-sep` | String | `0.5` | Any number | **Graphviz nodesep** - Minimum distance between nodes |
+| `--rank-sep` | String | `1.2` | Any number | **Graphviz ranksep** - Distance between ranks/levels |
+
+### Typography & Styling
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--fontname` | String | `Arial` | Font family for all text elements |
+| `--fontsize` | Integer | `18` | Font size for graph title/labels |
+| `--node-fontsize` | Integer | `14` | Font size for table names and column text |
+| `--edge-fontsize` | Integer | `12` | Font size for relationship labels |
+| `--node-style` | String | `rounded,filled` | **Graphviz node style** (e.g., `filled`, `rounded,filled`) |
+| `--node-shape` | String | `rect` | **Graphviz node shape** (e.g., `rect`, `ellipse`, `box`) |
+
+### Color & Visual Enhancement
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--saturate` | Float | `1.8` | Color saturation multiplier for table backgrounds |
+| `--brightness` | Float | `1.0` | Brightness adjustment for table colors |
+
+### Usage Examples by Scenario
+
+#### 🚀 Quick Development Schema
+```bash
+# Fast development with browser preview
+pypgsvg schema.dump --view
+```
+
+#### 📊 Large Enterprise Schema
+```bash
+# Optimized for large schemas with many tables
+pypgsvg schema.dump \
+  --output enterprise_erd \
+  --packmode graph \
+  --rankdir TB \
+  --esep 12 \
+  --rank-sep 2.5 \
+  --hide-standalone false
+```
+
+#### 📋 Documentation & Presentations
+```bash
+# Clean layout for documentation
+pypgsvg schema.dump \
+  --output docs/database_diagram \
+  --rankdir LR \
+  --fontname "Arial" \
+  --fontsize 20 \
+  --node-fontsize 16 \
+  --edge-fontsize 14 \
+  --node-style "rounded,filled"
+```
+
+#### 🎨 Custom Styling
+```bash
+# Custom colors and typography
+pypgsvg schema.dump \
+  --output styled_erd \
+  --fontname "Helvetica" \
+  --saturate 2.2 \
+  --brightness 1.1 \
+  --node-style "filled" \
+  --node-shape "box"
+```
+
+#### 🏗️ Wide Schema Layout
+```bash
+# Horizontal layout for wide displays
+pypgsvg schema.dump \
+  --rankdir LR \
+  --node-sep 3 \
+  --rank-sep 2 \
+  --packmode cluster \
+  --esep 10
+```
+
+### Understanding Graphviz Parameters
+
+#### Packmode Options
+- **`array`** (default): Tables arranged in a regular grid pattern
+- **`cluster`**: Groups related tables together spatially  
+- **`graph`**: Optimizes overall graph layout, best for complex schemas
+
+#### Rankdir Options
+- **`TB`** (Top-Bottom): Traditional vertical flow, tables flow downward
+- **`LR`** (Left-Right): Horizontal flow, good for wide displays
+- **`BT`** (Bottom-Top): Reverse vertical flow
+- **`RL`** (Right-Left): Reverse horizontal flow
+
+#### Distance Parameters
+- **`esep`**: Controls spacing between edges (relationship lines)
+- **`node-sep`**: Minimum distance between table nodes
+- **`rank-sep`**: Distance between different levels/ranks of tables
+
+### Advanced Filtering
+
+Tables are automatically excluded based on common patterns:
+
+- **Views**: `vw_*`, `*_view`
+- **Temporary**: `*_temp`, `*_tmp`, `temp_*`
+- **Backup**: `*_bk`, `*_backup`, `*_old`
+- **Audit/Log**: `*_log`, `*_audit`, `audit_*`
+- **Duplicates**: `*_dups`, `*_duplicates`
+- **Archives**: `*_archive`, `archive_*`
+
+Use `--show-standalone false` to hide tables with no foreign key relationships.
+
+---
+
 ## 🎯 Interactive Components
 
 The generated SVG includes several interactive panels that can be moved, resized, and minimized:
@@ -241,6 +397,126 @@ pg_dump -h $DB_HOST -d $DB_NAME -U $DB_USER -s > schema_$DATE.dump
 pypgsvg schema_$DATE.dump --output docs/database_erd_$DATE --hide-standalone
 echo "✅ Database documentation updated: docs/database_erd_$DATE.svg"
 ```
+
+---
+
+## 🔧 Complete Feature Overview
+
+### 📊 Database Schema Parsing
+
+pypgsvg supports comprehensive PostgreSQL schema parsing including:
+
+#### Table Structure Analysis
+- **CREATE TABLE** statements with full column definitions
+- **Data type detection** for all PostgreSQL types (SERIAL, JSONB, arrays, custom types)
+- **Column constraints** (NOT NULL, DEFAULT values, CHECK constraints)
+- **Primary key identification** (single and composite keys)
+- **Quoted identifiers** and schema-qualified table names
+- **Unicode support** with proper UTF-8 encoding handling
+
+#### Relationship Mapping
+- **Foreign key constraints** from ALTER TABLE statements
+- **Inline REFERENCES** declarations within CREATE TABLE
+- **Cascading options** (ON DELETE CASCADE, ON UPDATE RESTRICT, etc.)
+- **Complex relationship patterns** (self-referencing, many-to-many)
+- **Cross-schema references** with schema qualification
+
+#### Advanced SQL Features
+- **Database triggers** (BEFORE/AFTER/INSTEAD OF with INSERT/UPDATE/DELETE)
+- **Trigger function calls** with parameter parsing
+- **Constraint naming** and organization
+- **Index definitions** (when present in dump)
+- **Sequence relationships** for SERIAL columns
+
+### 🎨 Visual Representation
+
+#### Intelligent Layout Engine
+- **Graphviz integration** with optimized parameter passing
+- **Automatic table positioning** to minimize edge crossings
+- **Hierarchical layouts** showing data flow and dependencies
+- **Compact arrangements** for large schemas
+- **Custom spacing** controls for readability
+
+#### Color-Coded Organization
+- **Deterministic color assignment** based on table names
+- **WCAG-compliant contrast** for accessibility
+- **Color-blind friendly** palette selection
+- **Saturation controls** for visual emphasis
+- **Automatic text color** calculation for optimal readability
+
+#### Interactive Enhancement
+- **Clickable elements** for detailed SQL view
+- **Hover effects** for element identification
+- **Drag-and-drop** interface elements
+- **Resizable panels** for workspace customization
+- **Keyboard navigation** (ESC, R keys for reset)
+
+### 🖥️ User Interface Components
+
+#### Selection & Detail Panel
+- **Multi-select capability** for tables and relationships
+- **SQL source display** with proper formatting
+- **Clipboard integration** for easy copying
+- **Download functionality** for formatted exports
+- **Emoji-free output** option for enterprise use
+- **Trigger information** display with execution details
+
+#### Miniature Navigation
+- **Schema overview** with proportional scaling
+- **Viewport indicator** showing current view
+- **Click-to-navigate** functionality
+- **Drag viewport** for precise positioning
+- **Zoom level awareness** and synchronization
+
+#### Metadata Information
+- **Schema statistics** (table count, column count, relationship count)
+- **Generation parameters** display
+- **File information** (size, modification date, encoding)
+- **Processing timestamps** for audit trails
+- **Parameter documentation** for reproducibility
+
+### 🛠️ Enterprise Integration Features
+
+#### Automation-Friendly Design
+- **Command-line interface** with extensive options
+- **Scriptable Python API** for programmatic use
+- **Error handling** with detailed reporting
+- **Return codes** for CI/CD integration
+- **Logging support** for monitoring and debugging
+
+#### Output Customization
+- **SVG format** for web integration and scaling
+- **Self-contained files** with embedded styles and scripts
+- **No external dependencies** in generated output
+- **Cross-browser compatibility** (Chrome, Firefox, Safari, Edge)
+- **Print-friendly** layouts with proper scaling
+
+#### Quality Assurance
+- **Input validation** with comprehensive error reporting
+- **Graceful degradation** for partial schema parsing
+- **Memory efficiency** for large schema processing
+- **Performance optimization** for quick generation
+- **Deterministic output** for version control
+
+### 📋 Table Filtering & Exclusion
+
+#### Automatic Exclusions
+pypgsvg intelligently excludes common utility tables:
+
+| Pattern | Examples | Reason |
+|---------|----------|---------|
+| `vw_*`, `*_view` | `vw_users`, `summary_view` | Database views |
+| `*_temp`, `*_tmp`, `temp_*` | `data_temp`, `tmp_import` | Temporary tables |
+| `*_bk`, `*_backup`, `*_old` | `users_bk`, `data_backup` | Backup tables |
+| `*_log`, `*_audit`, `audit_*` | `error_log`, `audit_users` | Logging tables |
+| `*_dups`, `*_duplicates` | `data_dups`, `user_duplicates` | Cleanup tables |
+| `*_archive`, `archive_*` | `old_archive`, `archive_2023` | Archive tables |
+
+#### Standalone Table Handling
+- **Configurable display** of tables without foreign key relationships
+- **Useful for utility tables** and lookup tables
+- **Reduces clutter** in complex schemas
+- **Maintains referential integrity** in relationship mapping
 
 ---
 

@@ -54,9 +54,9 @@ This will create an SVG file with the same name as your input file (e.g., `your_
 
 Here are examples of generated ERDs from different database schemas:
 
-<img src="sample_schema_erd.png" alt="Sample ERD" width="300"> <img src="schema_erd.svg" alt="Complex Schema ERD" width="300">
+<img src="[sample_schema_erd.png](https://flic.kr/p/2ro7A4J)" alt="Sample ERD" width="300"> <img src="schema_erd.svg" alt="Complex Schema ERD" width="300">
 
-*Left: Simple blog schema (users, posts, comments) | Right: Complex enterprise schema with 90+ tables*
+*Left: Simple blog schema (users, posts, comments) | Right: Complex schema with 90+ tables*
 
 *Note: The tool generates SVG files, but PNG is shown for the simple example for better README compatibility. You can [view the original SVG files](sample_schema_erd.svg) for interactive features.*
 
