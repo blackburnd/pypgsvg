@@ -9,3 +9,5 @@ tests/
 test_miniature_functionality.svg
 src/pypgsvg/.\#svg.css
 src/pypgsvg/.\#svg_interactivity.js
+*.js#
+*.css#
