@@ -16,8 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragThreshold = 5;
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
+    
+    
 
     // --- Utility Functions ---
+    
+    // Get reliable viewport dimensions
+    function getViewportDimensions() {
+        return {
+            width: document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth,
+            height: document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight
+        };
+    }
+    
     function fallbackCopyTextToClipboard(text, button) {
         const textArea = document.createElement("textarea");
         textArea.value = text;
@@ -585,7 +596,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pt1.x = 0; pt1.y = 0;
         const svgPt1 = pt1.matrixTransform(invCtm);
         const pt2 = svg.createSVGPoint();
-        pt2.x = window.innerWidth; pt2.y = window.innerHeight;
+        const viewport = getViewportDimensions();
+        pt2.x = viewport.width; pt2.y = viewport.height;
         const svgPt2 = pt2.matrixTransform(invCtm);
         const visibleWidth = svgPt2.x - svgPt1.x;
         const visibleHeight = svgPt2.y - svgPt1.y;
@@ -613,14 +625,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectionWidth = metadataRect.width * 1.5;
 
             // Calculate max height (75% of viewport height)
-            const maxHeight = Math.floor(window.innerHeight * 0.75);
-
+            const viewport = getViewportDimensions();
+            const maxHeight = Math.floor(viewport.height * 0.75);
+            console.log(`UpdateSelectionPosition: viewport=${viewport.width}x${viewport.height}, maxHeight=${maxHeight}`);
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
             selectionContainer.style.maxHeight = `${maxHeight}px`;
             selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
             selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
             selectionContainer.style.zIndex = '10001';
+            console.log(`Selection container positioned at left: ${miniatureRect.right + margin}px, top: ${miniatureRect.top}px`);
+
         }
     };
 
@@ -1260,22 +1275,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-
-        // Only position the container if it hasn't been positioned by the user yet
-        // Check if the container has been moved from its initial right-based positioning
-        if (!selectionContainer.style.left) {
-            const computedStyle = window.getComputedStyle(selectionContainer);
-            const containerWidth = parseFloat(computedStyle.width);
-            const containerHeight = parseFloat(computedStyle.height);
-            const margin = 20; // 20px margin from edge
-            const left = window.innerWidth - containerWidth - margin;
-
-            selectionContainer.style.position = 'fixed';
-            selectionContainer.style.left = `${left}px`;
-            selectionContainer.style.right = 'auto';
-            selectionContainer.style.top = `30px`;
-            selectionContainer.style.bottom = 'auto';
-        }
     }
 
     function hideSelectionWindow() {
@@ -1341,8 +1340,9 @@ document.addEventListener('DOMContentLoaded', () => {
         userS = zoomLevel;
         const finalS = userS * initialS;
         const pt = svg.createSVGPoint();
-        pt.x = window.innerWidth / 2;
-        pt.y = window.innerHeight / 2;
+        const viewport = getViewportDimensions();
+        pt.x = viewport.width / 2;
+        pt.y = viewport.height / 2;
         const svgCenterPt = pt.matrixTransform(svg.getScreenCTM().inverse());
         const finalTx = svgCenterPt.x - targetX * finalS;
         const finalTy = svgCenterPt.y - targetY * finalS;
@@ -1502,50 +1502,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectionContainer.style.top = `${rect.top}px`;
             }
 
-            // Use the same approach as metadata container (which works perfectly)
-            const windowDragState = {
-                type: 'selection-window',
-                target: selectionContainer,
-                startX: event.clientX,
-                startY: event.clientY,
-                // Now we can safely use the inline style values
-                offsetX: parseFloat(selectionContainer.style.left),
-                offsetY: parseFloat(selectionContainer.style.top)
-            };
+            // Use the global dragState (same as other containers)
+            dragState.type = 'selection';
+            dragState.target = selectionContainer;
+            dragState.startX = event.clientX;
+            dragState.startY = event.clientY;
+            dragState.offsetX = parseFloat(selectionContainer.style.left);
+            dragState.offsetY = parseFloat(selectionContainer.style.top);
 
-            // Store this separate state
-            selectionContainer._dragState = windowDragState;
             selectionContainer.classList.add('dragging');
-
-            // Create window-specific mousemove handler that won't interfere with SVG
-            const handleMouseMove = (moveEvent) => {
-                moveEvent.preventDefault();
-                moveEvent.stopPropagation();
-
-                // Use same calculation as metadata container: movement delta + original position
-                const dx = moveEvent.clientX - windowDragState.startX;
-                const dy = moveEvent.clientY - windowDragState.startY;
-
-                const newX = windowDragState.offsetX + dx;
-                const newY = windowDragState.offsetY + dy;
-
-                selectionContainer.style.left = `${newX}px`;
-                selectionContainer.style.top = `${newY}px`;
-            };
-
-            // Create window-specific mouseup handler
-            const handleMouseUp = (upEvent) => {
-                upEvent.preventDefault();
-                upEvent.stopPropagation();
-                selectionContainer.classList.remove('dragging');
-                window.removeEventListener('mousemove', handleMouseMove);
-                window.removeEventListener('mouseup', handleMouseUp);
-                selectionContainer._dragState = null;
-            };
-
-            // Add temporary event listeners for this drag operation only
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
         });
     }
 
@@ -1748,8 +1713,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function getMinZoomToFit() {
         const mainBounds = getMainERDBounds();
         if (!mainBounds.width || !mainBounds.height) return 0.01;
-        const svgWidth = window.innerWidth;
-        const svgHeight = window.innerHeight;
+        const viewport = getViewportDimensions();
+        const svgWidth = viewport.width;
+        const svgHeight = viewport.height;
         const scaleX = svgWidth / mainBounds.width;
         const scaleY = svgHeight / mainBounds.height;
         return Math.min(scaleX, scaleY);
@@ -1930,8 +1896,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = mainBounds.y + mainBounds.height / 2;
 
             // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+            const viewport = getViewportDimensions();
+            const viewportWidth = viewport.width;
+            const viewportHeight = viewport.height;
             const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
             const scaleY = viewportHeight / (mainBounds.height * 0.8);
             const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
@@ -1986,7 +1953,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selectionWidth = metadataRect.width * 1.5;
 
                 // Calculate max height (75% of viewport height)
-                const maxHeight = Math.floor(window.innerHeight * 0.75);
+                const viewport = getViewportDimensions();
+                const maxHeight = Math.floor(viewport.height * 0.75);
 
                 selectionContainer.style.position = 'fixed';
                 selectionContainer.style.width = `${selectionWidth}px`;

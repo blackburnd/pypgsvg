@@ -3014,9 +3014,11 @@
 
 /* Overlay Container */
 #overlay-container-div {
-    position: absolute;
+    position: fixed !important;
     top: 0;
     left: 0;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
     font-family: system-ui, -apple-system, sans-serif;
     z-index: 10000;
@@ -3073,12 +3075,14 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     padding: 0;
     border-radius: 8px;
-    cursor: crosshair;
+    cursor: default;
     width: auto;
     height: auto;
     overflow: hidden;
     display: block;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 10000;
+    pointer-events: auto;
 }
 
 .miniature-container .header {
@@ -3094,10 +3098,25 @@
     align-items: center;
     cursor: grab;
     user-select: none;
+    z-index: 10002; /* Higher than SVG z-index */
+    position: relative;
+    pointer-events: auto;
 }
 
 .miniature-container .header:active {
     cursor: grabbing;
+}
+
+.miniature-inner-container {
+    pointer-events: none;
+    position: relative;
+}
+
+.miniature-inner-container svg {
+    pointer-events: auto;
+    cursor: crosshair;
+    position: relative;
+    z-index: 10000; /* Lower than header z-index */
 }
 
 .miniature-container.minimized,
@@ -3140,10 +3159,10 @@
     position: absolute !important;
     display: block !important;
     border: 2px solid #ff4081 !important;
-    background-color: rgba(255, 64, 129, 0.1) !important;
+    background-color: rgba(255, 64, 129, 0.05) !important;
     opacity: 1 !important;
     pointer-events: all !important;
-    z-index: 1000 !important;
+    z-index: 10001 !important;
     min-width: 10px !important;
     min-height: 10px !important;
     transition: all 0.1s ease;
@@ -3197,20 +3216,27 @@
 
 /* Selection Container */
 #selection-container {
-    position: fixed;
-    z-index: 10000;
-    pointer-events: auto !important; /* Force pointer events */
+    position: fixed !important;
+    top: 30px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
     cursor: grab;
-    background: rgba(248, 249, 250, 0.98);
-    border: 2px solid #2c3e50;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: rgba(248, 249, 250, 0.98) !important;
+    border: 2px solid #2c3e50 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     padding: 0;
     border-radius: 8px;
-    box-sizing: border-box; /* Include padding and border in width calculation */
-    overflow: hidden; /* Remove outer scrollbar - only inner should scroll */
-    max-height: 80vh; /* Limit height to 80% of viewport height */
-    min-width: 350px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-height: 80vh;
+    min-width: 300px;
+    max-width: min(500px, 30vw);
+    width: auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transform: none !important;
+    margin: 0 !important;
 }
 
 .selection-container .header {
@@ -3609,7 +3635,7 @@
             <h3>📁 Source Information</h3>
             <div class="metadata-single">
                 <span class="label">File:</span>
-                <span class="value">schema.dump</span>
+                <span class="value">complex_schema.dump</span>
             </div>
             <div class="metadata-single">
                 <span class="label">Size:</span>
@@ -3617,7 +3643,7 @@
             </div>
             <div class="metadata-single">
                 <span class="label">Generated:</span>
-                <span class="value">2025-08-16 17:40:39</span>
+                <span class="value">2025-08-17 12:29:24</span>
             </div>
         </div>
 
@@ -6743,8 +6769,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let dragThreshold = 5;
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
+    let computedStyle = null;
+    
 
     // --- Utility Functions ---
+    
+    // Get reliable viewport dimensions
+    function getViewportDimensions() {
+        return {
+            width: document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth,
+            height: document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight
+        };
+    }
+    
     function fallbackCopyTextToClipboard(text, button) {
         const textArea = document.createElement("textarea");
         textArea.value = text;
@@ -7312,7 +7349,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pt1.x = 0; pt1.y = 0;
         const svgPt1 = pt1.matrixTransform(invCtm);
         const pt2 = svg.createSVGPoint();
-        pt2.x = window.innerWidth; pt2.y = window.innerHeight;
+        const viewport = getViewportDimensions();
+        pt2.x = viewport.width; pt2.y = viewport.height;
         const svgPt2 = pt2.matrixTransform(invCtm);
         const visibleWidth = svgPt2.x - svgPt1.x;
         const visibleHeight = svgPt2.y - svgPt1.y;
@@ -7340,14 +7378,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectionWidth = metadataRect.width * 1.5;
 
             // Calculate max height (75% of viewport height)
-            const maxHeight = Math.floor(window.innerHeight * 0.75);
-
+            const viewport = getViewportDimensions();
+            const maxHeight = Math.floor(viewport.height * 0.75);
+            console.log(`UpdateSelectionPosition: viewport=${viewport.width}x${viewport.height}, maxHeight=${maxHeight}`);
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
             selectionContainer.style.maxHeight = `${maxHeight}px`;
-            selectionContainer.style.left = `${miniatureRect.right + margin}px`; // To the right of miniature
             selectionContainer.style.top = `${miniatureRect.top}px`; // Same top as miniature
             selectionContainer.style.zIndex = '10001';
+            console.log(`Selection container positioned at left: ${miniatureRect.right + margin}px, top: ${miniatureRect.top}px`);
+
         }
     };
 
@@ -7989,19 +8029,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Only position the container if it hasn't been positioned by the user yet
-        // Check if the container has been moved from its initial right-based positioning
-        if (!selectionContainer.style.left) {
-            const computedStyle = window.getComputedStyle(selectionContainer);
-            const containerWidth = parseFloat(computedStyle.width);
-            const containerHeight = parseFloat(computedStyle.height);
+        if (!computedStyle) {
+            computedStyle = window.getComputedStyle(selectionContainer);
+            
+            // Use document.documentElement.clientWidth instead of window.innerWidth for more reliable viewport width
+            const viewportWidth = document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth;
+            const viewportHeight = document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight;
+            
+            // Get container dimensions with fallbacks
+            let containerWidth = parseFloat(computedStyle.width) || 350; // fallback width
+            let containerHeight = parseFloat(computedStyle.height) || 300; // fallback height
+            
+            // Ensure container fits in viewport
+            const maxWidth = Math.min(400, viewportWidth * 0.3); // Max 30% of viewport or 400px
+            const maxHeight = Math.min(viewportHeight * 0.8, 600); // Max 80% of viewport or 600px
+            
             const margin = 20; // 20px margin from edge
-            const left = window.innerWidth - containerWidth - margin;
-
+            
+            // Calculate position from the right edge - try multiple positioning strategies
+            let left;
+            
+            // Strategy 1: Position from right edge with margin
+            left = Math.max(margin, viewportWidth - containerWidth - margin);
+            
+            // Strategy 2: If that puts us off screen, try from center
+            if (left < margin || left + containerWidth > viewportWidth - margin) {
+                left = Math.max(margin, (viewportWidth - containerWidth) / 2);
+                console.log('Selection container: using center positioning strategy');
+            }
+            
+            // Strategy 3: If still off screen, use safe positioning at top-right corner
+            if (left < margin || left + containerWidth > viewportWidth - margin) {
+                containerWidth = Math.min(maxWidth, viewportWidth - 2 * margin);
+                left = viewportWidth - containerWidth - margin;
+                console.log('Selection container: using safe corner positioning strategy');
+            }
+            
+            // Final safety check - ensure we're not negative or off-screen
+            left = Math.max(margin, Math.min(left, viewportWidth - containerWidth - margin));
+            
+            console.log(`Positioning selection container: viewport=${viewportWidth}x${viewportHeight}, container=${containerWidth}x${containerHeight}, left=${left}`);
+            
             selectionContainer.style.position = 'fixed';
+            selectionContainer.style.width = `${containerWidth}px`;
+            selectionContainer.style.maxWidth = `${maxWidth}px`;
+            selectionContainer.style.maxHeight = `${maxHeight}px`;
             selectionContainer.style.left = `${left}px`;
             selectionContainer.style.right = 'auto';
             selectionContainer.style.top = `30px`;
             selectionContainer.style.bottom = 'auto';
+            selectionContainer.style.zIndex = '10001';
         }
     }
 
@@ -8068,8 +8145,9 @@ document.addEventListener('DOMContentLoaded', () => {
         userS = zoomLevel;
         const finalS = userS * initialS;
         const pt = svg.createSVGPoint();
-        pt.x = window.innerWidth / 2;
-        pt.y = window.innerHeight / 2;
+        const viewport = getViewportDimensions();
+        pt.x = viewport.width / 2;
+        pt.y = viewport.height / 2;
         const svgCenterPt = pt.matrixTransform(svg.getScreenCTM().inverse());
         const finalTx = svgCenterPt.x - targetX * finalS;
         const finalTy = svgCenterPt.y - targetY * finalS;
@@ -8475,8 +8553,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function getMinZoomToFit() {
         const mainBounds = getMainERDBounds();
         if (!mainBounds.width || !mainBounds.height) return 0.01;
-        const svgWidth = window.innerWidth;
-        const svgHeight = window.innerHeight;
+        const viewport = getViewportDimensions();
+        const svgWidth = viewport.width;
+        const svgHeight = viewport.height;
         const scaleX = svgWidth / mainBounds.width;
         const scaleY = svgHeight / mainBounds.height;
         return Math.min(scaleX, scaleY);
@@ -8657,8 +8736,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const centerY = mainBounds.y + mainBounds.height / 2;
 
             // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+            const viewport = getViewportDimensions();
+            const viewportWidth = viewport.width;
+            const viewportHeight = viewport.height;
             const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
             const scaleY = viewportHeight / (mainBounds.height * 0.8);
             const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
@@ -8713,7 +8793,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selectionWidth = metadataRect.width * 1.5;
 
                 // Calculate max height (75% of viewport height)
-                const maxHeight = Math.floor(window.innerHeight * 0.75);
+                const viewport = getViewportDimensions();
+                const maxHeight = Math.floor(viewport.height * 0.75);
 
                 selectionContainer.style.position = 'fixed';
                 selectionContainer.style.width = `${selectionWidth}px`;

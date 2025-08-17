@@ -90,7 +90,7 @@ pg_dump -h your-host -d database -U username -s --no-owner --no-privileges > sch
 pg_dump -h your-host -d database -U username -s -O -F plain --disable-triggers --encoding=UTF8 > schema.dump
 ```
 
-Or use our [sample schema](https://github.com/blackburnd/pypgsvg/blob/main/Samples/schema.dump) for testing.
+Or use our [sample schema](https://github.com/blackburnd/pypgsvg/blob/main/Samples/complex_schema.dump) for testing.
 
 ### Interactive ERD Generation
 
@@ -121,14 +121,14 @@ pypgsvg schema.dump \
 
 ### 🎬 Quick Demo
 
-[[🎯 View Interactive Example](https://github.com/blackburnd/pypgsvg/blob/main/Samples/example_output_erd.svg)] 
+[[🎯 View Interactive Example](https://github.com/blackburnd/pypgsvg/blob/main/Samples/complex_schema.svg)] 
 
-[![Live Demo Screenshots](https://live.staticflickr.com/65535/54701842059_14340b4b77_b.jpg)](https://flic.kr/ps/46D1Th)
+[![https://live.staticflickr.com/65535/54725569515_1a265e1695.jpghttps://flic.kr/ps/46D1Th)
 
 **Try it yourself:**
 ```bash
 # Download sample and generate interactive ERD
-wget https://github.com/blackburnd/pypgsvg/raw/main/Samples/schema.dump
+wget https://github.com/blackburnd/pypgsvg/raw/main/Samples/complex_schema.dump
 pypgsvg schema.dump --output demo_erd --view
 ```
 
@@ -172,7 +172,7 @@ Displays comprehensive information about your database schema:
 - **File information** and timestamps
 - **Interactive controls** (minimize, close, drag to reposition)
 
-[![Metadata Panel](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/ps/46D1Th)
+[![Metadata Panel](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
 ### 🗺️ Miniature Overview
 Navigate large schemas effortlessly:
@@ -181,7 +181,7 @@ Navigate large schemas effortlessly:
 - **Drag viewport** for precise navigation
 - **Resizable panel** - make it larger for detailed navigation
 
-[![Overview Panel](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/ps/46D1Th)
+[![Overview Panel](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
 ### 🔍 Selection Details
 View and export detailed SQL information:
@@ -192,8 +192,7 @@ View and export detailed SQL information:
 - **Download button** for formatted text export
 - **Enterprise-friendly** emoji-free output option
 
-[![Selection Panel](https://live.staticflickr.com/65535/54701891288_096038eca2_b.jpg)](https://flic.kr/ps/46D1Th)
-
+[![Selection Panel](https://flic.kr/p/2rnUkss](https://flic.kr/s/aHBqjCpNX1)
 **Example selection output:**
 ```
 📊 Selected Tables

@@ -10,9 +10,11 @@
 
 /* Overlay Container */
 #overlay-container-div {
-    position: absolute;
+    position: fixed !important;
     top: 0;
     left: 0;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
     font-family: system-ui, -apple-system, sans-serif;
     z-index: 10000;
@@ -69,12 +71,14 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     padding: 0;
     border-radius: 8px;
-    cursor: crosshair;
+    cursor: default;
     width: auto;
     height: auto;
     overflow: hidden;
     display: block;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 10000;
+    pointer-events: auto;
 }
 
 .miniature-container .header {
@@ -90,10 +94,25 @@
     align-items: center;
     cursor: grab;
     user-select: none;
+    z-index: 10002; /* Higher than SVG z-index */
+    position: relative;
+    pointer-events: auto;
 }
 
 .miniature-container .header:active {
     cursor: grabbing;
+}
+
+.miniature-inner-container {
+    pointer-events: none;
+    position: relative;
+}
+
+.miniature-inner-container svg {
+    pointer-events: auto;
+    cursor: crosshair;
+    position: relative;
+    z-index: 10000; /* Lower than header z-index */
 }
 
 .miniature-container.minimized,
@@ -136,10 +155,10 @@
     position: absolute !important;
     display: block !important;
     border: 2px solid #ff4081 !important;
-    background-color: rgba(255, 64, 129, 0.1) !important;
+    background-color: rgba(255, 64, 129, 0.05) !important;
     opacity: 1 !important;
     pointer-events: all !important;
-    z-index: 1000 !important;
+    z-index: 10001 !important;
     min-width: 10px !important;
     min-height: 10px !important;
     transition: all 0.1s ease;
@@ -193,20 +212,27 @@
 
 /* Selection Container */
 #selection-container {
-    position: fixed;
-    z-index: 10000;
-    pointer-events: auto !important; /* Force pointer events */
+    position: fixed !important;
+    top: 30px !important;
+    left: auto !important;
+    bottom: auto !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
     cursor: grab;
-    background: rgba(248, 249, 250, 0.98);
-    border: 2px solid #2c3e50;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: rgba(248, 249, 250, 0.98) !important;
+    border: 2px solid #2c3e50 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     padding: 0;
     border-radius: 8px;
-    box-sizing: border-box; /* Include padding and border in width calculation */
-    overflow: hidden; /* Remove outer scrollbar - only inner should scroll */
-    max-height: 80vh; /* Limit height to 80% of viewport height */
-    min-width: 350px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-height: 80vh;
+    min-width: 300px;
+    max-width: min(500px, 30vw);
+    width: auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transform: none !important;
+    margin: 0 !important;
 }
 
 .selection-container .header {
