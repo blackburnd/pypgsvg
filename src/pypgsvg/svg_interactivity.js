@@ -17,11 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
     let selectionContainerManuallyPositioned = false; // Flag to track if user has manually positioned selection container
-    
-    
 
     // --- Utility Functions ---
-    
+
     // Get reliable viewport dimensions
     function getViewportDimensions() {
         return {
@@ -29,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight
         };
     }
-    
+
     function fallbackCopyTextToClipboard(text, button) {
         const textArea = document.createElement("textarea");
         textArea.value = text;
@@ -120,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.style.right = '2px';
             controls.style.zIndex = '10001';
             windowElem.appendChild(controls);
-        } 
+        }
 
         const btnConfig = options.buttons || {};
         const allControls = {};
@@ -159,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minBtn.title = 'Minimize';
             minBtn.innerHTML = '–';
             controls.appendChild(minBtn);
-        } 
+        }
 
         monclick = (container) => {
             container.classList.toggle('minimized');
@@ -211,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.title = 'Close';
             closeBtn.innerHTML = '×';
             controls.appendChild(closeBtn);
-        } 
+        }
 
         closeBtn.addEventListener('click', (e) => {
             windowElem.style.display = 'none';
@@ -583,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalTy = (userTy * initialS) + initialTy;
         mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
         requestAnimationFrame(updateViewportIndicator);
-        requestAnimationFrame(updateSelectionContainerPosition);
+        //requestAnimationFrame(updateSelectionContainerPosition);
     };
 
     const updateViewportIndicator = () => {
@@ -641,10 +639,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculate max height (75% of viewport height)
             const viewport = getViewportDimensions();
             const maxHeight = Math.floor(viewport.height * 0.75);
-            
+
             const leftPos = miniatureRect.right + margin;
             const topPos = miniatureRect.top;
-            
+
             console.log(`Selection container positioning:`, {
                 viewport: `${viewport.width}x${viewport.height}`,
                 miniatureRect: miniatureRect,
@@ -653,21 +651,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectionWidth,
                 maxHeight
             });
-            
+
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
             selectionContainer.style.maxHeight = `${maxHeight}px`;
             selectionContainer.style.left = `${leftPos}px`;
             selectionContainer.style.top = `${topPos}px`;
             selectionContainer.style.zIndex = '10001';
-            
+
             console.log(`Selection container positioned at left: ${leftPos}px, top: ${topPos}px`);
         }
     };
 
     const onViewportChange = () => {
         requestAnimationFrame(updateViewportIndicator);
-        requestAnimationFrame(updateSelectionContainerPosition);
     };
 
     // --- Highlighting ---
@@ -1114,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectionContainer) return;
 
         // Check if the selection window was previously hidden
-        const wasHidden = selectionContainer.style.display === 'none' || 
+        const wasHidden = selectionContainer.style.display === 'none' ||
                          window.getComputedStyle(selectionContainer).display === 'none';
 
         // Force visibility with strong inline styles
@@ -1651,17 +1648,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dragState.type === 'indicator') {
             event.preventDefault();
             event.stopPropagation();
-            
+
             const miniRect = miniatureContainer.getBoundingClientRect();
-            
+
             // Clamp mouse position to miniature container bounds
             const clampedX = Math.max(miniRect.left, Math.min(miniRect.right, event.clientX));
             const clampedY = Math.max(miniRect.top, Math.min(miniRect.bottom, event.clientY));
-            
+
             // Calculate relative position within the clamped bounds
             const relX = (clampedX - miniRect.left) / miniRect.width;
             const relY = (clampedY - miniRect.top) / miniRect.height;
-            
+
             // Additional safety clamping to ensure we stay within 0-1 range
             const safeRelX = Math.max(0, Math.min(1, relX));
             const safeRelY = Math.max(0, Math.min(1, relY));
@@ -1670,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mainBounds = getMainERDBounds();
             const targetX = mainBounds.x + safeRelX * mainBounds.width;
             const targetY = mainBounds.y + safeRelY * mainBounds.height;
-            
+
             // Zoom to the calculated point
             zoomToPoint(targetX, targetY, userS);
 
@@ -2039,21 +2036,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     buttons: { copy: true, download: true, edit: false }
                 });
                 makeResizable(metadataContainer);
-            } 
+            }
 
             if (miniatureContainer) {
                 addWindowControls(miniatureContainer, {
                     buttons: { copy: false, edit: false }
                 });
                 makeResizable(miniatureContainer);
-            } 
+            }
 
             if (selectionContainer) {
                 addWindowControls(selectionContainer, {
                     buttons: { copy: true, download: true, edit: true }
                 });
                 makeResizable(selectionContainer);
-            } 
+            }
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);
