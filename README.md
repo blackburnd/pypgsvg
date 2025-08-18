@@ -93,13 +93,15 @@
 pypgsvg schema.dump --output database_erd --view
 
 # Enterprise automation (CI/CD ready)
-pypgsvg schema.dump --output docs/database_diagram --rankdir TB --node-sep 4
+pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
 ```
 
 ### Advanced Enterprise Options
 ```bash
 # Large schema optimization
-pypgsvg large_schema.dump --packmode graph --rank-sep 3 --hide-standalone
+pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
+source venv/bin/activate && python -m src.pypgsvg Samples/complex_schema.dump --node-shape=ellipse --show-standalone=false --output=./Samples/complex_schema --rankdir LR --node-sep 2 --packmode
+
 
 # Custom layout for documentation
 pypgsvg schema.dump --rankdir LR --fontsize 20 --node-fontsize 16 --output presentation_erd
