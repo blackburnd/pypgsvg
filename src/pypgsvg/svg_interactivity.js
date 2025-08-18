@@ -581,7 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalTy = (userTy * initialS) + initialTy;
         mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
         requestAnimationFrame(updateViewportIndicator);
-        //requestAnimationFrame(updateSelectionContainerPosition);
     };
 
     const updateViewportIndicator = () => {
