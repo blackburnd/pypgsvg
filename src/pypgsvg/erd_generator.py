@@ -7,6 +7,7 @@ from graphviz import Digraph
 from typing import Dict, List, Optional
 from .utils import (
     should_exclude_table,
+    should_exclude_table_or_view,
     is_standalone_table,
     get_contrasting_text_color,
     sanitize_label
@@ -26,6 +27,7 @@ def generate_erd_with_graphviz(
     output_file,
     input_file_path=None,
     show_standalone=True,
+    include_views=False,
     packmode='array',
     rankdir='TB',
     esep='6',
@@ -66,16 +68,16 @@ def generate_erd_with_graphviz(
     """
     # Filter tables based on exclusion patterns and standalone option
     filtered_tables = {}
-    for table_name, columns in tables.items():
+    for table_name, table_data in tables.items():
         # Skip if matches exclusion patterns
-        if should_exclude_table(table_name):
+        if should_exclude_table_or_view(table_data, table_name, include_views):
             continue
 
         # Skip standalone tables if option is disabled
         if not show_standalone and is_standalone_table(table_name, foreign_keys):
             continue
 
-        filtered_tables[table_name] = columns
+        filtered_tables[table_name] = table_data
 
     filtered_foreign_keys = [
         fk for fk in foreign_keys
@@ -135,7 +137,19 @@ def generate_erd_with_graphviz(
 
     # Use deterministic color assignment based on table name
     sorted_tables = sorted(filtered_tables.keys())
-    table_colors = {table_name: color_palette[i % len(color_palette)] for i, table_name in enumerate(sorted_tables)}
+    table_colors = {}
+    
+    # Define greyscale colors for views
+    view_greyscale_colors = ["#666666", "#777777", "#888888", "#999999", "#aaaaaa", "#bbbbbb"]
+    
+    for i, table_name in enumerate(sorted_tables):
+        table_data = filtered_tables[table_name]
+        if table_data.get('is_view', False):
+            # Use greyscale colors for views
+            table_colors[table_name] = view_greyscale_colors[i % len(view_greyscale_colors)]
+        else:
+            # Use regular color palette for tables
+            table_colors[table_name] = color_palette[i % len(color_palette)]
     # --- Data for JS Highlighting ---
     graph_data = {
         "tables": {},
@@ -197,9 +211,17 @@ def generate_erd_with_graphviz(
         if trigger_icons:
             label += f'<TR><TD class="trigger-icons" ALIGN="left">{trigger_icons}</TD></TR>'
         # Table header row (full width, saturated color)
+        table_data = filtered_tables[table_name]
+        is_view = table_data.get('is_view', False)
+        
+        if is_view:
+            header_text = f'VIEW: {table_name}'
+        else:
+            header_text = table_name
+            
         label += (
             f'<TR><TD ALIGN="center" BGCOLOR="{header_color}">'
-            f'<FONT COLOR="{text_color}" POINT-SIZE="24">{table_name}</FONT></TD></TR>'
+            f'<FONT COLOR="{text_color}" POINT-SIZE="24">{header_text}</FONT></TD></TR>'
         )
         # Table background rows (desaturated color)
         for column in cols['columns']:
@@ -272,7 +294,7 @@ def generate_erd_with_graphviz(
             edge_attrs["arrowhead"] = "dot"
             edge_attrs["style"] = "dashed"
         # Check for cascade constraints
-        elif any("CASCADE" in str(c) for c in constraints):
+        elif constraints and any("CASCADE" in str(c) for c in constraints):
             edge_attrs["arrowhead"] = "vee"
             edge_attrs["penwidth"] = "3"
         # Check for triggers on the relationship
