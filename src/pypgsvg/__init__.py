@@ -27,6 +27,7 @@ def main():
     parser.add_argument('-o', '--output', default='schema_erd', help='Output file name (without extension)')
     parser.add_argument('--show-standalone', default='true', help='Hide standalone tables')
     parser.add_argument('--view', action='store_true', help='Open the generated SVG in a browser')
+    parser.add_argument('--include-views', action='store_true', help='Include database views in the ERD')
     parser.add_argument('--saturate', type=float, default=1.8, help='Saturation factor for table colors')
     parser.add_argument('--brightness', type=float, default=1.0, help='Brightness factor for table colors')
 
@@ -70,6 +71,7 @@ def main():
                 tables, foreign_keys, output_file,
                 input_file_path=args.input_file,
                 show_standalone=args.show_standalone!='false',
+                include_views=args.include_views,
                 packmode=args.packmode,
                 rankdir=args.rankdir,
                 esep=args.esep,

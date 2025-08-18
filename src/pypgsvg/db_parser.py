@@ -3,7 +3,7 @@ from typing import List, Tuple, Dict
 
 def parse_sql_dump(sql_dump):
     """
-    Parse an SQL dump to extract tables, foreign key relationships, and triggers.
+    Parse an SQL dump to extract tables, views, foreign key relationships, and triggers.
     """
     tables = {}
     foreign_keys = []
@@ -14,6 +14,12 @@ def parse_sql_dump(sql_dump):
     # Table creation pattern
     table_pattern = re.compile(
         r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(["\w.]+)\s*\((.*?)\);',
+        re.S | re.I
+    )
+
+    # View creation pattern
+    view_pattern = re.compile(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(["\w.]+)\s+AS\s+(.*?);',
         re.S | re.I
     )
 
@@ -97,6 +103,20 @@ def parse_sql_dump(sql_dump):
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
             tables[table_name]['columns'] = columns
+            tables[table_name]['is_view'] = False
+
+        # Extract views
+        for match in view_pattern.finditer(sql_dump):
+            view_name = match.group(1).strip('"')
+            view_definition = match.group(2).strip()
+            _lines = [view_name, f"VIEW: {view_definition[:100]}..."]
+            
+            # For views, we create a simple structure similar to tables
+            # but with minimal column information since we can't easily parse complex SELECT statements
+            tables[view_name] = {}
+            tables[view_name]['lines'] = "\n".join(_lines)
+            tables[view_name]['columns'] = [{"name": "VIEW", "type": "definition", "line": view_definition[:100] + "...", "is_primary_key": False, "is_foreign_key": False}]
+            tables[view_name]['is_view'] = True
 
         # Extract foreign keys from ALTER TABLE
         triggers = {}
