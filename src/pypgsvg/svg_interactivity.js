@@ -1102,6 +1102,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         showSelectionWindow(tableIds, edgeIds, event);
+        
+        // Update table selector to reflect current highlights
+        if (window.updateTableSelector) {
+            window.updateTableSelector();
+        }
     };
 
 
@@ -1367,6 +1372,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         hideSelectionWindow();
+        
+        // Update table selector to show all tables when highlights are cleared
+        if (window.updateTableSelector) {
+            window.updateTableSelector();
+        }
     };
 
     // Reset pan and zoom to the initial state
@@ -1929,6 +1939,113 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Table Selector functionality
+    function initializeTableSelector() {
+        const tableSelector = document.getElementById('table-selector');
+        if (!tableSelector) return;
+
+        // Function to populate the selector with tables
+        function populateTableSelector(tablesToShow = null) {
+            // Clear existing options except the first one
+            tableSelector.innerHTML = '';
+            
+            let tablesToDisplay;
+            let optionText;
+            
+            if (!tablesToShow) {
+                // Show all tables
+                tablesToDisplay = Object.keys(tables);
+                optionText = `All Tables (${tablesToDisplay.length})`;
+            } else {
+                // Show only highlighted/selected tables
+                tablesToDisplay = tablesToShow;
+                optionText = `Selected Tables (${tablesToDisplay.length})`;
+            }
+            
+            // Add the default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = optionText;
+            tableSelector.appendChild(defaultOption);
+            
+            // Add table options
+            tablesToDisplay.sort().forEach(tableId => {
+                const option = document.createElement('option');
+                option.value = tableId;
+                option.textContent = tableId;
+                tableSelector.appendChild(option);
+            });
+        }
+
+        // Function to update selector based on current highlights
+        function updateTableSelector() {
+            const highlightedTables = document.querySelectorAll('.node.highlighted');
+            if (highlightedTables.length > 0) {
+                const tableIds = Array.from(highlightedTables).map(el => el.id).filter(id => tables[id]);
+                populateTableSelector(tableIds);
+            } else {
+                populateTableSelector(); // Show all tables
+            }
+        }
+
+        // Handle selector change
+        tableSelector.addEventListener('change', function() {
+            const selectedTableId = this.value;
+            if (!selectedTableId) return;
+
+            // Clear existing highlights
+            clearAllHighlights();
+
+            if (tables[selectedTableId]) {
+                // Set this table as highlighted
+                highlightedElementId = selectedTableId;
+                
+                // Get connected edges and tables (same logic as SVG click handler)
+                const connectedEdges = tables[selectedTableId].edges;
+                const connectedTables = [selectedTableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+                const uniqueTables = [...new Set(connectedTables)];
+                
+                // Highlight the table and its connections
+                highlightElements(uniqueTables, connectedEdges);
+                
+                // Show selection window
+                showSelectionWindow(uniqueTables, connectedEdges, null);
+                
+                // Focus on the selected table
+                focusOnTable(selectedTableId);
+            }
+            
+            // Reset selector to default option
+            this.selectedIndex = 0;
+        });
+
+        // Function to focus on a table (zoom to it)
+        function focusOnTable(tableId) {
+            const tableElement = document.getElementById(tableId);
+            if (!tableElement) return;
+
+            try {
+                // Get the table's SVG bounding box
+                const bbox = tableElement.getBBox();
+                
+                // Calculate the center of the table in SVG coordinates
+                const tableCenterX = bbox.x + bbox.width / 2;
+                const tableCenterY = bbox.y + bbox.height / 2;
+                
+                // Zoom to the table with a reasonable zoom level
+                zoomToPoint(tableCenterX, tableCenterY, Math.max(userS, 1.2));
+            } catch (error) {
+                console.warn('Could not focus on table:', tableId, error);
+            }
+        }
+
+        // Store the update function globally so it can be called from other parts
+        window.updateTableSelector = updateTableSelector;
+
+        // Initial population
+        populateTableSelector();
+    }
+
 
     function initializeSvgView() {
 
@@ -2050,6 +2167,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 makeResizable(selectionContainer);
             }
+
+            // Initialize table selector
+            initializeTableSelector();
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);
