@@ -176,9 +176,13 @@ def inject_metadata_into_svg(
         <div class="metadata-section">
             <h3>🗃️ Schema Statistics</h3>
             <div class="metadata-grid">
-                <div class="metadata-item">
+                <div class="metadata-item table-selector-item">
                     <span class="label">Tables</span>
-                    <span class="value">{total_tables}</span>
+                    <div class="table-selector-container">
+                        <select id="table-selector" class="table-selector">
+                            <option value="">All Tables ({total_tables})</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="metadata-item">
                     <span class="label">Columns</span>
