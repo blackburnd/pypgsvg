@@ -12,3 +12,5 @@ src/pypgsvg/.#svg_interactivity.js
 /src/pypgsvg.egg-info
 node_modules/
 test-results/
+Samples/boom.svg
+package-lock.json
