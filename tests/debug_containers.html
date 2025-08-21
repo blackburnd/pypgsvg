@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Container Interaction Debug Test</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: Arial, sans-serif;
+        }
+        
+        #svg-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+        }
+        
+        .overlay-container { 
+            position: absolute;
+            border: 2px solid #333; 
+            background: rgba(255,255,255,0.95);
+            z-index: 1000;
+            min-width: 200px;
+            min-height: 150px;
+        }
+        
+        .window-header { 
+            background: #333; 
+            color: white; 
+            padding: 8px; 
+            cursor: move; 
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        .window-content {
+            padding: 15px;
+        }
+        
+        .resize-handle { 
+            position: absolute; 
+            background: #333; 
+            opacity: 0.7;
+        }
+        
+        .resize-handle:hover {
+            opacity: 1;
+        }
+        
+        .resize-handle.nw { 
+            top: 0; 
+            left: 0; 
+            width: 12px; 
+            height: 12px; 
+            cursor: nw-resize; 
+        }
+        
+        .resize-handle.se { 
+            bottom: 0; 
+            right: 0; 
+            width: 12px; 
+            height: 12px; 
+            cursor: se-resize; 
+        }
+        
+        #selection-container {
+            left: 50px;
+            top: 50px;
+            width: 300px;
+            height: 200px;
+            border-color: blue;
+        }
+        
+        #selection-container .window-header {
+            background: blue;
+        }
+        
+        #selection-container .resize-handle {
+            background: blue;
+        }
+        
+        #miniature-container {
+            left: 400px;
+            top: 50px;
+            width: 300px;
+            height: 200px;
+            border-color: red;
+        }
+        
+        #miniature-container .window-header {
+            background: red;
+        }
+        
+        #miniature-container .resize-handle {
+            background: red;
+        }
+        
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 2000;
+        }
+        
+        .status {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Container Interaction Debug Test</h1>
+    <p>This page tests drag and resize functionality for both containers.</p>
+    
+    <div class="debug-info">
+        <div class="status" id="mouse-pos">Mouse: -</div>
+        <div class="status" id="drag-state">Drag: None</div>
+        <div class="status" id="event-target">Target: -</div>
+        <div class="status" id="cursor-style">Cursor: -</div>
+    </div>
+    
+    <div id="svg-container">
+        <!-- Main SVG content -->
+        <svg width="100%" height="100%" viewBox="0 0 800 600">
+            <g id="main-group">
+                <rect x="100" y="100" width="200" height="100" fill="lightblue" stroke="black"/>
+                <text x="200" y="150" text-anchor="middle">Test Table</text>
+                <rect x="500" y="300" width="150" height="80" fill="lightgreen" stroke="black"/>
+                <text x="575" y="340" text-anchor="middle">Another Table</text>
+            </g>
+        </svg>
+
+        <!-- Selection Container -->
+        <div id="selection-container" class="overlay-container">
+            <div class="window-header">
+                Selection Container (Working)
+            </div>
+            <div class="window-content">
+                <p>This container should be draggable and resizable.</p>
+                <p>Try dragging the header or resize handles.</p>
+            </div>
+            <div class="resize-handle nw" data-handle="nw"></div>
+            <div class="resize-handle se" data-handle="se"></div>
+        </div>
+
+        <!-- Miniature Container -->
+        <div id="miniature-container" class="overlay-container">
+            <div class="window-header">
+                Miniature Container (Broken)
+            </div>
+            <div class="window-content">
+                <p>This container should also be draggable and resizable.</p>
+                <p>But currently it's not working properly.</p>
+            </div>
+            <div class="resize-handle nw" data-handle="nw"></div>
+            <div class="resize-handle se" data-handle="se"></div>
+        </div>
+    </div>
+
+    <script>
+        // Debug information display
+        const mousePos = document.getElementById('mouse-pos');
+        const dragState = document.getElementById('drag-state');
+        const eventTarget = document.getElementById('event-target');
+        const cursorStyle = document.getElementById('cursor-style');
+        
+        // Simple drag and resize implementation for comparison
+        let isDragging = false;
+        let isResizing = false;
+        let currentContainer = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let startWidth = 0;
+        let startHeight = 0;
+        let resizeHandle = null;
+
+        // Mouse tracking for debug
+        document.addEventListener('mousemove', (e) => {
+            mousePos.textContent = `Mouse: ${e.clientX}, ${e.clientY}`;
+            eventTarget.textContent = `Target: ${e.target.tagName} ${e.target.className || ''} ${e.target.id || ''}`;
+            cursorStyle.textContent = `Cursor: ${getComputedStyle(e.target).cursor}`;
+        });
+
+        // Add event listeners to both containers
+        function setupContainer(containerId) {
+            const container = document.getElementById(containerId);
+            const header = container.querySelector('.window-header');
+            const resizeHandles = container.querySelectorAll('.resize-handle');
+
+            // Header drag functionality
+            header.addEventListener('mousedown', (e) => {
+                console.log(`${containerId} header mousedown`, e);
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isDragging = true;
+                currentContainer = container;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                
+                const rect = container.getBoundingClientRect();
+                startLeft = rect.left;
+                startTop = rect.top;
+                
+                dragState.textContent = `Drag: ${containerId} header`;
+                container.style.opacity = '0.8';
+            });
+
+            // Resize handle functionality
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', (e) => {
+                    console.log(`${containerId} resize handle mousedown`, e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    isResizing = true;
+                    currentContainer = container;
+                    resizeHandle = handle.dataset.handle;
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    
+                    const rect = container.getBoundingClientRect();
+                    startLeft = rect.left;
+                    startTop = rect.top;
+                    startWidth = rect.width;
+                    startHeight = rect.height;
+                    
+                    dragState.textContent = `Resize: ${containerId} ${resizeHandle}`;
+                    container.style.opacity = '0.8';
+                });
+            });
+        }
+
+        // Global mouse move handler
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && currentContainer) {
+                const deltaX = e.clientX - dragStartX;
+                const deltaY = e.clientY - dragStartY;
+                
+                const newLeft = startLeft + deltaX;
+                const newTop = startTop + deltaY;
+                
+                currentContainer.style.left = `${newLeft}px`;
+                currentContainer.style.top = `${newTop}px`;
+                
+            } else if (isResizing && currentContainer) {
+                const deltaX = e.clientX - dragStartX;
+                const deltaY = e.clientY - dragStartY;
+                
+                if (resizeHandle === 'se') {
+                    // Southeast: increase width and height
+                    const newWidth = Math.max(200, startWidth + deltaX);
+                    const newHeight = Math.max(150, startHeight + deltaY);
+                    
+                    currentContainer.style.width = `${newWidth}px`;
+                    currentContainer.style.height = `${newHeight}px`;
+                    
+                } else if (resizeHandle === 'nw') {
+                    // Northwest: decrease width/height and adjust position
+                    const newWidth = Math.max(200, startWidth - deltaX);
+                    const newHeight = Math.max(150, startHeight - deltaY);
+                    const newLeft = startLeft + (startWidth - newWidth);
+                    const newTop = startTop + (startHeight - newHeight);
+                    
+                    currentContainer.style.width = `${newWidth}px`;
+                    currentContainer.style.height = `${newHeight}px`;
+                    currentContainer.style.left = `${newLeft}px`;
+                    currentContainer.style.top = `${newTop}px`;
+                }
+            }
+        });
+
+        // Global mouse up handler
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging || isResizing) {
+                console.log('Mouse up, ending drag/resize');
+                
+                if (currentContainer) {
+                    currentContainer.style.opacity = '1';
+                }
+                
+                isDragging = false;
+                isResizing = false;
+                currentContainer = null;
+                resizeHandle = null;
+                
+                dragState.textContent = 'Drag: None';
+            }
+        });
+
+        // Setup both containers
+        setupContainer('selection-container');
+        setupContainer('miniature-container');
+
+        // Test if event listeners are working
+        console.log('Container interaction test loaded');
+        console.log('Selection container:', document.getElementById('selection-container'));
+        console.log('Miniature container:', document.getElementById('miniature-container'));
+    </script>
+</body>
+</html>
