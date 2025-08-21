@@ -4369,7 +4369,7 @@
             </div>
             <div class="metadata-single">
                 <span class="label">Generated:</span>
-                <span class="value">2025-08-21 14:09:40</span>
+                <span class="value">2025-08-21 14:02:03</span>
             </div>
         </div>
 
@@ -7882,16 +7882,24 @@
         </div>
     </foreignObject>
     <script type="text/javascript"><![CDATA[
-document.addEventListener('DOMContentLoaded', () => {
-    const svg = document.children[0];
-    const mainGroup = document.getElementById('main-erd-group');
-    const miniatureContainer = document.getElementById('miniature-container');
-    const viewportIndicator = document.getElementById('viewport-indicator');
-    const overlayContainer = document.getElementById('overlay-container');
-    const graphDataElement = document.getElementById('graph-data');
-    const graphData = JSON.parse(graphDataElement.textContent);
-    const { tables, edges } = graphData;
+// Global variables for SVG elements
+let svg, mainGroup, miniatureContainer, viewportIndicator, overlayContainer, graphDataElement, graphData, tables, edges;
+let windowElem = document;
+function initializeSvgView() {
+    svg = document.children[0];
+    mainGroup = document.getElementById('main-erd-group');
+    miniatureContainer = document.getElementById('miniature-container');
+    viewportIndicator = document.getElementById('viewport-indicator');
+    overlayContainer = document.getElementById('overlay-container');
+    graphDataElement = document.getElementById('graph-data');
+    graphData = JSON.parse(graphDataElement.textContent);
+    ({ tables, edges } = graphData);
 
+    if (!svg || !mainGroup || !miniatureContainer || !viewportIndicator) {
+        console.warn("SVG initialization: Required elements not found, skipping initialization");
+        return;
+    }
+}
     // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
     let userTx = 0, userTy = 0, userS = 1;
@@ -7929,10 +7937,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (successful) {
                 button.innerHTML = '✓';
                 button.title = 'Copied!';
-                setTimeout(() => {
-                    button.innerHTML = '📋';
-                    button.title = 'Copy to clipboard';
-                }, 2000);
+                // Remove setTimeout - just show success briefly then reset
+                button.innerHTML = '📋';
+                button.title = 'Copy to clipboard';
             } else {
                 console.error('Fallback: Oops, unable to copy');
             }
@@ -8213,10 +8220,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Visual feedback
                         allControls.copyBtn.innerHTML = '✓';
                         allControls.copyBtn.title = 'Copied!';
-                        setTimeout(() => {
-                            allControls.copyBtn.innerHTML = '📋';
-                            allControls.copyBtn.title = 'Copy to clipboard';
-                        }, 2000);
+                        // Remove setTimeout - just show success briefly then reset
+                        allControls.copyBtn.innerHTML = '📋';
+                        allControls.copyBtn.title = 'Copy to clipboard';
                     }).catch(err => {
                         console.error('Failed to copy to clipboard:', err);
                         // Fallback for older browsers
@@ -8345,10 +8351,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Visual feedback
                 allControls.downloadBtn.innerHTML = '✓';
                 allControls.downloadBtn.title = 'Downloaded!';
-                setTimeout(() => {
-                    allControls.downloadBtn.innerHTML = '💾';
-                    allControls.downloadBtn.title = 'Download as file';
-                }, 2000);
+                // Remove setTimeout - just show success briefly then reset
+                allControls.downloadBtn.innerHTML = '💾';
+                allControls.downloadBtn.title = 'Download as file';
             });
         }
 
@@ -9822,11 +9827,141 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+}
 
-    // Table Selector functionality
-    function initializeTableSelector() {
+document.addEventListener('DOMContentLoaded', initializeSvgView);
         const tableSelector = document.getElementById('table-selector');
-        if (!tableSelector) return;
+        if (!tableSelector) {
+            console.warn('Table selector element not found');
+            return;
+        }
+
+        // Get the table-selector-container div directly
+        const selectorContainer = document.querySelector('.table-selector-container');
+        if (!selectorContainer) {
+            console.warn('Table selector container not found');
+            return;
+        }
+        
+        // Create search input
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.id = 'table-search-input';
+        searchInput.className = 'table-search';
+        searchInput.placeholder = 'Search tables...';
+        searchInput.style.width = '100%';
+        searchInput.style.padding = '4px 6px';
+        searchInput.style.marginBottom = '4px';
+        searchInput.style.border = '1px solid rgba(39, 174, 96, 0.3)';
+        searchInput.style.borderRadius = '3px';
+        searchInput.style.fontSize = '0.8rem';
+        searchInput.style.background = 'rgba(255, 255, 255, 0.9)';
+        searchInput.style.color = '#2c3e50';
+        searchInput.style.outline = 'none';
+        searchInput.style.transition = 'all 0.2s ease';
+        
+        // Create results container
+        const resultsContainer = document.createElement('div');
+        resultsContainer.className = 'search-results';
+        resultsContainer.style.display = 'none';
+        resultsContainer.style.maxHeight = '120px';
+        resultsContainer.style.overflowY = 'auto';
+        resultsContainer.style.border = '1px solid rgba(39, 174, 96, 0.3)';
+        resultsContainer.style.borderRadius = '3px';
+        resultsContainer.style.background = 'white';
+        resultsContainer.style.position = 'absolute';
+        resultsContainer.style.zIndex = '10003';
+        resultsContainer.style.width = '100%';
+        resultsContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        
+        // Insert search input before the select
+        if (selectorContainer && searchInput && resultsContainer && tableSelector) {
+            selectorContainer.insertBefore(searchInput, tableSelector);
+            selectorContainer.insertBefore(resultsContainer, tableSelector);
+            selectorContainer.style.position = 'relative';
+        } else {
+            console.warn('Could not set up fuzzy search: missing DOM elements', {
+                selectorContainer: !!selectorContainer,
+                searchInput: !!searchInput, 
+                resultsContainer: !!resultsContainer,
+                tableSelector: !!tableSelector
+            });
+            return;
+        }
+
+        // Fuzzy search algorithm
+        function fuzzyMatch(query, text) {
+            if (!query) return { score: 0, matches: [] };
+            
+            query = query.toLowerCase();
+            text = text.toLowerCase();
+            
+            // Exact match gets highest score
+            if (text === query) return { score: 1000, matches: [{ start: 0, end: query.length }] };
+            
+            // Starts with query gets high score
+            if (text.startsWith(query)) return { score: 900, matches: [{ start: 0, end: query.length }] };
+            
+            // Contains query gets medium score
+            const indexOf = text.indexOf(query);
+            if (indexOf !== -1) return { score: 800, matches: [{ start: indexOf, end: indexOf + query.length }] };
+            
+            // Fuzzy character matching
+            let score = 0;
+            let textIndex = 0;
+            let matches = [];
+            let currentMatch = null;
+            
+            for (let i = 0; i < query.length; i++) {
+                const char = query[i];
+                let found = false;
+                
+                while (textIndex < text.length) {
+                    if (text[textIndex] === char) {
+                        if (!currentMatch) {
+                            currentMatch = { start: textIndex, end: textIndex + 1 };
+                        } else if (textIndex === currentMatch.end) {
+                            currentMatch.end = textIndex + 1;
+                        } else {
+                            matches.push(currentMatch);
+                            currentMatch = { start: textIndex, end: textIndex + 1 };
+                        }
+                        
+                        score += 10;
+                        textIndex++;
+                        found = true;
+                        break;
+                    }
+                    textIndex++;
+                }
+                
+                if (!found) return { score: 0, matches: [] };
+            }
+            
+            if (currentMatch) matches.push(currentMatch);
+            
+            // Bonus for consecutive characters
+            score += matches.reduce((acc, match) => acc + (match.end - match.start) * 5, 0);
+            
+            return { score, matches };
+        }
+
+        // Function to highlight matched text
+        function highlightMatches(text, matches) {
+            if (!matches.length) return text;
+            
+            let result = '';
+            let lastIndex = 0;
+            
+            matches.forEach(match => {
+                result += text.substring(lastIndex, match.start);
+                result += `<mark style="background: #fff3cd; padding: 0;">${text.substring(match.start, match.end)}</mark>`;
+                lastIndex = match.end;
+            });
+            
+            result += text.substring(lastIndex);
+            return result;
+        }
 
         // Function to populate the selector with tables
         function populateTableSelector(tablesToShow = null) {
@@ -9861,6 +9996,158 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Function to perform fuzzy search and show results
+        function performSearch(query) {
+            if (!resultsContainer) {
+                console.warn('Results container not available');
+                return;
+            }
+            
+            if (!query.trim()) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+            
+            const allTables = Object.keys(tables);
+            const searchResults = [];
+            
+            allTables.forEach(tableId => {
+                const match = fuzzyMatch(query, tableId);
+                if (match.score > 0) {
+                    searchResults.push({ tableId, ...match });
+                }
+            });
+            
+            // Sort by score (descending)
+            searchResults.sort((a, b) => b.score - a.score);
+            
+            // Clear previous results
+            resultsContainer.innerHTML = '';
+            
+            if (searchResults.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'result-item';
+                noResults.style.padding = '8px 10px';
+                noResults.style.color = '#7f8c8d';
+                noResults.style.fontStyle = 'italic';
+                noResults.style.fontSize = '0.8rem';
+                noResults.textContent = 'No tables found';
+                resultsContainer.appendChild(noResults);
+            } else {
+                // Show top 10 results
+                searchResults.slice(0, 10).forEach(result => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.style.padding = '6px 10px';
+                    resultItem.style.cursor = 'pointer';
+                    resultItem.style.borderBottom = '1px solid #ecf0f1';
+                    resultItem.style.fontSize = '0.8rem';
+                    resultItem.style.transition = 'background-color 0.2s';
+                    resultItem.innerHTML = highlightMatches(result.tableId, result.matches);
+                    
+                    // Add hover effect
+                    resultItem.addEventListener('mouseenter', () => {
+                        resultItem.style.backgroundColor = 'rgba(39, 174, 96, 0.1)';
+                    });
+                    resultItem.addEventListener('mouseleave', () => {
+                        resultItem.style.backgroundColor = '';
+                    });
+                    
+                    // Add click handler
+                    resultItem.addEventListener('click', () => {
+                        selectTable(result.tableId);
+                        searchInput.value = '';
+                        resultsContainer.style.display = 'none';
+                    });
+                    
+                    resultsContainer.appendChild(resultItem);
+                });
+            }
+            
+            resultsContainer.style.display = 'block';
+        }
+        
+        // Function to select a table (common logic)
+        function selectTable(tableId) {
+            if (!tables[tableId]) return;
+            
+            // Clear existing highlights
+            clearAllHighlights();
+            
+            // Set this table as highlighted
+            highlightedElementId = tableId;
+            
+            // Get connected edges and tables (same logic as SVG click handler)
+            const connectedEdges = tables[tableId].edges;
+            const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+            const uniqueTables = [...new Set(connectedTables)];
+            
+            // Highlight the table and its connections
+            highlightElements(uniqueTables, connectedEdges);
+            
+            // Show selection window
+            showSelectionWindow(uniqueTables, connectedEdges, null);
+            
+            // Focus on the selected table
+            focusOnTable(tableId);
+        }
+
+        // Search input event listeners
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                performSearch(e.target.value);
+            });
+            
+            searchInput.addEventListener('focus', () => {
+                if (searchInput.value.trim()) {
+                    performSearch(searchInput.value);
+                }
+            });
+        }
+        
+        // Hide results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (selectorContainer && resultsContainer && !selectorContainer.contains(e.target)) {
+                resultsContainer.style.display = 'none';
+            }
+        });
+        
+        // Keyboard navigation for search results
+        if (searchInput && resultsContainer) {
+            searchInput.addEventListener('keydown', (e) => {
+                const resultItems = resultsContainer.querySelectorAll('.result-item');
+                if (resultItems.length === 0) return;
+            
+            let currentIndex = Array.from(resultItems).findIndex(item => 
+                item.style.backgroundColor === 'rgba(39, 174, 96, 0.2)'
+            );
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    resultItems[currentIndex].style.backgroundColor = '';
+                }
+                currentIndex = currentIndex < resultItems.length - 1 ? currentIndex + 1 : 0;
+                resultItems[currentIndex].style.backgroundColor = 'rgba(39, 174, 96, 0.2)';
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentIndex >= 0) {
+                    resultItems[currentIndex].style.backgroundColor = '';
+                }
+                currentIndex = currentIndex > 0 ? currentIndex - 1 : resultItems.length - 1;
+                resultItems[currentIndex].style.backgroundColor = 'rgba(39, 174, 96, 0.2)';
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentIndex >= 0 && resultItems[currentIndex]) {
+                    resultItems[currentIndex].click();
+                }
+            } else if (e.key === 'Escape') {
+                resultsContainer.style.display = 'none';
+                searchInput.blur();
+            }
+        });
+        
+
         // Function to update selector based on current highlights
         function updateTableSelector() {
             const highlightedTables = document.querySelectorAll('.node.highlighted');
@@ -9872,32 +10159,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Handle selector change
+        // Handle selector change (keep existing dropdown functionality)
         tableSelector.addEventListener('change', function() {
             const selectedTableId = this.value;
             if (!selectedTableId) return;
 
-            // Clear existing highlights
-            clearAllHighlights();
-
-            if (tables[selectedTableId]) {
-                // Set this table as highlighted
-                highlightedElementId = selectedTableId;
-                
-                // Get connected edges and tables (same logic as SVG click handler)
-                const connectedEdges = tables[selectedTableId].edges;
-                const connectedTables = [selectedTableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
-                const uniqueTables = [...new Set(connectedTables)];
-                
-                // Highlight the table and its connections
-                highlightElements(uniqueTables, connectedEdges);
-                
-                // Show selection window
-                showSelectionWindow(uniqueTables, connectedEdges, null);
-                
-                // Focus on the selected table
-                focusOnTable(selectedTableId);
-            }
+            selectTable(selectedTableId);
             
             // Reset selector to default option
             this.selectedIndex = 0;
@@ -9928,25 +10195,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Initial population
         populateTableSelector();
-    }
 
+        // Initialize event handlers and drag functionality first (always needed)
+        enhanceEdgeClickability();
 
-    function initializeSvgView() {
-
-        if (!svg || !mainGroup || !miniatureContainer || !viewportIndicator || !getMainERDBounds()) {
-            setTimeout(initializeSvgView, 200);
-            return;
-        }
-
-        try {
-            // Get bounds and verify they're valid
-            const mainBounds = getMainERDBounds();
-            if (!mainBounds || typeof mainBounds !== 'object' ||
-                mainBounds.width <= 0 || mainBounds.height <= 0) {
-                setTimeout(initializeSvgView, 200);
-                return;
-            }
-
+        // Then try to set up initial viewport if bounds are available
+        const mainBounds = getMainERDBounds();
+        if (mainBounds && mainBounds.width > 0 && mainBounds.height > 0) {
             // Calculate center of the diagram
             const centerX = mainBounds.x + mainBounds.width / 2;
             const centerY = mainBounds.y + mainBounds.height / 2;
@@ -9964,15 +10219,11 @@ document.addEventListener('DOMContentLoaded', () => {
             userTy = 0;
             userS = scale;
 
-
             // Use zoomToPoint for consistent positioning
             zoomToPoint(centerX, centerY, scale);
 
             // Force viewport indicator update
             updateViewportIndicator();
-
-            // Enhance edge clickability by adding invisible click areas
-            enhanceEdgeClickability();
 
             // Ensure viewport indicator is visible
             if (viewportIndicator) {
@@ -9981,106 +10232,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 viewportIndicator.style.border = '2px solid #ff4081';
                 viewportIndicator.style.backgroundColor = 'rgba(255, 64, 129, 0.2)';
                 viewportIndicator.style.pointerEvents = 'all';
-
-                // Add this debug to check viewport indicator dimensions
-                const viStyle = window.getComputedStyle(viewportIndicator);
             }
-
-            // Position miniature container next to metadata container
-            const metadataContainer = document.getElementById('metadata-container');
-            if (miniatureContainer && metadataContainer) {
-                const metadataRect = metadataContainer.getBoundingClientRect();
-                const margin = 16; // 16px margin between containers
-
-                miniatureContainer.style.position = 'fixed';
-                miniatureContainer.style.left = `${metadataRect.right + margin}px`;
-                miniatureContainer.style.top = `${metadataRect.top}px`;
-
-            }
-
-            // Position containers
-            updateSelectionContainerPosition();
-
-            // Add browser zoom level to metadata
-            const addBrowserZoomToMetadata = () => {
-                const metadataInner = document.querySelector('.metadata-inner-container ul');
-                if (metadataInner) {
-                    // Remove existing browser zoom entry if it exists
-                    const existingZoomItem = metadataInner.querySelector('.browser-zoom-item');
-                    if (existingZoomItem) {
-                        existingZoomItem.remove();
-                    }
-
-                    // Calculate browser zoom level
-                    const browserZoom = Math.round(window.devicePixelRatio * 100);
-
-                    // Create new browser zoom item
-                    const zoomItem = document.createElement('li');
-                    zoomItem.className = 'browser-zoom-item';
-                    zoomItem.innerHTML = `Browser Zoom: ${browserZoom}%`;
-
-                    // Add it to the metadata list
-                    metadataInner.appendChild(zoomItem);
-                }
-            };
-
-            // Add browser zoom to metadata initially
-            addBrowserZoomToMetadata();
-
-            // Update browser zoom when window is resized/zoomed
-            window.addEventListener('resize', addBrowserZoomToMetadata);
-
-            // Initialize window controls for all containers
-            if (metadataContainer) {
-                addWindowControls(metadataContainer, {
-                    buttons: { copy: true, download: true, edit: false }
-                });
-                makeResizable(metadataContainer);
-            }
-
-            if (miniatureContainer) {
-                addWindowControls(miniatureContainer, {
-                    buttons: { copy: false, edit: false }
-                });
-                makeResizable(miniatureContainer);
-            }
-
-            if (selectionContainer) {
-                addWindowControls(selectionContainer, {
-                    buttons: { copy: true, download: true, edit: true }
-                });
-                makeResizable(selectionContainer);
-            }
-
-            // Initialize table selector
-            initializeTableSelector();
-        } catch (error) {
-            console.error("Error during SVG initialization:", error);
-            setTimeout(initializeSvgView, 300);
         }
     }
+}
 
-    // Primary initialization on DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-        // Small delay to ensure SVG is fully parsed
-        setTimeout(initializeSvgView, 300);
-
-        // Also initialize when window is resized
-        window.addEventListener('resize', () => {
-            // Debounce the resize event
-            if (window.resizeTimer) clearTimeout(window.resizeTimer);
-            window.resizeTimer = setTimeout(() => {
-                updateViewportIndicator();
-                updateSelectionContainerPosition();
-            }, 250);
-        });
-    });
-
-    // Backup initialization for cases when DOMContentLoaded already fired
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(initializeSvgView, 300);
-    }
-});
-
+document.addEventListener('DOMContentLoaded', initializeSvgView);
 ]]></script>
 </svg>
