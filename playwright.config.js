@@ -6,11 +6,17 @@ module.exports = defineConfig({
   timeout: 30000,
   retries: 0,
   use: {
-    headless: true, // Default to headless, override with --headed
+    headless: true, // Always run tests in headless mode
     viewport: { width: 1280, height: 800 },
     actionTimeout: 10000,
-    baseURL: 'http://localhost:8081',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8081',
   },
-  outputDir: 'test-results/',
+  outputDir: 'test-results/playwright',
   reporter: [['list'], ['html', { outputFolder: 'test-results/html-report' }]],
+  webServer: {
+    command: 'python3 -m http.server 8081',
+    port: 8081,
+    reuseExistingServer: false,
+    timeout: 30000,
+  },
 });
