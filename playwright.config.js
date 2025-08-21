@@ -10,7 +10,11 @@ module.exports = defineConfig({
     viewport: { width: 1280, height: 800 },
     actionTimeout: 10000,
     baseURL: 'http://localhost:8081',
+    // Ensure JavaScript is enabled
+    javaScriptEnabled: true,
+    // Grant clipboard permissions
+    permissions: ['clipboard-read', 'clipboard-write'],
   },
-  outputDir: 'test-results/',
+  outputDir: 'test-results/artifacts/',
   reporter: [['list'], ['html', { outputFolder: 'test-results/html-report' }]],
 });
