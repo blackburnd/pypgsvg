@@ -2,13 +2,11 @@
 *.pyc
 .coverage
 /dist
-tests/
 /src/pypgsvg.egg-info
 /src/pypgsvg.egg-info
-/src/pypgsvg.egg-info
-test_miniature_functionality.svg
-src/pypgsvg/.\#svg.css
-src/pypgsvg/.\#svg_interactivity.js
+/test_miniature_functionality.svg
+src/pypgsvg/.#svg.css
+src/pypgsvg/.#svg_interactivity.js
 *.js#
 *.css#
 /src/pypgsvg.egg-info
