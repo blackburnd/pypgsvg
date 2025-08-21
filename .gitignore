@@ -11,3 +11,7 @@ src/pypgsvg/.#svg_interactivity.js
 *.css#
 /src/pypgsvg.egg-info
 /tests/pypgsvg_erd_generator.egg-info
+node_modules/
+test-results/
+Samples/boom.svg
+package-lock.json

@@ -1,0 +1,2 @@
+[console_scripts]
+pypgsvg = src.create_graph:main
