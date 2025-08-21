@@ -9,10 +9,7 @@ test('metadata container exists in SVG', async ({ page }) => {
   await page.goto(fileUrl);
   await page.waitForLoadState('domcontentloaded');
   
-  // Wait a bit for any dynamic content to load
-  await page.waitForTimeout(2000);
-  
-  // Simple check - just verify the metadata container exists
+  // Wait for metadata container to be visible, then we're ready
   const metadataContainer = page.locator('#metadata-container');
   await expect(metadataContainer).toBeVisible();
 });
@@ -25,8 +22,9 @@ test('copy button exists and can be clicked', async ({ page }) => {
   await page.goto(fileUrl);
   await page.waitForLoadState('domcontentloaded');
   
-  // Wait a bit for any dynamic content to load
-  await page.waitForTimeout(2000);
+  // Wait for metadata container to be visible first
+  const metadataContainer = page.locator('#metadata-container');
+  await expect(metadataContainer).toBeVisible();
   
   // Verify the copy button exists and is visible
   const copyButton = page.locator('#metadata-container .copy-btn');
@@ -39,3 +37,4 @@ test('copy button exists and can be clicked', async ({ page }) => {
   // (we can't easily test clipboard functionality in headless mode without special permissions)
   await expect(copyButton).toBeVisible();
 });
+
