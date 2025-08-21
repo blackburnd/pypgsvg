@@ -2,7 +2,6 @@
 *.pyc
 .coverage
 /dist
-tests/
 /src/pypgsvg.egg-info
 /src/pypgsvg.egg-info
 /src/pypgsvg.egg-info
@@ -12,3 +11,4 @@ src/pypgsvg/.\#svg_interactivity.js
 *.js#
 *.css#
 /src/pypgsvg.egg-info
+/tests/pypgsvg_erd_generator.egg-info
