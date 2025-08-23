@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trigger Hover Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 100%;
+            overflow: auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trigger Hover Functionality Test</h1>
+    <div class="instructions">
+        <strong>Instructions:</strong> Hover over the lightning bolt (⚡) icons on the tables below to see trigger function details in a tooltip.
+    </div>
+    <div class="container">
+        <!-- The SVG content will be embedded here -->
+    </div>
+    
+    <script>
+        // Load and embed the SVG content
+        fetch('test_simple_triggers.svg')
+            .then(response => response.text())
+            .then(svgContent => {
+                // Remove the <?xml declaration if present to avoid conflicts
+                svgContent = svgContent.replace(/<\?xml[^>]*\?>/g, '');
+                document.querySelector('.container').innerHTML = svgContent;
+            })
+            .catch(error => {
+                console.error('Error loading SVG:', error);
+                document.querySelector('.container').innerHTML = '<p>Error loading SVG content</p>';
+            });
+    </script>
+</body>
+</html>
