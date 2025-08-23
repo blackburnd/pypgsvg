@@ -8,13 +8,21 @@
 
 
 
+
+## Python Virtual Environment
+Always ensure you are in the Python virtual environment before running any tests. If not already active, run:
+
+```bash
+. venv/bin/activate
+```
+
 ## Test Workflow (Automated)
 Run all tests and generate SVG with a single command—no manual confirmation needed:
 
 ```bash
 python3 -m src.pypgsvg Samples/complex_schema.dump --output Samples/complex_schema && \
 pytest tests/tests && \
-npx playwright test tests/browser --timeout=60000 && \
+npx playwright test tests/browser && \
 npx playwright show-report test-results/html-report
 ```
 
@@ -31,7 +39,7 @@ To generate a new complex_schema.svg and run only Playwright browser tests:
 
 ```bash
 python3 -m src.pypgsvg Samples/complex_schema.dump --output Samples/complex_schema && \
-npx playwright test tests/browser --timeout=60000 && \
+npx playwright test tests/browser && \
 npx playwright show-report test-results/html-report
 ```
 
