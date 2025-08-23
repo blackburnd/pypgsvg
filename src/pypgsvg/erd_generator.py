@@ -186,11 +186,13 @@ def generate_erd_with_graphviz(
         # bolt_svg = '<svg width="16" height="16" viewBox="0 0 16 16" style="vertical-align:middle;"><polygon points="7,1 2,9 7,9 6,15 14,6 9,6 10,1" fill="#FFD700" stroke="#FFA500" stroke-width="1"/></svg>'
 
         # Get triggers for this table
-        triggers = graph_data["tables"][safe_table_name].get("triggers", [])
+        table_triggers = graph_data["tables"][safe_table_name].get("triggers") or []
         bolt_unicode = "&#9889;"  # Unicode lightning bolt ⚡
         trigger_icons = ""
-        for idx, trigger in enumerate(triggers):
-            trigger_icons += f'<FONT POINT-SIZE="16" class="trigger-icon" TITLE="{trigger.get("trigger_name", "")}">{bolt_unicode}</FONT> '
+        if table_triggers:
+            for idx, trigger in enumerate(table_triggers):
+                trigger_name = trigger.get("trigger_name", "Unknown Trigger")
+                trigger_icons += f'<FONT POINT-SIZE="16" class="trigger-icon" TITLE="{trigger_name}">{bolt_unicode}</FONT> '
 
         label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">'
         # Lightning bolts row (left aligned)
