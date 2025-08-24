@@ -119,6 +119,40 @@ def test_main_mock_with_real_schema_dump(tmp_path):
             assert "Successfully generated ERD" in out.getvalue()
 
 
+def test_main_include_views_flag():
+    """Test that --include-views flag is passed to generate_erd_with_graphviz"""
+    out = io.StringIO()
+    args = ["test.sql", "--include-views"]
+    
+    with patch("sys.stdout", out):
+        with run_main_with_args(args, mock_file_content="CREATE TABLE test (id int);") as \
+                (mfile, mparse, mgen, mweb):
+            mainmod.main()
+            
+            # Check that generate_erd_with_graphviz was called with include_views=True
+            assert mgen.called
+            call_args, call_kwargs = mgen.call_args
+            assert call_kwargs.get('include_views') is True
+            assert "Successfully generated ERD" in out.getvalue()
+
+
+def test_main_exclude_views_by_default():
+    """Test that views are excluded by default (include_views=False)"""
+    out = io.StringIO()
+    args = ["test.sql"]
+    
+    with patch("sys.stdout", out):
+        with run_main_with_args(args, mock_file_content="CREATE TABLE test (id int);") as \
+                (mfile, mparse, mgen, mweb):
+            mainmod.main()
+            
+            # Check that generate_erd_with_graphviz was called with include_views=False
+            assert mgen.called
+            call_args, call_kwargs = mgen.call_args
+            assert call_kwargs.get('include_views') is False
+            assert "Successfully generated ERD" in out.getvalue()
+
+
 def test_main_full_functionality_with_real_schema_dump(tmp_path):
     # Path to the real schema.dump file
     schema_dump_path = os.path.abspath(os.path.join(

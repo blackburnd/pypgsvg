@@ -36,13 +36,32 @@ def sanitize_label(text: str) -> str:
     return re.sub(r'[^a-zA-Z0-9_]', '_', str(text))
 
 
-def should_exclude_table(table_name: str) -> bool:
+def should_exclude_table(table_name: str, include_views: bool = False) -> bool:
     """
     Check if a table should be excluded based on specific patterns
     """
     name = table_name.lower()
-    exclude_patterns = ['tmp_', 'vw_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
+    
+    # View-related patterns
+    view_patterns = ['vw_']
+    if not include_views and any(pattern in name for pattern in view_patterns):
+        return True
+    
+    # Other exclusion patterns (not view-related)
+    exclude_patterns = ['tmp_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata']
     return any(pattern in name for pattern in exclude_patterns)
+
+
+def should_exclude_table_or_view(table_data: dict, table_name: str, include_views: bool = False) -> bool:
+    """
+    Check if a table or view should be excluded based on specific patterns and the include_views flag
+    """
+    # If it's a view and views are not included, exclude it
+    if table_data.get('is_view', False) and not include_views:
+        return True
+    
+    # Apply general exclusion patterns
+    return should_exclude_table(table_name, include_views)
 
 
 def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str, str, str]]) -> bool:
