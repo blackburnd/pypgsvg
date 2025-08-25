@@ -592,14 +592,21 @@ pypgsvg intelligently excludes common utility tables:
 
 **Enterprise-grade testing** with comprehensive coverage:
 
-```bash
-# Run full test suite (no dependencies required)
-python -m pytest tests/tests/
+The project includes both unit tests (Python) and functional tests (browser-based).
 
-# Generate detailed coverage report
-python -m pytest tests/tests/ --cov=src --cov-report=html
-open htmlcov/index.html
+### Quick Start
+
+Use the provided test runner script which handles environment setup:
+
+```bash
+# Run unit tests
+./run-tests.sh
+
+# Run browser tests
+./run-tests.sh --browser
 ```
+
+For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md).
 
 **Quality metrics:**
 - ✅ **95%+ code coverage** 
