@@ -1497,10 +1497,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (metadataContainer) {
         makeResizable(metadataContainer);
         metadataContainer.addEventListener('mousedown', (event) => {
-            // Prevent drag if clicking on controls/buttons
+            // Prevent drag if clicking on controls/buttons/interactive elements
             if (
                 event.target.closest('.window-controls') ||
-                event.target.tagName === 'BUTTON'
+                event.target.tagName === 'BUTTON' ||
+                event.target.tagName === 'SELECT' ||
+                event.target.id === 'table-selector' ||
+                event.target.closest('#table-selector')
             ) return;
 
             const rect = metadataContainer.getBoundingClientRect();
@@ -1942,12 +1945,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Table Selector functionality
     function initializeTableSelector() {
         const tableSelector = document.getElementById('table-selector');
-        if (!tableSelector) return;
+        if (!tableSelector) {
+            console.warn('Table selector element not found');
+            return;
+        }
+
+        // Make sure we have access to the tables data
+        if (!tables || Object.keys(tables).length === 0) {
+            console.warn('No tables data available for table selector');
+            return;
+        }
+
+        console.log('Initializing table selector with', Object.keys(tables).length, 'tables');
 
         // Function to populate the selector with tables
         function populateTableSelector(tablesToShow = null) {
-            // Clear existing options except the first one
-            tableSelector.innerHTML = '';
+            // Clear existing options
+            while (tableSelector.firstChild) {
+                tableSelector.removeChild(tableSelector.firstChild);
+            }
             
             let tablesToDisplay;
             let optionText;
@@ -1962,19 +1978,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionText = `Selected Tables (${tablesToDisplay.length})`;
             }
             
-            // Add the default option
-            const defaultOption = document.createElement('option');
+            console.log('About to populate selector with options:', optionText);
+            
+            // Add the default option - create in HTML namespace explicitly
+            const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
             defaultOption.value = '';
             defaultOption.textContent = optionText;
             tableSelector.appendChild(defaultOption);
+            console.log('Added default option, current option count:', tableSelector.options.length);
             
             // Add table options
-            tablesToDisplay.sort().forEach(tableId => {
-                const option = document.createElement('option');
+            let addedCount = 0;
+            tablesToDisplay.sort().forEach((tableId, index) => {
+                const option = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
                 option.value = tableId;
                 option.textContent = tableId;
                 tableSelector.appendChild(option);
+                addedCount++;
+                
+                // Log progress for first few and last few
+                if (index < 3 || index >= tablesToDisplay.length - 3) {
+                    console.log(`Added option ${index + 1}: ${tableId}, total options now: ${tableSelector.options.length}`);
+                }
             });
+
+            console.log('Populated table selector with', tablesToDisplay.length, 'tables, final option count:', tableSelector.options.length);
+            console.log('TableSelector element:', tableSelector);
+            console.log('TableSelector innerHTML length:', tableSelector.innerHTML.length);
         }
 
         // Function to update selector based on current highlights
@@ -2017,6 +2047,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Reset selector to default option
             this.selectedIndex = 0;
+        });
+
+        // Prevent drag events from interfering with table selector interaction
+        tableSelector.addEventListener('mousedown', function(event) {
+            event.stopPropagation();
+        });
+
+        tableSelector.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
+        tableSelector.addEventListener('focus', function(event) {
+            event.stopPropagation();
         });
 
         // Function to focus on a table (zoom to it)

@@ -5,12 +5,7 @@ pyproject.toml
 requirements.txt
 setup.py
 Samples/complex_schema.dump
-Samples/complex_schema.svg
-Samples/complex_schema.svg.svg
-Samples/complex_schema6~.svg
 Samples/schema_erd.svg
-Samples/test_trigger_tooltip.svg.svg
-Samples/testme.svg
 src/__init__.py
 src/pypgsvg.py
 src/pypgsvg/__init__.py
