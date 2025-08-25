@@ -695,3 +695,21 @@ This project is released under the MIT License, making it suitable for:
 - ✅ **Private use** without attribution requirements
 
 Perfect for enterprise adoption with minimal legal overhead.
+
+## Testing
+
+The project includes both unit tests (Python) and functional tests (browser-based).
+
+### Quick Start
+
+Use the provided test runner script which handles environment setup:
+
+```bash
+# Run unit tests
+./run-tests.sh
+
+# Run browser tests
+./run-tests.sh --browser
+```
+
+For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md).
