@@ -3,11 +3,9 @@ const path = require('path');
 
 test.describe('Table Selector Fuzzy Search', () => {
   test.beforeEach(async ({ page }) => {
-    // Use file:// URL to load the SVG directly from filesystem
-    const svgPath = path.resolve(__dirname, '../../Samples/complex_schema.svg');
-    const fileUrl = `file://${svgPath}`;
-    
-    await page.goto(fileUrl);
+  // Use HTTP server URL to load the SVG
+  const fileUrl = `${process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8123'}/Samples/complex_schema.svg`;
+  await page.goto(fileUrl);
     await page.waitForLoadState('domcontentloaded');
     
     // Wait for metadata container to be available, then we're ready

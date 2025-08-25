@@ -190,7 +190,9 @@ def generate_erd_with_graphviz(
         bolt_unicode = "&#9889;"  # Unicode lightning bolt ⚡
         trigger_icons = ""
         for idx, trigger in enumerate(triggers):
-            trigger_icons += f'<FONT POINT-SIZE="16" class="trigger-icon" TITLE="{trigger.get("trigger_name", "")}">{bolt_unicode}</FONT> '
+            # Tooltip includes trigger name and full function text
+            tooltip = f"{trigger.get('trigger_name', '')}: {trigger.get('full_line', '')}".replace('"', '&quot;').replace("'", "&#39;")
+            trigger_icons += f'<FONT POINT-SIZE="16" class="trigger-icon" TITLE="{tooltip}">{bolt_unicode}</FONT> '
 
         label = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">'
         # Lightning bolts row (left aligned)

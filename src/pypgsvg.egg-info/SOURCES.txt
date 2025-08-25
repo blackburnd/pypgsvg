@@ -4,10 +4,10 @@ README.md
 pyproject.toml
 requirements.txt
 setup.py
-Samples/boom.svg
 Samples/complex_schema.dump
 Samples/complex_schema.svg
 Samples/complex_schema.svg.svg
+Samples/complex_schema6~.svg
 Samples/schema_erd.svg
 Samples/testme.svg
 src/__init__.py
