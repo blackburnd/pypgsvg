@@ -1939,6 +1939,116 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Function to add hover functionality to trigger lightning bolt icons
+    function initializeTriggerHover() {
+        // Find all lightning bolt text elements (⚡ symbols)
+        const allTextElements = svg.querySelectorAll('text');
+        const triggerElements = Array.from(allTextElements).filter(text => 
+            text.textContent.includes('⚡') && text.textContent.trim() === '⚡'
+        );
+
+        triggerElements.forEach(triggerElement => {
+            // Find the parent node (table) that contains this trigger icon
+            let tableNode = triggerElement.closest('.node');
+            if (!tableNode) return;
+
+            const tableId = tableNode.id;
+            const tableData = graphData.tables[tableId];
+            if (!tableData || !tableData.triggers || tableData.triggers.length === 0) return;
+
+            // Make trigger element interactive
+            triggerElement.style.cursor = 'pointer';
+            triggerElement.style.pointerEvents = 'all';
+
+            // Create tooltip element if it doesn't exist
+            let tooltip = document.getElementById('trigger-tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'trigger-tooltip';
+                tooltip.style.cssText = `
+                    position: fixed;
+                    background: #2c3e50;
+                    color: white;
+                    border: 1px solid #34495e;
+                    border-radius: 6px;
+                    padding: 12px;
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    max-width: 400px;
+                    z-index: 10050;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    display: none;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                `;
+                document.body.appendChild(tooltip);
+            }
+
+            // Mouse enter handler
+            triggerElement.addEventListener('mouseenter', (event) => {
+                // Build tooltip content with all triggers for this table
+                let tooltipContent = `⚡ Triggers for ${tableId}:\n\n`;
+                
+                tableData.triggers.forEach((trigger, index) => {
+                    if (index > 0) tooltipContent += '\n---\n\n';
+                    
+                    tooltipContent += `${trigger.trigger_name}\n`;
+                    tooltipContent += `Event: ${trigger.event}\n`;
+                    
+                    if (trigger.function) {
+                        tooltipContent += `Function: ${trigger.function}`;
+                        if (trigger.function_args) {
+                            tooltipContent += `(${trigger.function_args})`;
+                        } else {
+                            tooltipContent += '()';
+                        }
+                        tooltipContent += '\n';
+                    }
+                    
+                    if (trigger.function_text) {
+                        tooltipContent += `\nCode:\n${trigger.function_text}`;
+                    }
+                });
+
+                tooltip.textContent = tooltipContent;
+                tooltip.style.display = 'block';
+
+                // Position tooltip near the cursor but within viewport
+                const rect = triggerElement.getBoundingClientRect();
+                const viewport = getViewportDimensions();
+                
+                let left = rect.left + 20;
+                let top = rect.bottom + 5;
+                
+                // Adjust if tooltip would go off screen
+                if (left + 400 > viewport.width) {
+                    left = viewport.width - 420; // 400px max-width + 20px margin
+                }
+                if (top + tooltip.offsetHeight > viewport.height) {
+                    top = rect.top - tooltip.offsetHeight - 5;
+                }
+                
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+            });
+
+            // Mouse leave handler
+            triggerElement.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+
+            // Enhance visual feedback on hover
+            triggerElement.addEventListener('mouseenter', () => {
+                triggerElement.style.filter = 'drop-shadow(0 0 4px #FFD700) brightness(1.2)';
+            });
+
+            triggerElement.addEventListener('mouseleave', () => {
+                triggerElement.style.filter = 'drop-shadow(0 0 2px #FFD700)';
+            });
+        });
+    }
+
     // Table Selector functionality
     function initializeTableSelector() {
         const tableSelector = document.getElementById('table-selector');
@@ -2089,6 +2199,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Enhance edge clickability by adding invisible click areas
             enhanceEdgeClickability();
+
+            // Initialize trigger hover functionality  
+            initializeTriggerHover();
 
             // Ensure viewport indicator is visible
             if (viewportIndicator) {
