@@ -16,3 +16,4 @@ test-results/
 Samples/boom.svg
 package-lock.json
 venv/
+coverage.xml
