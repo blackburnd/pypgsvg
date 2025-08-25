@@ -180,7 +180,7 @@ def inject_metadata_into_svg(
                     <span class="label">Tables</span>
                     <div class="table-selector-container">
                         <select id="table-selector" class="table-selector">
-                            <option value="">All Tables ({total_tables})</option>
+                            <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
                 </div>
