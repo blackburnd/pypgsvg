@@ -3,68 +3,6 @@
 `pypgsvg` is a **lightweight** Python tool that generates a JS/CSS/SVG interactive Entity Relationship Diagrams (ERDs) from PostgreSQL schema dump files. With **only Graphviz as a dependency**, manually run or place in CI/CD pipelines, fast rapid deployment verification scenarios.
 
 
-## �️ Screenshots & Examples
-
-### 📊 Complete ERD Example
-![Complex Schema ERD](Samples/complex_schema.png)
-*Example of a complex database schema with multiple relationships and interactive features*
-
-### 🎬 Interactive Features Demo
-![Interactive Animation](https://live.staticflickr.com/65535/54725569515_1a265e1695_o.gif)
-*Live demonstration of drag, resize, and navigation features*
-
-### 🗺️ Miniature Overview Navigation
-![Miniature Overview](Samples/miniature.png)
-*Interactive minimap for navigating large schemas with viewport indicator*
-
-### 📋 Metadata Information Panel
-![Metadata Panel](Samples/metadata.png)
-*Comprehensive schema statistics and generation parameters*
-
-### 🎯 Selection & Details Panel
-![Selection Panel](Samples/selection.png)
-*View detailed SQL for selected tables, foreign keys, and triggers*
-
-### 📈 Basic Schema Example
-![Basic Example](Samples/example.png)
-*Simple schema showing core functionality and clean output*
-
-## Features
-
-- **Zero-dependency Python tool** (except Graphviz)
-- **Interactive SVG output** with navigation and selection tools
-- **Scriptable and automatable** for enterprise workflows
-- **Quick deployment** - install and run in seconds
-- **Self-contained** - no database connections required
-- **Cross-platform** support (Windows, macOS, Linux)
-
----
-
-## ✨ Interactive Features
-
-### 🎯 Selection & Navigation Tools
-- **Smart table/edge selection** - Click any element to view detailed SQL
-- **Miniature overview** with viewport indicator for large schemas
-- **Drag & drop containers** - Reposition windows anywhere
-- **Resizable panels** - Customize your workspace layout
-
-### 📋 Copy & Export Tools
-- **One-click copy** - Copy table definitions, foreign keys, or trigger SQL
-- **Download selection details** - Export selected elements as formatted text
-- **Emoji-free output** - Enterprise-friendly plain text exports
-
-### 🖱️ Interactive Controls
-- **Minimize/maximize** any panel to focus on your work
-- **Close buttons** for distraction-free viewing
-- **Pan and zoom** with mouse or miniature navigator
-- **Keyboard shortcuts** (ESC/R to reset view)
-
-### 🎨 Visual Enhancements
-- **Color-coded tables** with accessible contrast
-- **Hover effects** for better element identification
-- **Professional styling** suitable for documentation and presentations
-
----
 
 ## 📦 Installation
 
@@ -81,9 +19,24 @@
    - **CentOS/RHEL**: `sudo yum install graphviz`
    - **Windows**: Download from [Graphviz.org](https://graphviz.org/download/)
 
-**That's it!** Ready for enterprise deployment.
+**That's it!** Ready for  deployment.
 
 ---
+
+
+### 🎬 Quick Demo
+
+[[🎯 View Interactive Example](https://www.blackburnsystems.com/demo-erd-complex)] 
+
+![](https://live.staticflickr.com/65535/54725569515_1a265e1695.jpg)
+
+**Try it yourself:**
+```bash
+# Download sample and generate interactive ERD
+wget https://github.com/blackburnd/pypgsvg/raw/main/Samples/complex_schema.dump
+pypgsvg schema.dump --output demo_erd --view
+```
+
 
 ## 🛠️ Enterprise Usage
 
@@ -148,18 +101,6 @@ pypgsvg schema.dump \
 
 > **Note:** For full interactivity, open the SVG file locally in your browser. GitHub restricts JavaScript for security.
 
-### 🎬 Quick Demo
-
-[[🎯 View Interactive Example](https://github.com/blackburnd/pypgsvg/blob/main/Samples/complex_schema.svg)] 
-
-[![https://live.staticflickr.com/65535/54725569515_1a265e1695.jpghttps://flic.kr/ps/46D1Th)
-
-**Try it yourself:**
-```bash
-# Download sample and generate interactive ERD
-wget https://github.com/blackburnd/pypgsvg/raw/main/Samples/complex_schema.dump
-pypgsvg schema.dump --output demo_erd --view
-```
 
 ### Scriptable API
 
@@ -275,7 +216,7 @@ Displays comprehensive information about your database schema:
 - **File information** and timestamps
 - **Interactive controls** (minimize, close, drag to reposition)
 
-[![Metadata Panel](https://live.staticflickr.com/65535/54701918384_2debb75e13_z.jpg)](https://flic.kr/s/aHBqjCpNX1)
+[![Metadata Panel](https://live.staticflickr.com/65535/54725445018_efd3631f59.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
 ### 🗺️ Miniature Overview
 Navigate large schemas effortlessly:
@@ -284,7 +225,7 @@ Navigate large schemas effortlessly:
 - **Drag viewport** for precise navigation
 - **Resizable panel** - make it larger for detailed navigation
 
-[![Overview Panel](https://live.staticflickr.com/65535/54702015980_bca2aedb3e_c.jpg)](https://flic.kr/s/aHBqjCpNX1)
+[![Overview Panel](https://live.staticflickr.com/65535/54725569515_1a265e1695.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
 ### 🔍 Selection Details
 View and export detailed SQL information:
@@ -295,7 +236,7 @@ View and export detailed SQL information:
 - **Download button** for formatted text export
 - **Enterprise-friendly** emoji-free output option
 
-[![Selection Panel](https://flic.kr/p/2rnUkss](https://flic.kr/s/aHBqjCpNX1)
+[![Selection Panel](https://live.staticflickr.com/65535/54725469434_1300a2e147.jpg)](https://flic.kr/s/aHBqjCpNX1)
 **Example selection output:**
 ```
 📊 Selected Tables
