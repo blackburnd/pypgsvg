@@ -1,70 +1,3 @@
-Metadata-Version: 2.4
-Name: pypgsvg
-Version: 1.1.31
-Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dump files
-Author: blackburnd@gmail.com
-Author-email: Daniel Blackburn <daniel@example.com>
-License: MIT License
-        
-        Copyright (c) 2025 blackburnd
-        
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-        
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-        
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
-        
-Project-URL: Homepage, https://github.com/blackburnd/pypgsvg
-Project-URL: Bug Reports, https://github.com/blackburnd/pypgsvg/issues
-Project-URL: Source Code, https://github.com/blackburnd/pypgsvg
-Project-URL: Documentation, https://github.com/blackburnd/pypgsvg#readme
-Keywords: postgresql,database,erd,diagram,svg,graphviz,schema,visualization
-Classifier: Development Status :: 4 - Beta
-Classifier: Intended Audience :: Developers
-Classifier: Intended Audience :: System Administrators
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
-Classifier: Programming Language :: Python :: 3
-Classifier: Programming Language :: Python :: 3.8
-Classifier: Programming Language :: Python :: 3.9
-Classifier: Programming Language :: Python :: 3.10
-Classifier: Programming Language :: Python :: 3.11
-Classifier: Programming Language :: Python :: 3.12
-Classifier: Programming Language :: Python :: 3.13
-Classifier: Topic :: Database
-Classifier: Topic :: Documentation
-Classifier: Topic :: Software Development :: Documentation
-Classifier: Topic :: Utilities
-Requires-Python: >=3.8
-Description-Content-Type: text/markdown
-License-File: LICENSE
-Requires-Dist: graphviz>=0.20.0
-Provides-Extra: dev
-Requires-Dist: pytest>=7.0.0; extra == "dev"
-Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
-Requires-Dist: black>=22.0.0; extra == "dev"
-Requires-Dist: flake8>=4.0.0; extra == "dev"
-Requires-Dist: mypy>=1.0.0; extra == "dev"
-Provides-Extra: test
-Requires-Dist: pytest>=7.0.0; extra == "test"
-Requires-Dist: pytest-cov>=4.0.0; extra == "test"
-Requires-Dist: playwright>=1.37.0; extra == "test"
-Dynamic: author
-Dynamic: license-file
-Dynamic: requires-python
-
 # pypgsvg - Lightweight PostgreSQL ERD Generator
 
 `pypgsvg` is a **lightweight** Python tool that generates a JS/CSS/SVG interactive Entity Relationship Diagrams (ERDs) from PostgreSQL schema dump files. With **only Graphviz as a dependency**, manually run or place in CI/CD pipelines, fast rapid deployment verification scenarios.
@@ -336,7 +269,7 @@ For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md
 
 ## 🏗️ Architecture & Performance
 
-### Lightweight Design
+xs### Lightweight Design
 ```text
 📦 pypgsvg/
 ├── 🐍 Pure Python core (~450 lines)
