@@ -10,6 +10,7 @@ Samples/complex_schema.svg
 Samples/complex_schema.svg.svg
 Samples/complex_schema6~.svg
 Samples/schema_erd.svg
+Samples/site_erd.svg
 Samples/test_trigger_tooltip.svg.svg
 Samples/testme.svg
 src/__init__.py
