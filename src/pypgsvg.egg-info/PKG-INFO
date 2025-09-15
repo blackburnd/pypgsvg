@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: pypgsvg
-Version: 1.1.2
+Version: 1.1.3
 Summary: Generate SVG Entity Relationship Diagrams from PostgreSQL database dump files
 Author: blackburnd@gmail.com
 Author-email: Daniel Blackburn <daniel@example.com>
@@ -96,7 +96,7 @@ Dynamic: requires-python
 ![Basic Example](Samples/example.png)
 *Simple schema showing core functionality and clean output*
 
-## �🚀 Enterprise Features
+## Features
 
 - **Zero-dependency Python tool** (except Graphviz)
 - **Interactive SVG output** with navigation and selection tools
@@ -142,7 +142,7 @@ Dynamic: requires-python
    pip install pypgsvg
    ```
 
-2. Install Graphviz (the only external dependency):
+2. Install Graphviz (external dependency):
    - **macOS**: `brew install graphviz`
    - **Ubuntu/Debian**: `sudo apt-get install graphviz`
    - **CentOS/RHEL**: `sudo yum install graphviz`
@@ -195,7 +195,7 @@ Or use our [sample schema](https://github.com/blackburnd/pypgsvg/blob/main/Sampl
 pypgsvg schema.dump --output my_database_erd --view
 ```
 
-**Enterprise production:**
+**Usage:**
 ```bash
 pypgsvg schema.dump \
   --output docs/database_architecture \
@@ -297,61 +297,7 @@ else:
 | `--saturate` | Float | `1.8` | Color saturation multiplier for table backgrounds |
 | `--brightness` | Float | `1.0` | Brightness adjustment for table colors |
 
-### Usage Examples by Scenario
 
-#### 🚀 Quick Development Schema
-```bash
-# Fast development with browser preview
-pypgsvg schema.dump --view
-```
-
-#### 📊 Large Enterprise Schema
-```bash
-# Optimized for large schemas with many tables
-pypgsvg schema.dump \
-  --output enterprise_erd \
-  --packmode graph \
-  --rankdir TB \
-  --esep 12 \
-  --rank-sep 2.5 \
-  --hide-standalone false
-```
-
-#### 📋 Documentation & Presentations
-```bash
-# Clean layout for documentation
-pypgsvg schema.dump \
-  --output docs/database_diagram \
-  --rankdir LR \
-  --fontname "Arial" \
-  --fontsize 20 \
-  --node-fontsize 16 \
-  --edge-fontsize 14 \
-  --node-style "rounded,filled"
-```
-
-#### 🎨 Custom Styling
-```bash
-# Custom colors and typography
-pypgsvg schema.dump \
-  --output styled_erd \
-  --fontname "Helvetica" \
-  --saturate 2.2 \
-  --brightness 1.1 \
-  --node-style "filled" \
-  --node-shape "box"
-```
-
-#### 🏗️ Wide Schema Layout
-```bash
-# Horizontal layout for wide displays
-pypgsvg schema.dump \
-  --rankdir LR \
-  --node-sep 3 \
-  --rank-sep 2 \
-  --packmode cluster \
-  --esep 10
-```
 
 ### Understanding Graphviz Parameters
 
@@ -437,181 +383,12 @@ ALTER TABLE ONLY public.association_map
 
 ---
 
-## 🏢 Enterprise Deployment
-
-### CI/CD Integration
-```yaml
-# GitHub Actions example
-- name: Generate Database Documentation
-  run: |
-    pip install pypgsvg
-    sudo apt-get install graphviz
-    pypgsvg schemas/production.dump --output docs/database_erd
-    
-# Docker deployment
-FROM python:3.9-slim
-RUN apt-get update && apt-get install -y graphviz && rm -rf /var/lib/apt/lists/*
-RUN pip install pypgsvg
-COPY schema.dump .
-RUN pypgsvg schema.dump --output database_diagram
-```
-
-### Automation Scripts
-```bash
-#!/bin/bash
-# Enterprise schema documentation automation
-DATE=$(date +%Y%m%d)
-pg_dump -h $DB_HOST -d $DB_NAME -U $DB_USER -s > schema_$DATE.dump
-pypgsvg schema_$DATE.dump --output docs/database_erd_$DATE --hide-standalone
-echo "✅ Database documentation updated: docs/database_erd_$DATE.svg"
-```
-
----
-
-## 🔧 Complete Feature Overview
-
-### 📊 Database Schema Parsing
-
-pypgsvg supports comprehensive PostgreSQL schema parsing including:
-
-#### Table Structure Analysis
-- **CREATE TABLE** statements with full column definitions
-- **Data type detection** for all PostgreSQL types (SERIAL, JSONB, arrays, custom types)
-- **Column constraints** (NOT NULL, DEFAULT values, CHECK constraints)
-- **Primary key identification** (single and composite keys)
-- **Quoted identifiers** and schema-qualified table names
-- **Unicode support** with proper UTF-8 encoding handling
-
-#### Relationship Mapping
-- **Foreign key constraints** from ALTER TABLE statements
-- **Inline REFERENCES** declarations within CREATE TABLE
-- **Cascading options** (ON DELETE CASCADE, ON UPDATE RESTRICT, etc.)
-- **Complex relationship patterns** (self-referencing, many-to-many)
-- **Cross-schema references** with schema qualification
-
-#### Advanced SQL Features
-- **Database triggers** (BEFORE/AFTER/INSTEAD OF with INSERT/UPDATE/DELETE)
-- **Trigger function calls** with parameter parsing
-- **Constraint naming** and organization
-- **Index definitions** (when present in dump)
-- **Sequence relationships** for SERIAL columns
-
-### 🎨 Visual Representation
-
-#### Intelligent Layout Engine
-- **Graphviz integration** with optimized parameter passing
-- **Automatic table positioning** to minimize edge crossings
-- **Hierarchical layouts** showing data flow and dependencies
-- **Compact arrangements** for large schemas
-- **Custom spacing** controls for readability
-
-#### Color-Coded Organization
-- **Deterministic color assignment** based on table names
-- **WCAG-compliant contrast** for accessibility
-- **Color-blind friendly** palette selection
-- **Saturation controls** for visual emphasis
-- **Automatic text color** calculation for optimal readability
-
-#### Interactive Enhancement
-- **Clickable elements** for detailed SQL view
-- **Hover effects** for element identification
-- **Drag-and-drop** interface elements
-- **Resizable panels** for workspace customization
-- **Keyboard navigation** (ESC, R keys for reset)
-
-### 🖥️ User Interface Components
-
-#### Selection & Detail Panel
-- **Multi-select capability** for tables and relationships
-- **SQL source display** with proper formatting
-- **Clipboard integration** for easy copying
-- **Download functionality** for formatted exports
-- **Emoji-free output** option for enterprise use
-- **Trigger information** display with execution details
-
-#### Miniature Navigation
-- **Schema overview** with proportional scaling
-- **Viewport indicator** showing current view
-- **Click-to-navigate** functionality
-- **Drag viewport** for precise positioning
-- **Zoom level awareness** and synchronization
-
-#### Metadata Information
-- **Schema statistics** (table count, column count, relationship count)
-- **Generation parameters** display
-- **File information** (size, modification date, encoding)
-- **Processing timestamps** for audit trails
-- **Parameter documentation** for reproducibility
-
-### 🛠️ Enterprise Integration Features
-
-#### Automation-Friendly Design
-- **Command-line interface** with extensive options
-- **Scriptable Python API** for programmatic use
-- **Error handling** with detailed reporting
-- **Return codes** for CI/CD integration
-- **Logging support** for monitoring and debugging
-
-#### Output Customization
-- **SVG format** for web integration and scaling
-- **Self-contained files** with embedded styles and scripts
-- **No external dependencies** in generated output
-- **Cross-browser compatibility** (Chrome, Firefox, Safari, Edge)
-- **Print-friendly** layouts with proper scaling
-
-#### Quality Assurance
-- **Input validation** with comprehensive error reporting
-- **Graceful degradation** for partial schema parsing
-- **Memory efficiency** for large schema processing
-- **Performance optimization** for quick generation
-- **Deterministic output** for version control
-
-### 📋 Table Filtering & Exclusion
-
-#### Automatic Exclusions
-pypgsvg intelligently excludes common utility tables:
-
-| Pattern | Examples | Reason |
-|---------|----------|---------|
-| `vw_*`, `*_view` | `vw_users`, `summary_view` | Database views |
-| `*_temp`, `*_tmp`, `temp_*` | `data_temp`, `tmp_import` | Temporary tables |
-| `*_bk`, `*_backup`, `*_old` | `users_bk`, `data_backup` | Backup tables |
-| `*_log`, `*_audit`, `audit_*` | `error_log`, `audit_users` | Logging tables |
-| `*_dups`, `*_duplicates` | `data_dups`, `user_duplicates` | Cleanup tables |
-| `*_archive`, `archive_*` | `old_archive`, `archive_2023` | Archive tables |
-
-#### Standalone Table Handling
-- **Configurable display** of tables without foreign key relationships
-- **Useful for utility tables** and lookup tables
-- **Reduces clutter** in complex schemas
-- **Maintains referential integrity** in relationship mapping
-
----
-
-## 🧪 Testing & Quality
-
-**Enterprise-grade testing** with comprehensive coverage:
-
-The project includes both unit tests (Python) and functional tests (browser-based).
-
-### Quick Start
-
-Use the provided test runner script which handles environment setup:
-
-```bash
-# Run unit tests
-./run-tests.sh
-
-# Run browser tests
-./run-tests.sh --browser
-```
 
 For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md).
 
 **Quality metrics:**
 - ✅ **95%+ code coverage** 
 - ✅ **70+ comprehensive tests**
-- ✅ **Enterprise PYTHONPATH support**
 - ✅ **Cross-platform compatibility**
 
 ---
@@ -674,52 +451,19 @@ Enterprise-focused exclusions for cleaner diagrams:
 
 ---
 
-## 🔧 Supported Database Features
-
-### SQL Parsing Capabilities
-- ✅ **CREATE TABLE** statements with all PostgreSQL data types
-- ✅ **ALTER TABLE** constraints and foreign keys
-- ✅ **Triggers** with BEFORE/AFTER/INSTEAD OF events
-- ✅ **Primary keys** and unique constraints
-- ✅ **Complex data types** (JSON, arrays, custom types)
-- ✅ **Quoted identifiers** and schema-qualified names
-- ✅ **Unicode support** with proper encoding handling
-
-### Advanced SQL Features
-```sql
--- Fully supported constructs
-CREATE TABLE "complex_table" (
-    id SERIAL PRIMARY KEY,
-    data JSONB NOT NULL,
-    tags TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Trigger support
-CREATE TRIGGER update_modified_time 
-    BEFORE UPDATE ON complex_table 
-    FOR EACH ROW EXECUTE FUNCTION update_timestamp();
-
--- Foreign key variations
-ALTER TABLE orders 
-    ADD CONSTRAINT fk_customer 
-    FOREIGN KEY (customer_id) 
-    REFERENCES customers(id) 
-    ON DELETE CASCADE ON UPDATE RESTRICT;
-```
 
 ---
 
 ## 🚨 Error Handling & Reliability
 
-**Production-ready error management:**
+**Error management:**
 - **Graceful degradation** - Continues processing despite individual parsing errors
 - **Detailed error reporting** - Specific line numbers and context
 - **Encoding resilience** - Handles various character encodings
 - **Malformed SQL recovery** - Attempts to extract partial information
 - **Validation checks** - Ensures output integrity
 
-**Enterprise logging:**
+**Logging:**
 ```python
 # Built-in error collection for monitoring
 tables, foreign_keys, triggers, errors = parse_sql_dump(sql_content)
@@ -733,8 +477,7 @@ if errors:
 ---
 
 ## 🤝 Contributing
-
-We welcome enterprise users and contributors:
+Welcome users and contributors:
 
 1. **Code quality** - Follow PEP 8 and maintain >95% test coverage
 2. **Enterprise focus** - Consider automation and deployment scenarios  
@@ -744,10 +487,6 @@ We welcome enterprise users and contributors:
 
 ---
 
-## 📋 Dependencies
-
-**Minimal dependency footprint for enterprise deployment:**
-
 ### Required
 - **Python 3.8+** (standard in most enterprise environments)
 - **Graphviz** (system package, widely available)
@@ -756,26 +495,11 @@ We welcome enterprise users and contributors:
 - `pytest>=7.0.0` - Testing framework
 - `pytest-cov>=4.0.0` - Coverage reporting  
 
-**That's it!** No heavy frameworks, databases, or complex runtime dependencies.
-
----
-
-## 📄 License & Enterprise Usage
-
-This project is released under the MIT License, making it suitable for:
-- ✅ **Commercial use** in enterprise environments
-- ✅ **Modification** for internal requirements  
-- ✅ **Distribution** within organizations
-- ✅ **Private use** without attribution requirements
-
-Perfect for enterprise adoption with minimal legal overhead.
-
 ## Testing
 
 The project includes both unit tests (Python) and functional tests (browser-based).
 
 ### Quick Start
-
 Use the provided test runner script which handles environment setup:
 
 ```bash
@@ -785,5 +509,3 @@ Use the provided test runner script which handles environment setup:
 # Run browser tests
 ./run-tests.sh --browser
 ```
-
-For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md).
