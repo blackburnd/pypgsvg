@@ -42,8 +42,13 @@ def wrap_main_erd_content(*args, **kwargs):
 
 
 def load_interactivity_js():
-    cwd = os.getcwd()
-    js_path = '%s/src/pypgsvg/svg_interactivity.js' % cwd
+    fname = 'svg_interactivity.js'
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    test_fpath = os.path.join(cwd, fname)
+    if os.path.exists(test_fpath):
+        js_path = test_fpath
+    else:
+        js_path = '%s/src/pypgsvg/%s' % (fname, cwd)
     with open(js_path, 'r', encoding='utf-8') as f:
         js_code = f.read()
     return f'<script type="text/javascript"><![CDATA[\n' + js_code + '\n]]></script>'
@@ -52,10 +57,18 @@ SVG_INTERACTIVITY_SCRIPT = load_interactivity_js()
 
 
 def load_svg_css():
-    cwd = os.getcwd()
-    css_path = '%s/src/pypgsvg/svg.css' % cwd
+    fname = 'svg.css'
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    test_fpath = os.path.join(cwd, fname)
+    if os.path.exists(test_fpath):
+        css_path = test_fpath
+    else:
+        cwd = os.path.dirname(os.path.abspath(__file__))
+        css_path = '%s/src/pypgsvg/' % (cwd, fname)
+
     with open(css_path, 'r', encoding='utf-8') as f:
         css_code = f.read()
+
     return f'<style type="text/css"><![CDATA[\n' + css_code + '\n]]></style>'
  
 SVG_CSS_STYLE = load_svg_css()

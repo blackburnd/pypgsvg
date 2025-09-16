@@ -2,7 +2,7 @@ include README.md
 include LICENSE
 include requirements.txt
 include pyproject.toml
-recursive-include src *.py *.js
+recursive-include src *.py *.js *.css
 recursive-include Samples *.svg *.dump
 recursive-include tools *.sh
 recursive-exclude tests *
