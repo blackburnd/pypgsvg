@@ -40,15 +40,18 @@ def wrap_main_erd_content(*args, **kwargs):
     # Replace the original tag with the fully modified one, only once.
     return svg_content.replace(original_g_tag, modified_g_tag, 1)
 
+
 def load_interactivity_js():
-    js_path = os.path.join(os.path.dirname(__file__), 'svg_interactivity.js')
+    js_path = 'svg_interactivity.js'
     with open(js_path, 'r', encoding='utf-8') as f:
         js_code = f.read()
     return f'<script type="text/javascript"><![CDATA[\n' + js_code + '\n]]></script>'
+    
 SVG_INTERACTIVITY_SCRIPT = load_interactivity_js()
 
+
 def load_svg_css():
-    css_path = os.path.join(os.path.dirname(__file__), 'svg.css')
+    css_path = 'svg.css'
     with open(css_path, 'r', encoding='utf-8') as f:
         css_code = f.read()
     return f'<style type="text/css"><![CDATA[\n' + css_code + '\n]]></style>'
