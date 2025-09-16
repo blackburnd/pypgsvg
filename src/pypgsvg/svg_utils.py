@@ -42,7 +42,8 @@ def wrap_main_erd_content(*args, **kwargs):
 
 
 def load_interactivity_js():
-    js_path = 'svg_interactivity.js'
+    cwd = os.getcwd()
+    js_path = '%s/src/pypgsvg/svg_interactivity.js' % cwd
     with open(js_path, 'r', encoding='utf-8') as f:
         js_code = f.read()
     return f'<script type="text/javascript"><![CDATA[\n' + js_code + '\n]]></script>'
@@ -51,7 +52,8 @@ SVG_INTERACTIVITY_SCRIPT = load_interactivity_js()
 
 
 def load_svg_css():
-    css_path = 'svg.css'
+    cwd = os.getcwd()
+    css_path = '%s/src/pypgsvg/svg.css' % cwd
     with open(css_path, 'r', encoding='utf-8') as f:
         css_code = f.read()
     return f'<style type="text/css"><![CDATA[\n' + css_code + '\n]]></style>'
