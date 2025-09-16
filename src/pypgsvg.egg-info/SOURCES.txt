@@ -21,6 +21,7 @@ src/pypgsvg/colors.py
 src/pypgsvg/db_parser.py
 src/pypgsvg/erd_generator.py
 src/pypgsvg/metadata_injector.py
+src/pypgsvg/svg.css
 src/pypgsvg/svg_interactivity.js
 src/pypgsvg/svg_utils.py
 src/pypgsvg/utils.py
