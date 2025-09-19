@@ -2,9 +2,8 @@ const { test, expect } = require('@playwright/test');
 const path = require('path');
 
 test('metadata container exists in SVG', async ({ page }) => {
-  // Use HTTP server URL to load the SVG
-  const fileUrl = `${process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8123'}/Samples/complex_schema.svg`;
-  await page.goto(fileUrl);
+  // Use relative URL which will use Playwright's configured baseURL
+  await page.goto('/Samples/complex_schema.svg');
   await page.waitForLoadState('domcontentloaded');
   
   // Wait for metadata container to be visible, then we're ready

@@ -4,7 +4,7 @@ test('table selector is functionally interactive for users', async ({ page }) =>
   // Listen for console messages
   page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
-  await page.goto('http://localhost:8000/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
+  await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
   // Wait for the selector to be visible and accessible
   const selector = '#table-selector';

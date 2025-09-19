@@ -2,7 +2,7 @@
 const { test, expect } = require('@playwright/test');
 
 test('table selector uses all tables from graphData', async ({ page }) => {
-  await page.goto('http://localhost:8000/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
+  await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
   // Wait for the selector to be visible
   const selector = '#table-selector';
