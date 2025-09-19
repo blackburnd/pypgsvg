@@ -26,22 +26,26 @@ def main():
     parser.add_argument('input_file', help='Path to the PostgreSQL dump file')
     parser.add_argument('-o', '--output', default='schema_erd', help='Output file name (without extension)')
     parser.add_argument('--show-standalone', default='true', help='Hide standalone tables')
-    parser.add_argument('--view', action='store_true', help='Open the generated SVG in a browser')
-    parser.add_argument('--saturate', type=float, default=1.8, help='Saturation factor for table colors')
-    parser.add_argument('--brightness', type=float, default=1.0, help='Brightness factor for table colors')
+    parser.add_argument('--view', action='store_true', help='Trigger the host to open the generated SVG in default app usually the browser')
 
-    # New Graphviz/ERD parameters
     parser.add_argument('--packmode', default='array', choices=['array', 'cluster', 'graph'], help='Graphviz packmode (array, cluster, graph)')
     parser.add_argument('--rankdir', default='TB', choices=['TB', 'LR', 'BT', 'RL'], help='Graphviz rankdir (TB, LR, BT, RL)')
     parser.add_argument('--esep', default='8', help='Graphviz esep value')
-    parser.add_argument('--fontname', default='Arial', help='Font name for graph, nodes, and edges')
-    parser.add_argument('--fontsize', type=int, default=18, help='Font size for graph label')
+    parser.add_argument('--node-sep', default='0.5', help='Node separation distance')
+    parser.add_argument('--rank-sep', default='1.2', help='Rank separation distance')
+
     parser.add_argument('--node-fontsize', type=int, default=14, help='Font size for node labels')
     parser.add_argument('--edge-fontsize', type=int, default=12, help='Font size for edge labels')
     parser.add_argument('--node-style', default='rounded,filled', help='Node style (e.g., "filled", "rounded,filled")')
     parser.add_argument('--node-shape', default='rect', help='Node shape (e.g., "rect", "ellipse")')
-    parser.add_argument('--node-sep', default='0.5', help='Node separation distance')
-    parser.add_argument('--rank-sep', default='1.2', help='Rank separation distance')
+    parser.add_argument('--fontname', default='Arial', help='Font name for graph, nodes, and edges')
+    parser.add_argument('--fontsize', type=int, default=18, help='Font size for graph label')
+
+
+    # New Graphviz/ERD parameters
+    parser.add_argument('--saturate', type=float, default=1.8, help='Saturation factor for table colors')
+    parser.add_argument('--brightness', type=float, default=1.0, help='Brightness factor for table colors')
+
 
     args = parser.parse_args()
 
