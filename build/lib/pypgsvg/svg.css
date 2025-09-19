@@ -1,0 +1,872 @@
+/* General SVG Styling */
+#main-svg {
+    overflow: contain;
+    display: block;
+    /* Performance optimizations */
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+#main-svg.grabbing {
+    cursor: grabbing;
+}
+
+/* Overlay Container */
+#overlay-container-div {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    font-family: system-ui, -apple-system, sans-serif;
+    z-index: 10000;
+}
+
+/* Metadata and Miniature Containers */
+.metadata-container {
+    position: fixed;
+    display: block;
+    z-index: 10000;
+    background: rgba(248, 249, 250, 0.98);
+    border: 2px solid #27ae60;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    border-radius: 8px;
+    pointer-events: auto;
+    min-width: 320px;
+    max-width: 400px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.metadata-container .header {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    margin: 0;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+}
+
+.metadata-container .header:active {
+    cursor: grabbing;
+}
+
+.metadata-container .container-content {
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+    font-size: 0.9rem;
+}
+
+.miniature-container {
+    position: fixed;
+    background: rgba(248, 249, 250, 0.98);
+    border: 2px solid #8e44ad;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 0;
+    border-radius: 8px;
+    cursor: default;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+.miniature-container .header {
+    background: linear-gradient(135deg, #8e44ad, #7d3c98);
+    color: white;
+    padding: 10px 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    margin: 0;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+    z-index: 10002; /* Higher than SVG z-index */
+    position: relative;
+    pointer-events: auto;
+}
+
+.miniature-container .header:active {
+    cursor: grabbing;
+}
+
+.miniature-inner-container {
+    pointer-events: none;
+    position: relative;
+}
+
+.miniature-inner-container svg {
+    pointer-events: auto;
+    cursor: crosshair;
+    position: relative;
+    z-index: 10000; /* Lower than header z-index */
+}
+
+.miniature-container.minimized,
+.metadata-container.minimized,
+.selection-box.minimized {
+    height: auto !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow: contain !important;
+}
+
+/* Dragging Feedback */
+.miniature-container.dragging,
+.metadata-container.dragging {
+    cursor: grabbing !important;
+}
+
+#miniature-header,
+.metadata-container {
+    cursor: grab;
+}
+
+/* Miniature Title */
+.miniature-title {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+    color: #333;
+}
+
+.miniature-container img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Viewport Indicator */
+.viewport-indicator {
+    position: absolute !important;
+    display: block !important;
+    border: 2px solid #ff4081 !important;
+    background-color: rgba(255, 64, 129, 0.05) !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    z-index: 10001 !important;
+    min-width: 10px !important;
+    min-height: 10px !important;
+    transition: all 0.1s ease;
+    box-sizing: border-box;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.viewport-indicator.dragging {
+    cursor: grabbing;
+}
+
+/* Instructions */
+.instructions {
+    bottom: 10px;
+    right: 20px;
+    font-size: 11px;
+    color: #666;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 3px 6px;
+}
+
+/* Nodes and Edges */
+.node,
+.edge {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* Add hover effects to make nodes and edges more visible when selectable */
+/* Disabled to prevent unwanted mouseover events */
+/* 
+.edge:hover {
+    filter: drop-shadow(0 0 2px rgba(255, 0, 0, 0.5));
+}
+
+.node:hover {
+    filter: drop-shadow(0 0 3px rgba(0, 0, 255, 0.3));
+}
+*/
+
+/* Metadata Minimap Row */
+.metadata-minimap-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+    z-index: 10000;
+}
+
+/* Selection Container */
+#selection-container {
+    position: fixed !important;
+    top: 30px;
+    left: auto;
+    bottom: auto;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
+    cursor: grab;
+    background: rgba(248, 249, 250, 0.98) !important;
+    border: 2px solid #2c3e50 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    padding: 0;
+    border-radius: 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-height: 80vh;
+    min-width: 300px;
+    max-width: min(500px, 30vw);
+    width: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+.selection-container .header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 12px 15px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    cursor: grab;
+    user-select: none;
+}
+
+.selection-container .header:active {
+    cursor: grabbing;
+}
+
+#selection-container .container-content{
+    position: relative;
+    font-size: 0.9rem;
+    opacity: 1;
+    cursor: grab;
+    pointer-events: auto;
+    padding: 15px;
+    max-height: calc(80vh - 60px);
+    overflow-y: auto;
+}
+
+#selection-container.dragging {
+    cursor: grabbing !important;
+    background-color: rgba(200, 220, 240, 0.98);
+}
+
+.selection-box {
+    font-size: 10px;
+    background: rgba(168, 188, 220, 0.98);
+    border: 1px solid #000;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Resize Handle */
+.resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 4px 0;
+}
+
+/* Add this CSS to make the resize handles visible and functional */
+.resize-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background-color: rgba(200, 200, 200, 0.5);
+    border: 1px solid rgba(100, 100, 100, 0.5);
+    z-index: 10000;
+}
+
+.resize-handle.nw {
+    top: 0;
+    left: 0;
+    cursor:nw-resize;
+}
+
+.resize-handle.ne {
+    top: 0;
+    right: 0;
+    cursor:ne-resize;
+}
+
+.resize-handle.sw {
+    bottom: 0;
+    left: 0;
+    cursor:sw-resize;
+}
+
+.resize-handle.se {
+    bottom: 0;
+    right: 0;
+    cursor:se-resize;
+}
+
+.resizing {
+    user-select: none;
+    pointer-events: none;
+}
+
+.resizing * {
+    pointer-events: none;
+}
+
+/* Window Controls */
+.window-controls {
+    display: flex;
+    gap: 2px;
+    margin-left: auto; /* Pushes the buttons to the far right */
+}
+
+.window-controls button {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.trigger-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 2px;
+    vertical-align: middle;
+    cursor: pointer;
+    z-index: 10004;
+}
+.trigger-icon:hover {
+    filter: drop-shadow(0 0 2px #FFD700);
+}
+
+/* Add these to your existing CSS */
+#selection-inner-container {
+    overflow-y: auto;  /* Enable vertical scrolling for inner content */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    width: 100%;      /* Ensures it fills the container */
+    height: 100%;     /* Ensures it fills the container */
+    box-sizing: border-box;
+    word-wrap: break-word;  /* Breaks long words to prevent horizontal overflow */
+    max-height: inherit; /* Inherit max-height from parent */
+}
+
+/* Make pre tags wrap text to prevent code blocks from overflowing */
+#selection-inner-container pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: inherit;  /* Inherit the dynamic font size */
+}
+
+/* Style for table names in selection window */
+.table-name {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: inline-block;
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    margin: 2px 4px 2px 0;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.table-name:hover {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.5);
+}
+
+/* Style for edge names in selection window */
+.edge-name {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin: 2px 0;
+}
+
+.edge-name:hover {
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+.edge-name pre {
+    margin: 2px 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 6px 8px;
+    border-radius: 3px;
+    border-left: 3px solid #e74c3c;
+}
+
+/* Selection window content sections */
+.selection-section {
+    margin-bottom: 20px;
+}
+
+.selection-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.selection-section h4 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #34495e;
+    margin: 12px 0 6px 0;
+}
+
+.trigger-info {
+    background: rgba(241, 196, 15, 0.1);
+    border: 1px solid rgba(241, 196, 15, 0.3);
+    border-radius: 4px;
+    padding: 8px;
+    margin: 4px 0;
+    font-size: 0.85rem;
+}
+
+.trigger-info .trigger-name {
+    font-weight: 600;
+    color: #d68910;
+}
+
+.trigger-info .trigger-event {
+    color: #7d6608;
+    margin-left: 8px;
+}
+
+.column-info {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 3px;
+    padding: 4px 6px;
+    margin: 2px 0;
+    font-size: 0.85rem;
+    border-left: 2px solid #95a5a6;
+}
+
+/* Metadata content organization */
+.metadata-section {
+    margin-bottom: 18px;
+}
+
+.metadata-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.metadata-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.metadata-item {
+    background: rgba(39, 174, 96, 0.08);
+    border: 1px solid rgba(39, 174, 96, 0.2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+}
+
+.metadata-item .label {
+    font-weight: 600;
+    color: #27ae60;
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.metadata-item .value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* Table selector specific styles */
+.table-selector-item {
+    position: relative;
+}
+
+.table-selector-container {
+    margin-top: 4px;
+}
+
+.table-selector {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    border-radius: 3px;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    color: #2c3e50;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.table-selector:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(39, 174, 96, 0.5);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table-selector:focus {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+}
+
+.table-selector option {
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    background: white;
+    color: #2c3e50;
+}
+
+.table-selector option:hover {
+    background: rgba(39, 174, 96, 0.1);
+}
+
+.metadata-single {
+    background: rgba(52, 152, 219, 0.08);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    border-radius: 4px;
+    padding: 8px 10px;
+    margin: 4px 0;
+    font-size: 0.85rem;
+}
+
+.metadata-single .label {
+    font-weight: 600;
+    color: #3498db;
+    margin-right: 8px;
+}
+
+.metadata-single .value {
+    color: #2c3e50;
+}
+
+.metadata-params {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 8px;
+}
+
+.metadata-params .param-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 0.8rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.metadata-params .param-row:last-child {
+    border-bottom: none;
+}
+
+.metadata-params .param-label {
+    font-weight: 500;
+    color: #7f8c8d;
+}
+
+.metadata-params .param-value {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Add to your CSS for the copy button */
+.copy-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.copy-btn:hover {
+    background: #ddd;
+}
+
+/* Add to your CSS for the edit button */
+.edit-btn {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    pointer-events: auto;
+    z-index: 10099;
+}
+
+.edit-btn:hover {
+    background: #ddd;
+}
+
+/* Make table-name and edge-name more obviously clickable */
+.table-name, .edge-name {
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.table-name:hover, .edge-name:hover {
+    background-color: rgba(200, 200, 200, 0.5); /* More visible hover effect */
+    text-decoration: underline;
+}
+
+/* ===============================
+   MODERN SVG TABLE STYLING
+   =============================== */
+
+/* Enhanced table styling for main ERD - NO hover effects */
+#main-erd-group .node {
+    filter: none;
+    transition: none;
+    will-change: auto;
+}
+
+/* Table border styling - make borders much more visible */
+#main-erd-group .node polygon[stroke="black"] {
+    stroke: #000000 !important;
+    stroke-width: 1 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Enhanced table cell styling with better spacing */
+#main-erd-group .node polygon {
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    shape-rendering: crispEdges;
+}
+
+/* Table row polygons - stronger internal borders for better separation */
+#main-erd-group .node polygon[fill="none"] {
+    stroke: #333333 !important;
+    stroke-width: 1.5 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Header row styling - make headers more prominent */
+#main-erd-group .node polygon[fill*="#"] + polygon[fill="none"][stroke="black"] {
+    stroke: #000000 !important;
+    stroke-width: 1 !important;
+    stroke-opacity: 1 !important;
+}
+
+/* Table header text styling - remove effects that cause fuzziness */
+#main-erd-group .node text[font-size="24"] {
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    fill: #000000 !important;
+    stroke: none !important;
+    /* Better positioning for headers */
+    dominant-baseline: middle;
+    text-anchor: start;
+    transform: translateX(12px);
+}
+
+/* Column text styling - remove effects that cause fuzziness */
+#main-erd-group .node text[font-size="18"] {
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
+    fill: #222222 !important;
+    stroke: none !important;
+}
+
+/* Remove all text effects that cause fuzziness */
+#main-erd-group .node text {
+    text-anchor: start !important;
+    dominant-baseline: central;
+    text-rendering: optimizeLegibility;
+    shape-rendering: crispEdges;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace !important;
+}
+
+/* Add proper text positioning and spacing for table content */
+#main-erd-group .node text {
+    alignment-baseline: middle;
+    baseline-shift: 0;
+}
+
+/* Ensure adequate spacing between text and table borders */
+#main-erd-group .node text[x] {
+    /* Add left margin by adjusting x position */
+    transform: translateX(8px);
+}
+
+/* Table cell text positioning - prevent overlap with borders */
+#main-erd-group .node text[font-size="18"] {
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
+    fill: #222222 !important;
+    stroke: none !important;
+    /* Add vertical centering and horizontal margin */
+    dominant-baseline: middle;
+    text-anchor: start;
+}
+
+/* Create visual breathing room around table cells - clean borders */
+#main-erd-group .node polygon[fill="none"] {
+    stroke: #555555 !important;
+    stroke-width: 1.2 !important;
+    stroke-opacity: 1 !important;
+}
+
+
+
+/* ===============================
+   MODERN SVG EDGE STYLING
+   =============================== */
+
+
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+}
+*/
+
+/* Enhanced path styling for edges - NO hover effects */
+#main-erd-group .edge path {
+    stroke-width: 5 !important;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: none;
+    will-change: auto;
+}
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover path {
+    stroke-width: 4 !important;
+    filter: brightness(1.2);
+}
+*/
+
+
+
+/* Hover effects disabled to prevent unwanted mouseover events */
+/*
+#main-erd-group .edge:hover polygon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+*/
+
+/* Parallel edge enhancement - make multiple edges between same tables with equal thickness */
+#main-erd-group .edge path[stroke-width="3"] {
+    stroke-width: 5 !important;
+    stroke-dasharray: none;
+    opacity: 0.9;
+}
+
+/* Enhanced parallel edge styling - different widths for equal visual distribution */
+#main-erd-group .edge:nth-child(even) path {
+    stroke-dasharray: none;
+    opacity: 0.95;
+    stroke-width: 6 !important;
+    /* Make even edges (background) slightly thicker */
+}
+
+#main-erd-group .edge:nth-child(odd) path {
+    opacity: 1;
+    stroke-width: 3.5 !important;
+    /* Make odd edges (foreground) thinner so they sit on top */
+}
+
+/* Third and subsequent parallel edges use medium thickness */
+#main-erd-group .edge:nth-child(3n) path {
+    stroke-dasharray: 8,4,2,4;
+    opacity: 0.9;
+    stroke-width: 4.5 !important;
+}
+
+/* Special styling for highlighted edges - doubled thickness */
+#main-erd-group .edge path[stroke-width="16"],
+#main-erd-group .edge path[stroke-width="12"],
+#main-erd-group .edge path[stroke-width="10"] {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 1 !important;
+}
+
+/* ===============================
+   MINIATURE ERD STYLING
+   =============================== */
+
+/* Enhanced miniature container styling */
+.miniature-container svg {
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+/* Miniature edge styling - NO hover effects */
+.miniature-container .edge path {
+    stroke-width: 3 !important;
+    opacity: 0.8;
+}
+
+/* Miniature text scaling */
+.miniature-container text {
+    font-size: 0.8em !important;
+}

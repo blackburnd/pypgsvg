@@ -276,11 +276,13 @@ def inject_metadata_into_svg(
   <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
-    instructions_html = '''
-    <div class="instructions">
-        💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight • ESC/R to reset
-    </div>
-    '''
+    instructions_html = (
+        '<div class="instructions">'
+        '💡 Drag to pan • Scroll to zoom • Click map to navigate • '
+        'Click tables/edges to highlight<br/>'
+        'ESC/R to reset • I to toggle info windows'
+        '</div>'
+    )
     selection_html = f'''
 <div id="selection-container" class="selection-container container" 
      style="display:none">
