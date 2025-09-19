@@ -1497,7 +1497,7 @@
             </div>
             <div class="metadata-single">
                 <span class="label">Generated:</span>
-                <span class="value">2025-09-16 11:02:25</span>
+                <span class="value">2025-09-19 11:44:57</span>
             </div>
         </div>
 
@@ -2148,6 +2148,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
 
+    // Parse URL parameters for initial state
+    parseUrlParameters();
+
     // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
     let userTx = 0, userTy = 0, userS = 1;
@@ -2157,6 +2160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
     let selectionContainerManuallyPositioned = false; // Flag to track if user has manually positioned selection container
+    let infoWindowsVisible = true; // Flag to track if informational windows are visible
 
     // --- Utility Functions ---
 
@@ -2233,6 +2237,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Clean up
         window.URL.revokeObjectURL(url);
+    }
+
+    // --- URL Parameter Handling ---
+    function parseUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Check if info windows should be hidden via URL parameter
+        if (urlParams.has('hideinfo') || urlParams.has('hide-info')) {
+            infoWindowsVisible = false;
+        }
+    }
+
+    // --- Info Windows Toggle ---
+    function toggleInfoWindows() {
+        infoWindowsVisible = !infoWindowsVisible;
+        
+        const metadataContainer = document.getElementById('metadata-container');
+        const miniatureContainer = document.getElementById('miniature-container');
+        const selectionContainer = document.getElementById('selection-container');
+        
+        const displayValue = infoWindowsVisible ? 'block' : 'none';
+        
+        if (metadataContainer) {
+            metadataContainer.style.display = displayValue;
+        }
+        if (miniatureContainer) {
+            miniatureContainer.style.display = displayValue;
+        }
+        if (selectionContainer) {
+            selectionContainer.style.display = displayValue;
+        }
     }
 
     // --- Window Controls ---
@@ -3920,13 +3955,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper to compute minimum zoom to fit SVG in viewport
     function getMinZoomToFit() {
         const mainBounds = getMainERDBounds();
-        if (!mainBounds.width || !mainBounds.height) return 0.01;
+        if (!mainBounds.width || !mainBounds.height) return 0.005; // Reduced from 0.01 to allow more zoom out
         const viewport = getViewportDimensions();
         const svgWidth = viewport.width;
         const svgHeight = viewport.height;
         const scaleX = svgWidth / mainBounds.width;
         const scaleY = svgHeight / mainBounds.height;
-        return Math.min(scaleX, scaleY);
+        return Math.min(scaleX, scaleY) * 0.5; // Added multiplier to allow zooming out beyond fit
     }
 
     svg.addEventListener('wheel', (event) => {
@@ -3962,7 +3997,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
             window.location.reload();
-
+        } else if (e.key.toLowerCase() === 'i') {
+            toggleInfoWindows();
         }
     });
 
@@ -4349,6 +4385,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     buttons: { copy: true, download: true, edit: true }
                 });
                 makeResizable(selectionContainer);
+            }
+
+            // Apply initial info windows visibility state based on URL parameters
+            if (!infoWindowsVisible) {
+                toggleInfoWindows();
             }
 
             // Initialize table selector
