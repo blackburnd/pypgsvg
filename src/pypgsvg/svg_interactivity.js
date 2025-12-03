@@ -8,9 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
 
-    // Parse URL parameters for initial state
-    parseUrlParameters();
-
     // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
     let userTx = 0, userTy = 0, userS = 1;
@@ -101,11 +98,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- URL Parameter Handling ---
     function parseUrlParameters() {
-        const urlParams = new URLSearchParams(window.location.search);
+        const queryString = window.location.search;
         
         // Check if info windows should be hidden via URL parameter
-        if (urlParams.has('hideinfo') || urlParams.has('hide-info')) {
+        if (queryString.includes('hide')) {
             infoWindowsVisible = false;
+            
+            // Apply the hiding immediately since containers now exist
+            const metadataContainer = document.getElementById('metadata-container');
+            const miniatureContainer = document.getElementById('miniature-container');
+            const selectionContainer = document.getElementById('selection-container');
+            
+            if (metadataContainer) {
+                metadataContainer.style.display = 'none';
+            }
+            if (miniatureContainer) {
+                miniatureContainer.style.display = 'none';
+            }
+            if (selectionContainer) {
+                selectionContainer.style.display = 'none';
+            }
         }
     }
 
@@ -2247,13 +2259,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 makeResizable(selectionContainer);
             }
 
-            // Apply initial info windows visibility state based on URL parameters
-            if (!infoWindowsVisible) {
-                toggleInfoWindows();
-            }
-
             // Initialize table selector
             initializeTableSelector();
+            
+            // Parse and apply URL parameters after all containers are initialized
+            parseUrlParameters();
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);

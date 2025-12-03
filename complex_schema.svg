@@ -4346,7 +4346,11 @@
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
             
-        <div class="instructions">💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight<br/>ESC/R to reset • I to toggle info windows</div>
+        
+    <div class="instructions">
+        💡 Drag to pan • Scroll to zoom • Click map to navigate • Click tables/edges to highlight • ESC/R to reset
+    </div>
+    
         
 <div class='metadata-container container' id='metadata-container'>
     <div class='header'>📊 Database Metadata</div>
@@ -4365,7 +4369,7 @@
             </div>
             <div class="metadata-single">
                 <span class="label">Generated:</span>
-                <span class="value">2025-09-19 12:14:28</span>
+                <span class="value">2025-09-19 11:59:30</span>
             </div>
         </div>
 
@@ -7888,6 +7892,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
 
+    // Parse URL parameters for initial state
+    parseUrlParameters();
+
     // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
     let userTx = 0, userTy = 0, userS = 1;
@@ -7978,39 +7985,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- URL Parameter Handling ---
     function parseUrlParameters() {
-        const queryString = window.location.search;
-        console.log('parseUrlParameters called with queryString:', queryString);
+        const urlParams = new URLSearchParams(window.location.search);
         
         // Check if info windows should be hidden via URL parameter
-        if (queryString.includes('hide')) {
-            console.log('URL parameter ?hide detected, hiding info windows');
+        if (urlParams.has('hideinfo') || urlParams.has('hide-info')) {
             infoWindowsVisible = false;
-            
-            // Apply the hiding immediately since containers now exist
-            const metadataContainer = document.getElementById('metadata-container');
-            const miniatureContainer = document.getElementById('miniature-container');
-            const selectionContainer = document.getElementById('selection-container');
-            
-            console.log('Containers found:', {
-                metadata: !!metadataContainer,
-                miniature: !!miniatureContainer,
-                selection: !!selectionContainer
-            });
-            
-            if (metadataContainer) {
-                metadataContainer.style.display = 'none';
-                console.log('Hidden metadata container');
-            }
-            if (miniatureContainer) {
-                miniatureContainer.style.display = 'none';
-                console.log('Hidden miniature container');
-            }
-            if (selectionContainer) {
-                selectionContainer.style.display = 'none';
-                console.log('Hidden selection container');
-            }
-        } else {
-            console.log('No ?hide URL parameter detected');
         }
     }
 
@@ -10152,11 +10131,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 makeResizable(selectionContainer);
             }
 
+            // Apply initial info windows visibility state based on URL parameters
+            if (!infoWindowsVisible) {
+                toggleInfoWindows();
+            }
+
             // Initialize table selector
             initializeTableSelector();
-            
-            // Parse and apply URL parameters after all containers are initialized
-            parseUrlParameters();
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);

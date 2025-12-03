@@ -8,6 +8,12 @@ test('table selector uses all tables from graphData', async ({ page }) => {
   const selector = '#table-selector';
   await page.locator(selector).waitFor({ timeout: 45000 });
 
+  // Wait for the table selector to be properly populated with options
+  await page.waitForFunction(() => {
+    const selectElement = document.getElementById('table-selector');
+    return selectElement && selectElement.options.length > 1;
+  }, { timeout: 10000 });
+
   // Get the graphData object from the page
   const graphData = await page.evaluate(() => {
     const script = document.getElementById('graph-data');

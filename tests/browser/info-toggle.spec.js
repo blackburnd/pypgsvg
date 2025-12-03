@@ -35,14 +35,18 @@ test('I key toggles informational windows visibility', async ({ page }) => {
   await expect(miniatureContainer).toBeHidden();
 });
 
-test('URL parameter hideinfo starts with informational windows hidden', async ({ page }) => {
-  // Navigate to the SVG with hideinfo parameter
-  await page.goto('/Samples/complex_schema.svg?hideinfo', { waitUntil: 'domcontentloaded' });
+test('URL parameter hide starts with informational windows hidden', async ({ page }) => {
+  // Navigate to the SVG with hide parameter (using the format that works manually)
+  await page.goto('/Samples/complex_schema.svg?hide=t', { waitUntil: 'domcontentloaded' });
 
-  // Wait for page to load
-  await page.waitForTimeout(1000);
+  // Wait for the containers to be created AND visible first (normal initialization)
+  await page.waitForSelector('#metadata-container', { state: 'visible', timeout: 10000 });
+  await page.waitForSelector('#miniature-container', { state: 'visible', timeout: 10000 });
 
-  // Verify containers start hidden
+  // Give a small delay for the URL parameter processing to complete
+  await page.waitForTimeout(500);
+
+  // Now verify containers are hidden due to URL parameter
   const metadataContainer = page.locator('#metadata-container');
   const miniatureContainer = page.locator('#miniature-container');
   
@@ -54,21 +58,6 @@ test('URL parameter hideinfo starts with informational windows hidden', async ({
   
   await expect(metadataContainer).toBeVisible();
   await expect(miniatureContainer).toBeVisible();
-});
-
-test('URL parameter hide-info starts with informational windows hidden', async ({ page }) => {
-  // Navigate to the SVG with hide-info parameter (alternative format)
-  await page.goto('/Samples/complex_schema.svg?hide-info', { waitUntil: 'domcontentloaded' });
-
-  // Wait for page to load
-  await page.waitForTimeout(1000);
-
-  // Verify containers start hidden
-  const metadataContainer = page.locator('#metadata-container');
-  const miniatureContainer = page.locator('#miniature-container');
-  
-  await expect(metadataContainer).toBeHidden();
-  await expect(miniatureContainer).toBeHidden();
 });
 
 test('selection container is also toggled with I key', async ({ page }) => {

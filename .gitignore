@@ -1,19 +1,45 @@
-.DS_Store
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+eggs/
+.eggs/
+
+# Testing
+.pytest_cache/
 .coverage
-/dist
-/src/pypgsvg.eg.*
-/src/pypgsvg.egg-info/*
-/test_miniature_functionality.svg
-src/pypgsvg/.#svg.css
-src/pypgsvg/.#svg_interactivity.js
-*.js#
-*.css#
-/src/pypgsvg.egg-info
-/tests/pypgsvg_erd_generator.egg-info
-node_modules/
-test-results/
-Samples/boom.svg
-package-lock.json
-venv/
+.coverage.*
+htmlcov/
 coverage.xml
+test-results/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# IDEs and editors
+.vscode/
+*.swp
+*.swo
+*~
+.#*
+\#*\#
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project-specific
+database.sql
