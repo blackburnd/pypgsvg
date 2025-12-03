@@ -1,9 +1,0 @@
-{
-    "geminiAssistant.apiKey": "AIzaSyDZuox2UoLODzU9ZmJ_3FsNmh5yoK2kHDM",
-    "geminiAssistant.customModelName": "Custom_Gemini",
-    "python.testing.pytestArgs": [
-        "src"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
-}
