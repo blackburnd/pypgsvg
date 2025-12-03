@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+##!/usr/bin/env bash
 
 # Test runner script for pypgsvg
 # This script ensures proper environment setup before running tests
@@ -16,7 +16,7 @@ echo -e "${YELLOW}==== pypgsvg Test Runner ====${NC}"
 # 1. Set up virtual environment
 if [ ! -d ".venv" ]; then
     echo -e "${YELLOW}Creating virtual environment...${NC}"
-    python -m venv .venv
+    python3 -m venv .venv
     echo -e "${GREEN}Virtual environment created.${NC}"
 else
     echo -e "${GREEN}Using existing virtual environment.${NC}"
@@ -24,7 +24,7 @@ fi
 
 # 2. Activate virtual environment
 echo -e "${YELLOW}Activating virtual environment...${NC}"
-source .venv/bin/activate
+. venv/bin/activate
 
 # 3. Install dependencies
 echo -e "${YELLOW}Installing package and test dependencies...${NC}"
@@ -55,7 +55,7 @@ done
 # 5. Run the appropriate test suite
 if [ "$TEST_TYPE" = "unit" ]; then
     echo -e "${YELLOW}Running Python unit tests...${NC}"
-    python -m pytest tests/tests/ -v $EXTRA_ARGS
+    python3 -m pytest tests/tests/ -v $EXTRA_ARGS
     TEST_EXIT_CODE=$?
 elif [ "$TEST_TYPE" = "browser" ]; then
     echo -e "${YELLOW}Running browser functional tests...${NC}"
