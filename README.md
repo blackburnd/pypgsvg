@@ -366,8 +366,54 @@ Welcome users and contributors:
 - **Graphviz** (system package, widely available)
 
 ### Development/Testing Only
+- **Node.js/npm** - Required for running browser tests only
 - `pytest>=7.0.0` - Testing framework
-- `pytest-cov>=4.0.0` - Coverage reporting  
+- `pytest-cov>=4.0.0` - Coverage reporting
+- `playwright>=1.37.0` - Browser testing framework  
+
+## Development Setup
+
+### Quick Install (From Source)
+
+If you're cloning the repository for development, use the automated installer:
+
+```bash
+# Clone the repository
+git clone https://github.com/blackburnd/pypgsvg.git
+cd pypgsvg
+
+# Run the automated installer
+./install.sh
+```
+
+The installer will:
+- Detect your operating system (macOS, Ubuntu/Debian, CentOS/RHEL)
+- Install Graphviz system package
+- Install Node.js and npm
+- Create Python virtual environment
+- Install Python dependencies
+- Install Playwright browser binaries
+
+**Supported platforms:** macOS (with Homebrew), Ubuntu/Debian, CentOS/RHEL
+
+### Manual Setup
+
+If the automated installer doesn't support your system:
+
+```bash
+# 1. Install system dependencies
+brew install graphviz node  # macOS
+# or
+sudo apt-get install graphviz nodejs npm  # Ubuntu/Debian
+
+# 2. Create virtual environment and install Python dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -e ".[test]"
+
+# 3. Install Playwright browsers
+npx playwright install
+```
 
 ## Testing
 
