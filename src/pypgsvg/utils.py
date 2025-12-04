@@ -36,13 +36,23 @@ def sanitize_label(text: str) -> str:
     return re.sub(r'[^a-zA-Z0-9_]', '_', str(text))
 
 
-def should_exclude_table(table_name: str) -> bool:
+def should_exclude_table(table_name: str, exclude_patterns: List[str] = None) -> bool:
     """
-    Check if a table should be excluded based on specific patterns
+    Check if a table should be excluded based on specific patterns.
+
+    Args:
+        table_name: Name of the table to check
+        exclude_patterns: List of patterns to match against table names (case-insensitive).
+                         If None, no tables will be excluded (default behavior changed).
+
+    Returns:
+        True if the table should be excluded, False otherwise
     """
+    if exclude_patterns is None:
+        exclude_patterns = []
+
     name = table_name.lower()
-    exclude_patterns = ['tmp_', 'vw_', 'bk', 'fix', 'dups', 'duplicates', 'matches', 'versionlog', 'old', 'ifma', 'memberdata',]
-    return any(pattern in name for pattern in exclude_patterns)
+    return any(pattern.lower() in name for pattern in exclude_patterns if pattern)
 
 
 def is_standalone_table(table_name: str, foreign_keys: List[Tuple[str, str, str, str, str, str, str]]) -> bool:
