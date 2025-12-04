@@ -194,6 +194,12 @@
     cursor: pointer;
 }
 
+/* Ensure all child elements within nodes and edges have pointer cursor */
+.node *,
+.edge * {
+    cursor: pointer !important;
+}
+
 /* Add hover effects to make nodes and edges more visible when selectable */
 /* Disabled to prevent unwanted mouseover events */
 /* 
@@ -232,7 +238,7 @@
     border-radius: 8px;
     box-sizing: border-box;
     overflow: hidden;
-    max-height: 80vh;
+    max-height: 60vh;
     min-width: 300px;
     max-width: min(500px, 30vw);
     width: auto;
@@ -266,7 +272,7 @@
     cursor: grab;
     pointer-events: auto;
     padding: 15px;
-    max-height: calc(80vh - 60px);
+    max-height: calc(60vh - 60px);
     overflow-y: auto;
 }
 
@@ -534,6 +540,7 @@
 /* Table selector specific styles */
 .table-selector-item {
     position: relative;
+    grid-column: 1 / -1; /* Span both columns to take full width */
 }
 
 .table-selector-container {
@@ -582,6 +589,7 @@
     padding: 8px 10px;
     margin: 4px 0;
     font-size: 0.85rem;
+    pointer-events: auto;
 }
 
 .metadata-single .label {
@@ -592,6 +600,100 @@
 
 .metadata-single .value {
     color: #2c3e50;
+}
+
+/* Editable Database Connection Fields */
+.metadata-single.editable-field input.editable-value {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: white;
+    color: #2c3e50;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    pointer-events: auto;
+    cursor: text;
+}
+
+.metadata-single.editable-field input.editable-value:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.metadata-single.editable-field input.editable-value::placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+.metadata-single.editable-field select.editable-value {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    background: white;
+    color: #2c3e50;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.metadata-single.editable-field select.editable-value:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Database Connection Action Buttons */
+.db-action-btn {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.db-action-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.db-action-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.db-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Connection Status Messages */
+#connection-status.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: #2e7d32;
+}
+
+#connection-status.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #c62828;
+}
+
+#connection-status.info {
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    color: #1565c0;
+}
+
+/* Close Server Button */
+#close-server-btn:hover {
+    opacity: 1 !important;
+    transform: scale(1.1);
 }
 
 .metadata-params {
@@ -869,4 +971,65 @@
 /* Miniature text scaling */
 .miniature-container text {
     font-size: 0.8em !important;
+}
+
+/* ===============================
+   GRAPHVIZ SETTINGS UI
+   =============================== */
+
+.graphviz-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #27ae60;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.setting-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: #2c3e50;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.setting-input:focus {
+    outline: none;
+    border-color: #27ae60;
+    box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.2);
+    background: white;
+}
+
+.setting-input:hover {
+    border-color: rgba(39, 174, 96, 0.5);
+}
+
+/* Collapsible headers */
+.collapsible-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.collapse-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
 }
