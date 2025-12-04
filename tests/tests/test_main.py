@@ -139,8 +139,49 @@ class TestRegexPatterns:
         ALTER TABLE child ADD CONSTRAINT fk FOREIGN KEY (parent_id) REFERENCES parent(id);
         ALTER TABLE ONLY child ADD CONSTRAINT fk2 FOREIGN KEY (parent_id) REFERENCES parent(id) NOT VALID;
         """
-        
+
         tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
-        
+
         assert len(foreign_keys) >= 1
         assert any('child' in fk and 'parent' in fk for fk in foreign_keys)
+
+
+@pytest.mark.unit
+class TestCLIValidation:
+    """Test command-line argument validation for input modes."""
+
+    @patch('sys.argv', ['pypgsvg'])
+    @patch('sys.exit')
+    def test_no_input_provided(self, mock_exit):
+        """Test error when neither dump file nor database params provided."""
+        from pypgsvg import main
+        with patch('builtins.print') as mock_print:
+            main()
+            mock_exit.assert_called_with(1)
+            # Check that error message was printed
+            printed_msgs = [str(call) for call in mock_print.call_args_list]
+            assert any('Must provide either' in msg for msg in printed_msgs)
+
+    @patch('sys.argv', ['pypgsvg', 'test.dump', '--host', 'localhost'])
+    @patch('sys.exit')
+    def test_both_input_modes_provided(self, mock_exit):
+        """Test error when both dump file and database params provided."""
+        from pypgsvg import main
+        with patch('builtins.print') as mock_print:
+            main()
+            mock_exit.assert_called_with(1)
+            # Check that error message was printed
+            printed_msgs = [str(call) for call in mock_print.call_args_list]
+            assert any('Cannot specify both' in msg for msg in printed_msgs)
+
+    @patch('sys.argv', ['pypgsvg', '--host', 'localhost', '--port', '5432'])
+    @patch('sys.exit')
+    def test_incomplete_database_params(self, mock_exit):
+        """Test error when only some database params provided."""
+        from pypgsvg import main
+        with patch('builtins.print') as mock_print:
+            main()
+            mock_exit.assert_called_with(1)
+            # Check that error message was printed
+            printed_msgs = [str(call) for call in mock_print.call_args_list]
+            assert any('all four parameters must be provided' in msg for msg in printed_msgs)

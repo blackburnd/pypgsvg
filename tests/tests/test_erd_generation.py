@@ -126,7 +126,8 @@ def test_parse_sql_dump(sample_sql):
         tables["vw_hidden"] = {"columns": [{"name": "id", "type": "integer"}]}
         with tempfile.TemporaryDirectory() as tmpdir:
             output_file = os.path.join(tmpdir, "erd_exclude")
-            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            # Pass exclusion patterns
+            generate_erd_with_graphviz(tables, foreign_keys, output_file, exclude_patterns=['vw_'])
             svg_path = output_file + ".svg"
             with open(svg_path, "r", encoding="utf-8") as f:
                 svg_content = f.read()

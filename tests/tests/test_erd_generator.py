@@ -59,21 +59,24 @@ def test_generate_erd_with_no_foreign_keys():
         assert "posts" in svg_content
 
 def test_generate_erd_excludes_tables():
-    # Table name triggers exclusion
+    # Table name triggers exclusion when pattern is provided
     tables = {
         "users": {"columns": [{"name": "id", "type": "integer"}]},
         "vw_users": {"columns": [{"name": "id", "type": "integer"}]},  # Should be excluded
+        "tmp_data": {"columns": [{"name": "id", "type": "integer"}]},  # Should be excluded
     }
     foreign_keys = []
     with tempfile.TemporaryDirectory() as tmpdir:
         output_file = os.path.join(tmpdir, "test_erd3")
-        generate_erd_with_graphviz(tables, foreign_keys, output_file)
+        # Pass exclusion patterns
+        generate_erd_with_graphviz(tables, foreign_keys, output_file, exclude_patterns=['vw_', 'tmp_'])
         svg_path = output_file + ".svg"
         assert os.path.exists(svg_path)
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
         assert "users" in svg_content
         assert "vw_users" not in svg_content
+        assert "tmp_data" not in svg_content
 
 def test_generate_erd_hide_standalone(simple_schema):
     tables, foreign_keys = simple_schema

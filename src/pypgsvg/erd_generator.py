@@ -26,6 +26,7 @@ def generate_erd_with_graphviz(
     output_file,
     input_file_path=None,
     show_standalone=True,
+    exclude_patterns=None,
     packmode='array',
     rankdir='TB',
     esep='6',
@@ -49,6 +50,7 @@ def generate_erd_with_graphviz(
         output_file: Output file name (without extension)
         input_file_path: Path to input SQL file for metadata
         show_standalone: (tables with no FK relationships)
+        exclude_patterns: List of patterns to exclude tables/views (e.g., ['vw_', 'tmp_'])
         packmode: Graphviz 'packmode' (e.g., 'array', 'cluster', 'graph')
         rankdir: Graphviz 'rankdir' (e.g., 'TB', 'LR', 'BT', 'RL')
         esep: Graphviz 'esep' value
@@ -68,7 +70,7 @@ def generate_erd_with_graphviz(
     filtered_tables = {}
     for table_name, columns in tables.items():
         # Skip if matches exclusion patterns
-        if should_exclude_table(table_name):
+        if should_exclude_table(table_name, exclude_patterns):
             continue
 
         # Skip standalone tables if option is disabled
