@@ -23,6 +23,7 @@ log = logging.getLogger("pypgsvg")
 def fetch_schema_from_database(host, port, database, user):
     """
     Fetch schema from a PostgreSQL database using pg_dump.
+    Also queries the database to get view column information.
 
     Args:
         host: Database host
@@ -31,7 +32,7 @@ def fetch_schema_from_database(host, port, database, user):
         user: Database user
 
     Returns:
-        SQL dump as a string
+        Tuple of (SQL dump string, view columns dict)
 
     Raises:
         Exception if pg_dump fails
@@ -64,13 +65,91 @@ def fetch_schema_from_database(host, port, database, user):
             text=True,
             check=True
         )
-        return result.stdout
+        sql_dump = result.stdout
+
+        # Also fetch view column information using psql
+        view_columns = fetch_view_columns(host, port, database, user, password)
+
+        return sql_dump, view_columns
     except subprocess.CalledProcessError as e:
         print(f"Error connecting to database: {e.stderr}")
         raise
     except FileNotFoundError:
         print("Error: pg_dump command not found. Please ensure PostgreSQL client tools are installed.")
         sys.exit(1)
+
+
+def fetch_view_columns(host, port, database, user, password):
+    """
+    Fetch column information for all views in the database.
+
+    Returns:
+        Dict mapping view names to their column lists
+    """
+    env = os.environ.copy()
+    env['PGPASSWORD'] = password
+
+    # Query to get view columns
+    query = """
+    SELECT
+        c.table_name as view_name,
+        c.column_name,
+        c.data_type,
+        c.ordinal_position
+    FROM information_schema.columns c
+    JOIN information_schema.views v ON c.table_name = v.table_name
+    WHERE c.table_schema = 'public'
+    ORDER BY c.table_name, c.ordinal_position;
+    """
+
+    cmd = [
+        'psql',
+        '-h', host,
+        '-p', str(port),
+        '-U', user,
+        '-d', database,
+        '-t',  # Tuples only
+        '-A',  # Unaligned output
+        '-F', '|',  # Field separator
+        '-c', query
+    ]
+
+    try:
+        result = subprocess.run(
+            cmd,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Parse the output
+        view_columns = {}
+        for line in result.stdout.strip().split('\n'):
+            if line.strip():
+                parts = line.split('|')
+                if len(parts) >= 4:
+                    view_name = parts[0].strip()
+                    column_name = parts[1].strip()
+                    data_type = parts[2].strip()
+
+                    if view_name not in view_columns:
+                        view_columns[view_name] = []
+
+                    view_columns[view_name].append({
+                        'name': column_name,
+                        'type': data_type,
+                        'is_primary_key': False,
+                        'is_foreign_key': False
+                    })
+
+        return view_columns
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Could not fetch view columns: {e.stderr}")
+        return {}
+    except Exception as e:
+        print(f"Warning: Error parsing view columns: {e}")
+        return {}
 
 
 def main():
@@ -83,6 +162,7 @@ def main():
     parser.add_argument('--show-standalone', default='true', help='Hide standalone tables')
     parser.add_argument('--view', action='store_true', help='Trigger the host to open the generated SVG in default app usually the browser')
     parser.add_argument('--exclude', nargs='*', default=[], help='Space-separated patterns to exclude tables/views (e.g., --exclude vw_ tmp_)')
+    parser.add_argument('--include', nargs='*', default=[], help='Space-separated table names to include (whitelist mode, e.g., --include users posts)')
 
     # Database connection arguments
     parser.add_argument('--host', help='Database host')
@@ -140,6 +220,7 @@ def main():
     # Get SQL dump from either file or database connection
     sql_dump = None
     input_source = None
+    view_columns_from_db = {}
 
     if args.input_file:
         # Read from dump file
@@ -157,14 +238,23 @@ def main():
         # Fetch from database connection
         try:
             print(f"Connecting to database {args.database} at {args.host}:{args.port}...")
-            sql_dump = fetch_schema_from_database(args.host, args.port, args.database, args.user)
+            sql_dump, view_columns_from_db = fetch_schema_from_database(args.host, args.port, args.database, args.user)
             input_source = f"{args.user}@{args.host}:{args.port}/{args.database}"
             print("Schema fetched successfully.")
         except Exception as e:
             print(f"Failed to fetch schema from database: {e}")
             sys.exit(1)
 
-    tables, foreign_keys, triggers, errors = parse_sql_dump(sql_dump)
+    # Parse the SQL dump
+    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+
+    # Enhance views with column information from database (if available)
+    for view_name, columns in view_columns_from_db.items():
+        if view_name in views:
+            views[view_name]['columns'] = columns
+        if view_name in tables:
+            tables[view_name]['columns'] = columns
+
     constraints = extract_constraint_info(foreign_keys)
 
     if errors:
@@ -178,6 +268,7 @@ def main():
                 input_file_path=input_source,
                 show_standalone=args.show_standalone!='false',
                 exclude_patterns=args.exclude if args.exclude else None,
+                include_tables=args.include if args.include else None,
                 packmode=args.packmode,
                 rankdir=args.rankdir,
                 esep=args.esep,
@@ -191,13 +282,51 @@ def main():
                 rank_sep=args.rank_sep,
                 constraints=constraints,
                 triggers=triggers,
+                views=views,
             )
 
             print(f"Successfully generated ERD: {output_file}.svg")
 
             if args.view:
-                path = os.path.abspath(f"{output_file}.svg")
-                webbrowser.open(f"file://{path}")
+                # Start server for interactive viewing with reload capabilities
+                from .server import start_server
+                
+                svg_file = os.path.abspath(f"{output_file}.svg")
+                
+                # Determine source type and parameters
+                if db_params_provided:
+                    source_type = 'database'
+                    source_params = {
+                        'host': args.host,
+                        'port': args.port,
+                        'database': args.database,
+                        'user': args.user
+                    }
+                else:
+                    source_type = 'file'
+                    source_params = {
+                        'filepath': os.path.abspath(args.input_file)
+                    }
+                
+                # Collect generation parameters
+                generation_params = {
+                    'show_standalone': args.show_standalone != 'false',
+                    'exclude_patterns': args.exclude if args.exclude else None,
+                    'include_tables': args.include if args.include else None,
+                    'packmode': args.packmode,
+                    'rankdir': args.rankdir,
+                    'esep': args.esep,
+                    'fontname': args.fontname,
+                    'fontsize': args.fontsize,
+                    'node_fontsize': args.node_fontsize,
+                    'edge_fontsize': args.edge_fontsize,
+                    'node_style': args.node_style,
+                    'node_shape': args.node_shape,
+                    'node_sep': args.node_sep,
+                    'rank_sep': args.rank_sep,
+                }
+                
+                start_server(svg_file, source_type, source_params, generation_params)
 
         except Exception as e:
             print(f"--- ERROR during ERD generation ---")

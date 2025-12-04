@@ -3,9 +3,10 @@ from typing import List, Tuple, Dict
 
 def parse_sql_dump(sql_dump):
     """
-    Parse an SQL dump to extract tables, foreign key relationships, and triggers.
+    Parse an SQL dump to extract tables, views, foreign key relationships, and triggers.
     """
     tables = {}
+    views = {}
     foreign_keys = []
     triggers = {}
     primary_keys = {}  # Track primary key columns per table
@@ -14,6 +15,12 @@ def parse_sql_dump(sql_dump):
     # Table creation pattern
     table_pattern = re.compile(
         r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(["\w.]+)\s*\((.*?)\);',
+        re.S | re.I
+    )
+
+    # View creation pattern
+    view_pattern = re.compile(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(["\w.]+)\s+AS\s+(.*?)(?=CREATE|ALTER|$)',
         re.S | re.I
     )
 
@@ -97,6 +104,30 @@ def parse_sql_dump(sql_dump):
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
             tables[table_name]['columns'] = columns
+            tables[table_name]['type'] = 'table'
+
+        # Extract views
+        for match in view_pattern.finditer(sql_dump):
+            view_name = match.group(1).strip('"')
+            view_definition = match.group(2).strip()
+
+            # Truncate long view definitions for display
+            if len(view_definition) > 500:
+                view_definition = view_definition[:500] + '...'
+
+            views[view_name] = {
+                'definition': view_definition,
+                'type': 'view',
+                'columns': []  # Will be populated from database if available
+            }
+
+            # Also add to tables dict for backward compatibility, but mark as view
+            tables[view_name] = {
+                'lines': view_name,
+                'columns': [],  # Will be populated from database if available
+                'type': 'view',
+                'definition': view_definition
+            }
 
         # Extract foreign keys from ALTER TABLE
         triggers = {}
@@ -193,7 +224,7 @@ def parse_sql_dump(sql_dump):
         for error in parsing_errors:
             print(error)
 
-    return tables, foreign_keys, triggers, parsing_errors
+    return tables, foreign_keys, triggers, parsing_errors, views
 
 
 def extract_constraint_info(foreign_keys):

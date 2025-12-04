@@ -21,7 +21,7 @@ class TestParseSqlDump:
             username varchar(50)
         );
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert len(tables) == 1
         assert 'users' in tables
@@ -35,7 +35,7 @@ class TestParseSqlDump:
     
     def test_parse_table_with_foreign_key(self, sample_sql_dump):
         """Test parsing tables with foreign key relationships."""
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sample_sql_dump)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sample_sql_dump)
         
         # Check tables were parsed
         assert len(tables) >= 2
@@ -55,7 +55,7 @@ class TestParseSqlDump:
             "user_name" character varying(50)
         );
         '''
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert 'user_table' in tables
         assert tables['user_table']['columns'][0]['name'] == 'user_id'
@@ -69,7 +69,7 @@ class TestParseSqlDump:
             name varchar(100)
         );
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert 'test_table' in tables
         assert len(tables['test_table']['columns']) == 2
@@ -86,7 +86,7 @@ class TestParseSqlDump:
     ])
     def test_parse_malformed_sql(self, sql_dump):
         """Test parsing malformed SQL dumps."""
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql_dump)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
         
         # Should handle gracefully without crashing
         assert isinstance(tables, dict)
@@ -103,7 +103,7 @@ class TestParseSqlDump:
         ALTER TABLE child1 ADD CONSTRAINT fk1 FOREIGN KEY (parent_id) REFERENCES parent(id);
         ALTER TABLE ONLY child2 ADD CONSTRAINT fk2 FOREIGN KEY (parent_id) REFERENCES parent(id) NOT VALID;
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert len(foreign_keys) == 2
         assert any(fk[0] == 'child1' and fk[2] == 'parent' for fk in foreign_keys)
@@ -117,7 +117,7 @@ class TestParseSqlDump:
         
         ALTER TABLE child ADD CONSTRAINT fk1 FOREIGN KEY (parent_id) REFERENCES parent(id) ON DELETE CASCADE;
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert len(foreign_keys) == 1
         assert foreign_keys[0][0] == 'child'
@@ -130,7 +130,7 @@ class TestParseSqlDump:
         
         ALTER TABLE child ADD CONSTRAINT fk1 FOREIGN KEY (parent_id) REFERENCES nonexistent(id);
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert len(tables) == 1
         assert len(foreign_keys) == 0  # Should not be added
@@ -148,7 +148,7 @@ class TestParseSqlDump:
             metadata jsonb
         );
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert 'complex_table' in tables
         columns = tables['complex_table']['columns']
@@ -172,7 +172,7 @@ class TestParseSqlDump:
             PRIMARY KEY (id)
         );
         """
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
         
         assert 'with_pk' in tables
         # PRIMARY KEY constraint should not be parsed as a column

@@ -105,15 +105,24 @@ def inject_metadata_into_svg(
     node_sep,
     rank_sep,
     triggers={},
+    views={},
 ):
     # Remove XML declaration and DOCTYPE robustly
     svg_content = re.sub(r'<\?xml[^>]*\?>\s*', '', svg_content)
     svg_content = re.sub(r'<!DOCTYPE[^>]*>\s*', '', svg_content)
 
-    # Metadata lines
+    # Metadata lines - adapt based on source type
+    source_type = file_info.get('source_type', 'file')
+    if source_type == 'database':
+        source_line = f"Source: {file_info.get('connection', 'Unknown')}"
+        size_line = f"Database: {file_info.get('database', 'Unknown')}"
+    else:
+        source_line = f"Source: {file_info.get('filename', 'Unknown')}"
+        size_line = f"File Size: {file_info.get('filesize', 'Unknown')}"
+    
     metadata_lines = [
-        f"Source: {file_info['filename']}",
-        f"File Size: {file_info['filesize']}",
+        source_line,
+        size_line,
         f"Generated: {file_info['generated']}",
         f"Tables: {total_tables}",
         f"Columns: {total_columns}",
@@ -150,6 +159,83 @@ def inject_metadata_into_svg(
             miniature_svg, miniature_width, miniature_height = miniature_data
             miniature_svg = prefix_svg_ids(miniature_svg, prefix='mini-')
 
+    # Generate source information HTML based on source type
+    source_type = file_info.get('source_type', 'file')
+    
+    if source_type == 'database':
+        # Parse host and port from combined host field
+        host_port = file_info.get('host', 'localhost:5432')
+        if ':' in host_port:
+            host, port = host_port.split(':', 1)
+        else:
+            host, port = host_port, '5432'
+        
+        source_section = f"""
+            <div class="db-connection-section">
+                <div class="connection-header">
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: #555;">🔌 Current Connection</h4>
+                    <div class="original-connection" style="font-size: 0.85rem; color: #666; margin-bottom: 12px; padding: 6px; background: #f5f5f5; border-radius: 4px;">
+                        <strong>Original:</strong> {file_info.get('connection', 'Unknown')}
+                    </div>
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">Host:</span>
+                    <input type="text" id="db-host" class="editable-value" value="{host}" />
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">Port:</span>
+                    <input type="text" id="db-port" class="editable-value" value="{port}" />
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">Database:</span>
+                    <select id="db-database" class="editable-value" style="width: 100%; padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85rem; background: white; cursor: pointer;">
+                        <option value="{file_info.get('database', 'Unknown')}">{file_info.get('database', 'Unknown')}</option>
+                    </select>
+                    <button id="refresh-databases-btn" class="db-action-btn" style="margin-top: 4px; width: 100%; padding: 6px; background: #9E9E9E; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                        🔄 Refresh Databases
+                    </button>
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">User:</span>
+                    <input type="text" id="db-user" class="editable-value" value="{file_info.get('user', 'Unknown')}" />
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">Password:</span>
+                    <input type="password" id="db-password" class="editable-value" value="" placeholder="Enter password" />
+                </div>
+                <div class="db-connection-buttons" style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button id="test-connection-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        🔍 Test Connection
+                    </button>
+                    <button id="reload-from-db-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        🔄 Reload ERD
+                    </button>
+                </div>
+                <div id="connection-status" style="margin-top: 8px; padding: 6px; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
+            </div>"""
+    else:
+        # File-based source - show editable filepath when in server mode
+        source_section = f"""
+            <div class="file-source-section">
+                <div class="connection-header">
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: #555;">📁 Source File</h4>
+                    <div class="original-file-info" style="font-size: 0.85rem; color: #666; margin-bottom: 12px; padding: 6px; background: #f5f5f5; border-radius: 4px;">
+                        <strong>Current:</strong> {file_info.get('filename', 'Unknown')}<br>
+                        <strong>Size:</strong> {file_info.get('filesize', 'Unknown')}
+                    </div>
+                </div>
+                <div class="metadata-single editable-field">
+                    <span class="label">File Path:</span>
+                    <input type="text" id="file-path" class="editable-value" value="{file_info.get('filename', '')}" placeholder="Enter path to SQL dump file" />
+                </div>
+                <div class="file-reload-buttons" style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button id="reload-from-file-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        🔄 Reload from File
+                    </button>
+                </div>
+                <div id="file-status" style="margin-top: 8px; padding: 6px; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
+            </div>"""
+    
     # HTML overlays
     metadata_html = f"""
 <div class='metadata-container container' id='metadata-container'>
@@ -158,28 +244,36 @@ def inject_metadata_into_svg(
     <div class='metadata-inner-container container-content'>
         
         <div class="metadata-section">
-            <h3>📁 Source Information</h3>
-            <div class="metadata-single">
-                <span class="label">File:</span>
-                <span class="value">{file_info['filename']}</span>
-            </div>
-            <div class="metadata-single">
-                <span class="label">Size:</span>
-                <span class="value">{file_info['filesize']}</span>
-            </div>
-            <div class="metadata-single">
-                <span class="label">Generated:</span>
-                <span class="value">{file_info['generated']}</span>
+            <h3 class="collapsible-header" id="source-info-header" style="cursor: pointer; user-select: none;">
+                <span class="collapse-icon">▶</span> 📁 Source Information
+            </h3>
+            <div id="source-info-content" style="display: none;">
+                {source_section}
+                <div class="metadata-single">
+                    <span class="label">Generated:</span>
+                    <span class="value">{file_info['generated']}</span>
+                </div>
             </div>
         </div>
 
         <div class="metadata-section">
-            <h3>🗃️ Schema Statistics</h3>
+            <h3 class="collapsible-header" id="schema-stats-header" style="cursor: pointer; user-select: none;">
+                <span class="collapse-icon">▶</span> 🗃️ Schema Statistics
+            </h3>
+            <div id="schema-stats-content" style="display: none;">
             <div class="metadata-grid">
                 <div class="metadata-item table-selector-item">
                     <span class="label">Tables</span>
                     <div class="table-selector-container">
                         <select id="table-selector" class="table-selector">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="metadata-item table-selector-item">
+                    <span class="label">Views</span>
+                    <div class="table-selector-container">
+                        <select id="view-selector" class="view-selector">
                             <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
@@ -205,54 +299,118 @@ def inject_metadata_into_svg(
                     <span class="value">{'Yes' if show_standalone else 'Hidden'}</span>
                 </div>
             </div>
+            </div>
         </div>
 
         <div class="metadata-section">
-            <h3>⚙️ Graphviz Diagraph Parameters</h3>
-            <div class="metadata-params">
-                <div class="param-row">
-                    <span class="param-label">Rank Direction:</span>
-                    <span class="param-value">{rankdir}</span>
+            <h3 class="collapsible-header" id="graphviz-settings-header" style="cursor: pointer; user-select: none;">
+                <span class="collapse-icon">▶</span> ⚙️ Graphviz Settings
+            </h3>
+            <div id="graphviz-settings-content" style="display: none;">
+                <div class="graphviz-settings-grid">
+                    <div class="setting-item">
+                        <label class="setting-label">Pack Mode</label>
+                        <select id="gv-packmode" class="setting-input">
+                            <option value="array" {'selected="selected"' if packmode == 'array' else ''}>array</option>
+                            <option value="cluster" {'selected="selected"' if packmode == 'cluster' else ''}>cluster</option>
+                            <option value="graph" {'selected="selected"' if packmode == 'graph' else ''}>graph</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Rank Direction</label>
+                        <select id="gv-rankdir" class="setting-input">
+                            <option value="TB" {'selected="selected"' if rankdir == 'TB' else ''}>TB (Top to Bottom)</option>
+                            <option value="LR" {'selected="selected"' if rankdir == 'LR' else ''}>LR (Left to Right)</option>
+                            <option value="BT" {'selected="selected"' if rankdir == 'BT' else ''}>BT (Bottom to Top)</option>
+                            <option value="RL" {'selected="selected"' if rankdir == 'RL' else ''}>RL (Right to Left)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Node Shape</label>
+                        <select id="gv-node-shape" class="setting-input">
+                            <option value="rect" {'selected="selected"' if node_shape == 'rect' else ''}>Rectangle</option>
+                            <option value="ellipse" {'selected="selected"' if node_shape == 'ellipse' else ''}>Ellipse</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Edge Separation</label>
+                        <input type="text" id="gv-esep" class="setting-input" value="{esep}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Node Separation</label>
+                        <input type="text" id="gv-node-sep" class="setting-input" value="{node_sep}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Rank Separation</label>
+                        <input type="text" id="gv-rank-sep" class="setting-input" value="{rank_sep}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Font Family</label>
+                        <input type="text" id="gv-fontname" class="setting-input" value="{fontname}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Font Size (pt)</label>
+                        <input type="number" id="gv-fontsize" class="setting-input" value="{fontsize}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Node Font Size (pt)</label>
+                        <input type="number" id="gv-node-fontsize" class="setting-input" value="{node_fontsize}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Edge Font Size (pt)</label>
+                        <input type="number" id="gv-edge-fontsize" class="setting-input" value="{edge_fontsize}" />
+                    </div>
+                    <div class="setting-item">
+                        <label class="setting-label">Node Style</label>
+                        <input type="text" id="gv-node-style" class="setting-input" value="{node_style}" />
+                    </div>
                 </div>
-                <div class="param-row">
-                    <span class="param-label">Pack Mode:</span>
-                    <span class="param-value">{packmode}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Edge Separation:</span>
-                    <span class="param-value">{esep}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Font Family:</span>
-                    <span class="param-value">{fontname}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Font Size:</span>
-                    <span class="param-value">{fontsize}pt</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Node Font:</span>
-                    <span class="param-value">{node_fontsize}pt</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Edge Font:</span>
-                    <span class="param-value">{edge_fontsize}pt</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Node Style:</span>
-                    <span class="param-value">{node_style}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Node Shape:</span>
-                    <span class="param-value">{node_shape}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Node Separation:</span>
-                    <span class="param-value">{node_sep}</span>
-                </div>
-                <div class="param-row">
-                    <span class="param-label">Rank Separation:</span>
-                    <span class="param-value">{rank_sep}</span>
+                <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #ddd;">
+                    <button id="optimize-layout-btn" class="db-action-btn" style="
+                        width: 100%;
+                        padding: 8px 12px;
+                        margin-bottom: 8px;
+                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    ">
+                        🤖 AI-Optimize Layout
+                    </button>
+                    <button id="apply-graphviz-settings-btn" class="db-action-btn" style="
+                        width: 100%;
+                        padding: 8px 12px;
+                        background: linear-gradient(135deg, #3498db, #2980b9);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    ">
+                        🔄 Apply Settings &amp; Regenerate ERD
+                    </button>
+                    <div id="optimize-status" style="
+                        margin-top: 8px;
+                        padding: 6px;
+                        border-radius: 3px;
+                        font-size: 0.8rem;
+                        text-align: center;
+                        display: none;
+                    "></div>
+                    <div id="apply-settings-status" style="
+                        margin-top: 8px;
+                        padding: 6px;
+                        border-radius: 3px;
+                        font-size: 0.8rem;
+                        text-align: center;
+                        display: none;
+                    "></div>
                 </div>
             </div>
         </div>
