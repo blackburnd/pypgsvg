@@ -26,9 +26,10 @@ def run_main_with_args(args, mock_file_content=None, raise_file_error=None, pars
         with open_mock as mfile, \
              patch("pypgsvg.__init__.parse_sql_dump") as mparse, \
              patch("pypgsvg.__init__.generate_erd_with_graphviz") as mgen, \
+             patch("pypgsvg.server.start_server") as mserver, \
              patch("webbrowser.open") as mweb:
-            # parse_sql_dump returns (tables, fks, triggers, errors, views)
-            mparse.return_value = ({"users": {"columns": []}}, [], {}, parse_errors or [], {})
+            # parse_sql_dump returns (tables, fks, triggers, errors, views, functions, settings)
+            mparse.return_value = ({"users": {"columns": []}}, [], {}, parse_errors or [], {}, {}, {})
             if gen_exception:
                 mgen.side_effect = gen_exception
             yield mfile, mparse, mgen, mweb

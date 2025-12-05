@@ -236,7 +236,9 @@ class TestGenerateSelectedSVGEndpoint:
                 [],  # foreign_keys
                 {},  # triggers
                 [],  # errors
-                {}   # views
+                {},  # views
+                {},  # functions
+                {}   # settings
             )
             mock_extract.return_value = {}
 
@@ -310,6 +312,8 @@ class TestGenerateSelectedSVGEndpoint:
                 [],
                 {},
                 [],
+                {},
+                {},
                 {}
             )
             mock_extract.return_value = {}
@@ -438,7 +442,7 @@ class TestSettingsPersistence:
              patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
              patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen:
 
-            mock_parse.return_value = ({'test': {}}, [], {}, [], {})
+            mock_parse.return_value = ({'test': {}}, [], {}, [], {}, {}, {})
             mock_extract.return_value = {}
 
             # Mock the SVG file creation
@@ -484,6 +488,8 @@ class TestIncludeTablesParameter:
                 ],
                 {},
                 [],
+                {},
+                {},
                 {}
             )
             mock_extract.return_value = {}
@@ -542,6 +548,8 @@ class TestIncludeTablesParameter:
                 [('posts', 'user_id', 'users', 'id', 1, {}, None)],
                 {},
                 [],
+                {},
+                {},
                 {}
             )
             mock_extract.return_value = {}
