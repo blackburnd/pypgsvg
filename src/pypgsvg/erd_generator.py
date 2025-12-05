@@ -180,6 +180,7 @@ def generate_erd_with_graphviz(
         "views": {},
         "defaultColor": "#cccccc",
         "highlightColor": "#ff0000",
+        "includedTables": list(filtered_tables.keys()) if include_tables else None,  # Store which tables were included (for focused ERD)
     }
 
     # Populate table data
@@ -187,8 +188,9 @@ def generate_erd_with_graphviz(
         safe_name = sanitize_label(table_name)
         table_data = filtered_tables[table_name]
         column_count = len(table_data.get('columns', [])) if isinstance(table_data, dict) else 0
-        
+
         graph_data["tables"][safe_name] = {
+            "originalName": table_name,  # Store original name for reverse lookup
             "defaultColor": table_colors[table_name],
             "highlightColor": saturate_color(table_colors[table_name], saturation_factor=4.0),
             "desaturatedColor": desaturate_color(table_colors[table_name], desaturation_factor=0.1),
@@ -318,9 +320,9 @@ def generate_erd_with_graphviz(
             "id": f"edge-{i}",
             "color": f"{color1}:{color2}",
             "style": "solid",
-            "penwidth": "2.5"
+            "penwidth": "3"
         }
-        
+
         # Check for self-referencing relationships
         if ltbl == rtbl:
             edge_attrs["arrowhead"] = "dot"
@@ -328,11 +330,12 @@ def generate_erd_with_graphviz(
         # Check for cascade constraints
         elif any("CASCADE" in str(c) for c in constraints):
             edge_attrs["arrowhead"] = "vee"
-            edge_attrs["penwidth"] = "3"
+            edge_attrs["penwidth"] = "4"
         # Check for triggers on the relationship
         elif triggers:
             edge_attrs["arrowhead"] = "diamond"
             edge_attrs["style"] = "bold"
+            edge_attrs["penwidth"] = "3.5"
         else:
             edge_attrs["arrowhead"] = "vee"
 

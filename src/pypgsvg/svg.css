@@ -69,19 +69,24 @@
 
 .miniature-container {
     position: fixed;
+    right: 16px;
+    top: 16px;
+    display: block !important;
+    visibility: visible !important;
+    z-index: 10000;
     background: rgba(248, 249, 250, 0.98);
     border: 2px solid #8e44ad;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     padding: 0;
     border-radius: 8px;
-    cursor: default;
+    pointer-events: auto;
+    min-width: 320px;
+    max-width: 400px;
     width: auto;
     height: auto;
-    overflow: hidden;
-    display: block;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    z-index: 10000;
-    pointer-events: auto;
+    overflow: auto;
+    box-sizing: border-box;
 }
 
 .miniature-container .header {
@@ -97,9 +102,9 @@
     align-items: center;
     cursor: grab;
     user-select: none;
-    z-index: 10002; /* Higher than SVG z-index */
-    position: relative;
+    z-index: 10002;
     pointer-events: auto;
+    flex-shrink: 0;
 }
 
 .miniature-container .header:active {
@@ -107,15 +112,20 @@
 }
 
 .miniature-inner-container {
-    pointer-events: none;
-    position: relative;
+    padding: 8px;
+    overflow: visible;
+    display: block !important;
+    visibility: visible !important;
 }
 
 .miniature-inner-container svg {
     pointer-events: auto;
     cursor: crosshair;
-    position: relative;
-    z-index: 10000; /* Lower than header z-index */
+    display: block !important;
+    visibility: visible !important;
+    width: 100%;
+    height: auto;
+    min-height: 100px;
 }
 
 .miniature-container.minimized,
@@ -155,7 +165,7 @@
 
 /* Viewport Indicator */
 .viewport-indicator {
-    position: absolute !important;
+
     display: block !important;
     border: 2px solid #ff4081 !important;
     background-color: rgba(255, 64, 129, 0.05) !important;
@@ -212,15 +222,6 @@
 }
 */
 
-/* Metadata Minimap Row */
-.metadata-minimap-row {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 16px;
-    z-index: 10000;
-}
 
 /* Selection Container */
 #selection-container {
@@ -228,7 +229,7 @@
     top: 30px;
     left: auto;
     bottom: auto;
-    z-index: 999999 !important;
+    z-index: 10000 !important;
     pointer-events: auto !important;
     cursor: grab;
     background: rgba(248, 249, 250, 0.98) !important;
@@ -266,7 +267,7 @@
 }
 
 #selection-container .container-content{
-    position: relative;
+
     font-size: 0.9rem;
     opacity: 1;
     cursor: grab;
@@ -965,7 +966,7 @@
 /* Miniature edge styling - NO hover effects */
 .miniature-container .edge path {
     stroke-width: 3 !important;
-    opacity: 0.8;
+    opacity: 1.0;
 }
 
 /* Miniature text scaling */
