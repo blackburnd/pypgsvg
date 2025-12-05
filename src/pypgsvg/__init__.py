@@ -246,7 +246,7 @@ def main():
             sys.exit(1)
 
     # Parse the SQL dump
-    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
     # Enhance views with column information from database (if available)
     for view_name, columns in view_columns_from_db.items():
@@ -283,6 +283,8 @@ def main():
                 constraints=constraints,
                 triggers=triggers,
                 views=views,
+                functions=functions,
+                settings=settings,
             )
 
             print(f"Successfully generated ERD: {output_file}.svg")
