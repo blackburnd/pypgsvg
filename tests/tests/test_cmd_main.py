@@ -123,16 +123,18 @@ def test_main_full_functionality_with_real_schema_dump(tmp_path):
     # Path to the real schema.dump file
     schema_dump_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), "../../Samples/complex_schema.dump"))
-    
+
     # Ensure the file exists
     assert os.path.exists(schema_dump_path), \
         f"Schema dump file not found at {schema_dump_path}"
-    
+
     # Prepare output and arguments
     out = io.StringIO()
     args = [schema_dump_path, "-o", str(tmp_path / "out")]
 
     # Run the test as if it were executed from the terminal
-    with patch("sys.stdout", out):
+    # Mock getpass to prevent prompting for database password
+    with patch("sys.stdout", out), \
+         patch("getpass.getpass", return_value=""):
         with patch.object(sys, "argv", ["prog"] + args):
             mainmod.main()  # Run the actual main function

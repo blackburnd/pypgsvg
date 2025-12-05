@@ -1,4 +1,20 @@
 import pytest
+from unittest.mock import patch
+
+
+@pytest.fixture(autouse=True)
+def mock_database_interactions():
+    """Automatically mock database interactions for all tests."""
+    with patch('getpass.getpass', return_value=''), \
+         patch('subprocess.run') as mock_run:
+        # Mock successful subprocess runs
+        from unittest.mock import MagicMock
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout='-- Mock schema dump',
+            stderr=''
+        )
+        yield
 
 
 @pytest.fixture

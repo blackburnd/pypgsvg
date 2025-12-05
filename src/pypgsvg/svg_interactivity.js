@@ -2497,64 +2497,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, { passive: false });
         }
 
-        // Print ERD button handler - creates a print-friendly version
-        const printErdBtn = document.getElementById('print-erd-btn');
-        if (printErdBtn) {
-            printErdBtn.addEventListener('click', () => {
-                // Hide all interactive UI elements for printing
-                const elementsToHide = [
-                    document.getElementById('metadata-container'),
-                    document.getElementById('miniature-container'),
-                    document.getElementById('selection-container'),
-                    document.getElementById('overlay-container')
-                ];
-
-                // Store original display values
-                const originalDisplayValues = elementsToHide.map(el => el ? el.style.display : null);
-
-                // Hide elements
-                elementsToHide.forEach(el => {
-                    if (el) el.style.display = 'none';
-                });
-
-                // Reset zoom and pan to show full ERD
-                if (mainGroup) {
-                    const mainBounds = mainGroup.getBBox();
-                    const viewport = getViewportDimensions();
-
-                    // Calculate scale to fit the entire ERD with padding
-                    const padding = 50;
-                    const scaleX = (viewport.width - padding * 2) / mainBounds.width;
-                    const scaleY = (viewport.height - padding * 2) / mainBounds.height;
-                    const scale = Math.min(scaleX, scaleY, 1.0);
-
-                    // Center the ERD
-                    const centerX = mainBounds.x + mainBounds.width / 2;
-                    const centerY = mainBounds.y + mainBounds.height / 2;
-
-                    // Calculate translation to center
-                    const tx = (viewport.width / 2) - (centerX * scale);
-                    const ty = (viewport.height / 2) - (centerY * scale);
-
-                    // Apply transform
-                    mainGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
-                }
-
-                // Wait a bit for rendering, then print
-                setTimeout(() => {
-                    window.print();
-
-                    // Restore hidden elements after print dialog closes
-                    setTimeout(() => {
-                        elementsToHide.forEach((el, index) => {
-                            if (el && originalDisplayValues[index] !== null) {
-                                el.style.display = originalDisplayValues[index] || '';
-                            }
-                        });
-                    }, 100);
-                }, 100);
-            });
-        }
 
         // Generate Focused ERD confirm button handler - actually generate the ERD
         const focusedErdConfirmBtn = document.getElementById('generate-focused-erd-confirm');
@@ -3942,10 +3884,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Define showConnectionStatus function first so it's available to all handlers
+        // Database controls - retrieve button elements
+        if (!testBtn || !reloadBtn) {
+            // No database controls present (file-based mode handled above)
+            return;
+        }
+
+        // Define showConnectionStatus function for database operations
         function showConnectionStatus(message, type) {
             if (!statusDiv) return;
-            
+
             statusDiv.textContent = message;
             statusDiv.className = type;
             statusDiv.style.display = 'block';
@@ -3958,14 +3906,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (!testBtn || !reloadBtn) {
-            // No database controls present (file-based mode handled above)
-            return;
-        }
-
         // Shared state for database change tracking
         let lastSelectedDatabase = document.getElementById('db-database')?.value || '';
-        
+
         // Refresh databases button handler
         const refreshDbBtn = document.getElementById('refresh-databases-btn');
         if (refreshDbBtn) {
@@ -4179,6 +4122,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 reloadBtn.disabled = false;
                 reloadBtn.textContent = '🔄 Reload ERD';
             }
+        });
+    }
+
+    /**
+     * Initialize print button for creating print-friendly ERD views
+     */
+    function initializePrintButton() {
+        const printErdBtn = document.getElementById('print-erd-btn');
+        if (!printErdBtn) return;
+
+        printErdBtn.addEventListener('click', () => {
+            // Hide all interactive UI elements for printing
+            const elementsToHide = [
+                document.getElementById('metadata-container'),
+                document.getElementById('miniature-container'),
+                document.getElementById('selection-container'),
+                document.getElementById('overlay-container')
+            ];
+
+            // Store original display values
+            const originalDisplayValues = elementsToHide.map(el => el ? el.style.display : null);
+
+            // Hide elements
+            elementsToHide.forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+
+            // Reset zoom and pan to show full ERD
+            const mainGroup = document.getElementById('main-erd-group');
+            if (mainGroup) {
+                const mainBounds = mainGroup.getBBox();
+                const svg = document.children[0];
+                const viewport = {
+                    width: svg.clientWidth || window.innerWidth,
+                    height: svg.clientHeight || window.innerHeight
+                };
+
+                // Calculate scale to fit the entire ERD with padding
+                const padding = 50;
+                const scaleX = (viewport.width - padding * 2) / mainBounds.width;
+                const scaleY = (viewport.height - padding * 2) / mainBounds.height;
+                const scale = Math.min(scaleX, scaleY, 1.0);
+
+                // Center the ERD
+                const centerX = mainBounds.x + mainBounds.width / 2;
+                const centerY = mainBounds.y + mainBounds.height / 2;
+
+                // Calculate translation to center
+                const tx = (viewport.width / 2) - (centerX * scale);
+                const ty = (viewport.height / 2) - (centerY * scale);
+
+                // Apply transform
+                mainGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+            }
+
+            // Wait a bit for rendering, then print
+            setTimeout(() => {
+                window.print();
+
+                // Restore hidden elements after print dialog closes
+                setTimeout(() => {
+                    elementsToHide.forEach((el, index) => {
+                        if (el && originalDisplayValues[index] !== null) {
+                            el.style.display = originalDisplayValues[index] || '';
+                        }
+                    });
+                }, 100);
+            }, 100);
         });
     }
 
@@ -4729,6 +4740,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Initialize Graphviz settings
             initializeGraphvizSettings();
+
+            // Initialize print button
+            initializePrintButton();
 
             // Parse and apply URL parameters after all containers are initialized
             parseUrlParameters();
