@@ -348,7 +348,7 @@ def generate_erd_with_graphviz(
             edge_attrs["arrowhead"] = "dot"
             edge_attrs["style"] = "dashed"
         # Check for cascade constraints
-        elif any("CASCADE" in str(c) for c in constraints):
+        elif constraints and any("CASCADE" in str(c) for c in constraints):
             edge_attrs["arrowhead"] = "vee"
             edge_attrs["penwidth"] = "4"
         # Check for triggers on the relationship
@@ -365,17 +365,17 @@ def generate_erd_with_graphviz(
             **edge_attrs
         )
 
-    actual_svg_path = output_file + ".svg"
+    # Render the graph and get SVG content directly
     try:
-        dot.render(filename=output_file, cleanup=True)
+        # Use pipe() to get the SVG content directly without file I/O issues
+        svg_content = dot.pipe(format='svg', encoding='utf-8')
+        actual_svg_path = output_file + ".svg"
         print(f"--- ERD generated successfully: {actual_svg_path} ---")
     except Exception as e:
         log.error(f"Error rendering graph with Graphviz: {e}")
         return
 
-    with open(actual_svg_path, 'r', encoding='utf-8') as f:
-        svg_content = f.read()
-
+    # Process the SVG content
     svg_content = re.sub(r'<svg([^>]*)>', r'<svg\1 style="overflow:hidden;">', svg_content, count=1)
     # Remove Graphviz background rects/paths (double border fix) for full-size SVG
     svg_content = re.sub(r'<rect[^>]*fill="white"[^>]*/>', '', svg_content)

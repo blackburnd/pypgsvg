@@ -24,13 +24,13 @@ class TestMainExecution:
     def test_file_reading_workflow(self, mock_file, mock_parse, mock_generate):
         """Test file reading and processing workflow."""
         # Setup mocks
-        mock_parse.return_value = ({'test': {'columns': []}}, [], [])
-        
+        mock_parse.return_value = ({'test': {'columns': []}}, [], {}, [], {}, {}, {})
+
         # Simulate the main workflow (without __main__ check)
         with patch('builtins.open', mock_file):
             with mock_file.return_value as file:
                 sql_content = file.read()
-                tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_content)
+                tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_content)
                 if not errors:
                     generate_erd_with_graphviz(tables, foreign_keys, "test_output")
         
@@ -84,8 +84,8 @@ class TestErrorHandling:
         # This should trigger the general exception handler
         malformed_sql = "CREATE TABLE test (\nid integer\n"  # Unclosed parenthesis
         
-        tables, foreign_keys, triggers, errors, views = parse_sql_dump(malformed_sql)
-        
+        tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(malformed_sql)
+
         # Should handle gracefully
         assert isinstance(tables, dict)
         assert isinstance(foreign_keys, list)
@@ -128,7 +128,7 @@ class TestRegexPatterns:
         ]
         
         for sql in test_cases:
-            tables, _, _, _, _ = parse_sql_dump(sql)
+            tables, _, _, _, _, _, _ = parse_sql_dump(sql)
             assert len(tables) >= 1
     
     def test_foreign_key_pattern_matching(self):
@@ -140,7 +140,7 @@ class TestRegexPatterns:
         ALTER TABLE ONLY child ADD CONSTRAINT fk2 FOREIGN KEY (parent_id) REFERENCES parent(id) NOT VALID;
         """
 
-        tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql)
+        tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql)
 
         assert len(foreign_keys) >= 1
         assert any('child' in fk and 'parent' in fk for fk in foreign_keys)

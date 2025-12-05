@@ -255,7 +255,7 @@ def inject_metadata_into_svg(
                 <div class="connection-header">
                     <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: #555;">📁 Source File</h4>
                     <div class="original-file-info" style="font-size: 0.85rem; color: #666; margin-bottom: 12px; padding: 6px; background: #f5f5f5; border-radius: 4px;">
-                        <strong>Current:</strong> {file_info.get('filename', 'Unknown')}<br>
+                        <strong>Current:</strong> {file_info.get('filename', 'Unknown')}<br/>
                         <strong>Size:</strong> {file_info.get('filesize', 'Unknown')}
                     </div>
                 </div>
