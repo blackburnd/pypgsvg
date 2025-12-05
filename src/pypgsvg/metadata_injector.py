@@ -15,14 +15,45 @@ doctype = '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Gra
 
 
 # --- Utility functions (copy from original) ---
+def generate_db_config_table(settings):
+    """
+    Generate HTML table for database configuration settings.
+
+    Args:
+        settings: Dictionary of database configuration settings
+
+    Returns:
+        HTML string containing the settings table
+    """
+    if not settings or len(settings) == 0:
+        return '<p style="color: #999; font-style: italic; padding: 8px;">No database configuration settings found.</p>'
+
+    html = '<table style="width: 100%; border-collapse: collapse;">'
+    html += '<thead><tr style="background: #ecf0f1;"><th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-weight: 600;">Setting</th><th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-weight: 600;">Value</th></tr></thead>'
+    html += '<tbody>'
+    for setting, value in sorted(settings.items()):
+        # Escape HTML special characters
+        setting_escaped = str(setting).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+        value_escaped = str(value).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+        html += f'<tr><td style="padding: 6px; border: 1px solid #ddd; font-family: monospace; color: #2c3e50;">{setting_escaped}</td><td style="padding: 6px; border: 1px solid #ddd; font-family: monospace; color: #34495e;">{value_escaped}</td></tr>'
+    html += '</tbody></table>'
+    return html
+
+
+
 def extract_svg_dimensions_from_content(svg_content):
- 
-    svg_match = re.search(r'<svg[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*>', svg_content)
-    if svg_match:
-        width_str, height_str = svg_match.groups()
+
+    # Try to find width and height attributes in any order
+    width_match = re.search(r'<svg[^>]*\swidth="([^"]*)"', svg_content)
+    height_match = re.search(r'<svg[^>]*\sheight="([^"]*)"', svg_content)
+
+    if width_match and height_match:
+        width_str = width_match.group(1)
+        height_str = height_match.group(1)
         width = float(re.sub(r'[^0-9.]', '', width_str))
         height = float(re.sub(r'[^0-9.]', '', height_str))
         return int(width), int(height)
+    return None, None
 
 
 def generate_miniature_erd(
@@ -41,9 +72,11 @@ def generate_miniature_erd(
     node_style='filled',
     node_shape='rect',
 ):
-   
+
     # Extract original dimensions
     width, height = extract_svg_dimensions_from_content(main_svg_content)
+    if width is None or height is None:
+        return None
     max_dim = 500
     scale = min(max_dim / width, max_dim / height, 1.0)
     miniature_width = int(width * scale)
@@ -106,6 +139,8 @@ def inject_metadata_into_svg(
     rank_sep,
     triggers={},
     views={},
+    functions={},
+    settings={},
 ):
     # Remove XML declaration and DOCTYPE robustly
     svg_content = re.sub(r'<\?xml[^>]*\?>\s*', '', svg_content)
@@ -239,7 +274,22 @@ def inject_metadata_into_svg(
     # HTML overlays
     metadata_html = f"""
 <div class='metadata-container container' id='metadata-container'>
-    <div class='header'>📊 Database Metadata</div>
+    <div class='header' style='display: flex; justify-content: space-between; align-items: center;'>
+        <span>📊 Database Metadata</span>
+        <button id="print-erd-btn" class="db-action-btn" style="
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        ">
+            🖨️ Print
+        </button>
+    </div>
     <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
     <div class='metadata-inner-container container-content'>
         
@@ -274,6 +324,14 @@ def inject_metadata_into_svg(
                     <span class="label">Views</span>
                     <div class="table-selector-container">
                         <select id="view-selector" class="view-selector">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="metadata-item table-selector-item">
+                    <span class="label">Functions</span>
+                    <div class="table-selector-container">
+                        <select id="function-selector" class="function-selector">
                             <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
@@ -366,21 +424,6 @@ def inject_metadata_into_svg(
                     </div>
                 </div>
                 <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #ddd;">
-                    <button id="optimize-layout-btn" class="db-action-btn" style="
-                        width: 100%;
-                        padding: 8px 12px;
-                        margin-bottom: 8px;
-                        background: linear-gradient(135deg, #9b59b6, #8e44ad);
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                    ">
-                        🤖 AI-Optimize Layout
-                    </button>
                     <button id="apply-focused-settings-btn" class="db-action-btn" style="
                         width: 100%;
                         padding: 8px 12px;
@@ -411,14 +454,6 @@ def inject_metadata_into_svg(
                     ">
                         🔄 Apply Settings &amp; Regenerate ERD
                     </button>
-                    <div id="optimize-status" style="
-                        margin-top: 8px;
-                        padding: 6px;
-                        border-radius: 3px;
-                        font-size: 0.8rem;
-                        text-align: center;
-                        display: none;
-                    "></div>
                     <div id="apply-settings-status" style="
                         margin-top: 8px;
                         padding: 6px;
@@ -427,6 +462,17 @@ def inject_metadata_into_svg(
                         text-align: center;
                         display: none;
                     "></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="metadata-section">
+            <h3 class="collapsible-header" id="db-config-header" style="cursor: pointer; user-select: none;">
+                <span class="collapse-icon">▶</span> ⚙️ Database Configuration
+            </h3>
+            <div id="db-config-content" style="display: none;">
+                <div style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">
+                    {generate_db_config_table(settings)}
                 </div>
             </div>
         </div>
@@ -446,8 +492,6 @@ def inject_metadata_into_svg(
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle ne" id="resize_handle_ne" style="position:absolute;right:2px;top:24px;width:16px;height:16px;cursor:ne-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle sw" id="resize_handle_sw" style="position:absolute;left:2px;bottom:2px;width:16px;height:16px;cursor:sw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
   <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
@@ -467,8 +511,6 @@ def inject_metadata_into_svg(
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
   <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle ne" id="resize_handle_ne" style="position:absolute;right:2px;top:24px;width:16px;height:16px;cursor:ne-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle sw" id="resize_handle_sw" style="position:absolute;left:2px;bottom:2px;width:16px;height:16px;cursor:sw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
   <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
 </div>
 '''
@@ -479,7 +521,7 @@ def inject_metadata_into_svg(
         {selection_html}
     """
     overlay_container_html = f'''
-    <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
+    <foreignObject id="overlay-container" x="0" y="0" width="100vw" height="100vh" pointer-events="none">
         <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif;">
             {all_overlays_html}
         </div>

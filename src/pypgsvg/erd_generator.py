@@ -41,7 +41,9 @@ def generate_erd_with_graphviz(
     node_shape='rect',
     constraints={},
     triggers={},
-    views={}
+    views={},
+    functions={},
+    settings={}
 ):
     """
     Generate an ERD using Graphviz with explicit side connections.
@@ -68,6 +70,8 @@ def generate_erd_with_graphviz(
         constraints: Optional list of constraints discovered during parsing
         triggers: Optional list of triggers discovered during parsing
         views: Dictionary of view definitions extracted during parsing
+        functions: Dictionary of function definitions extracted during parsing
+        settings: Dictionary of configuration settings (SET statements) extracted during parsing
 
     """
     # Filter tables based on include/exclude patterns and standalone option
@@ -178,6 +182,8 @@ def generate_erd_with_graphviz(
         "tables": {},
         "edges": {},
         "views": {},
+        "functions": {},
+        "settings": settings,  # Configuration settings from the database dump
         "defaultColor": "#cccccc",
         "highlightColor": "#ff0000",
         "includedTables": list(filtered_tables.keys()) if include_tables else None,  # Store which tables were included (for focused ERD)
@@ -197,7 +203,9 @@ def generate_erd_with_graphviz(
             "triggers": triggers.get(table_name, []),
             "constraints": [],
             "edges": [],
-            "columnCount": column_count
+            "columnCount": column_count,
+            "sql": table_data.get('lines', ''),  # Include the CREATE TABLE SQL
+            "type": table_data.get('type', 'table')  # Include the type (table or view)
         }
 
     # Populate edge data and update table data with connected edges
@@ -227,6 +235,18 @@ def generate_erd_with_graphviz(
             "name": view_name,
             "definition": view_data.get('definition', ''),
             "type": "view"
+        }
+
+    # Populate functions data
+    for function_name, function_data in functions.items():
+        safe_name = sanitize_label(function_name)
+        graph_data["functions"][safe_name] = {
+            "name": function_name,
+            "parameters": function_data.get('parameters', ''),
+            "return_type": function_data.get('return_type', ''),
+            "language": function_data.get('language', ''),
+            "body": function_data.get('body', ''),
+            "full_definition": function_data.get('full_definition', '')
         }
 
     for table_name, cols in filtered_tables.items():
@@ -394,7 +414,7 @@ def generate_erd_with_graphviz(
         node_fontsize=node_fontsize, edge_fontsize=edge_fontsize,
         node_style=node_style, node_shape=node_shape,
         node_sep=node_sep, rank_sep=rank_sep, triggers=triggers,
-        views=views,
+        views=views, functions=functions, settings=settings,
     )
 
     with open(actual_svg_path, 'w', encoding='utf-8') as f:

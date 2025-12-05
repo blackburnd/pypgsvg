@@ -35,6 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/"/g, '&quot;');
     }
 
+    /**
+     * Sanitize label text for Graphviz compatibility (matches Python sanitize_label function).
+     * Removes or replaces special characters to create safe identifiers.
+     */
+    function sanitizeLabel(text) {
+        if (typeof text !== 'string') text = String(text || '');
+        return text.replace(/[^a-zA-Z0-9_]/g, '_');
+    }
+
     // Get reliable viewport dimensions
     function getViewportDimensions() {
         return {
@@ -72,6 +81,634 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.body.removeChild(textArea);
+    }
+
+    function copyToClipboard(text, button) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent || button.innerHTML;
+                button.textContent = '✓';
+                button.title = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText.includes('Copy') ? originalText : '📋';
+                    button.title = 'Copy to clipboard';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy to clipboard:', err);
+                fallbackCopyTextToClipboard(text, button);
+            });
+        } else {
+            fallbackCopyTextToClipboard(text, button);
+        }
+    }
+
+    function makeDraggable(windowElem, handleElem) {
+        handleElem.addEventListener('mousedown', (event) => {
+            // Prevent drag if clicking on controls/buttons
+            if (event.target.closest('.window-controls') || event.target.tagName === 'BUTTON') {
+                return;
+            }
+
+            const rect = windowElem.getBoundingClientRect();
+            const dragState = {
+                startX: event.clientX,
+                startY: event.clientY,
+                offsetX: rect.left,
+                offsetY: rect.top
+            };
+
+            windowElem.classList.add('dragging');
+
+            const handleMouseMove = (moveEvent) => {
+                moveEvent.preventDefault();
+                moveEvent.stopPropagation();
+
+                const dx = moveEvent.clientX - dragState.startX;
+                const dy = moveEvent.clientY - dragState.startY;
+
+                const newX = dragState.offsetX + dx;
+                const newY = dragState.offsetY + dy;
+
+                windowElem.style.left = `${newX}px`;
+                windowElem.style.top = `${newY}px`;
+                windowElem.style.transform = 'none';
+            };
+
+            const handleMouseUp = (upEvent) => {
+                upEvent.preventDefault();
+                upEvent.stopPropagation();
+                windowElem.classList.remove('dragging');
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    }
+
+    function showSqlWindow(tableName, sqlText, triggeringButton) {
+        // Check if SQL window already exists, if so remove it
+        const existingSqlWindow = document.getElementById('sql-viewer-window');
+        if (existingSqlWindow) {
+            existingSqlWindow.remove();
+            // Reset button text if provided
+            if (triggeringButton) {
+                const originalText = triggeringButton.getAttribute('data-original-text');
+                if (originalText) {
+                    triggeringButton.textContent = originalText;
+                }
+            }
+            return; // Exit early, window was closed
+        }
+
+        // Split SQL into lines for individual line copying
+        const sqlLines = sqlText.split('\n');
+
+        // Create the SQL viewer window - use HTML namespace explicitly
+        const sqlWindow = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        sqlWindow.id = 'sql-viewer-window';
+        sqlWindow.className = 'container';
+
+        // Calculate initial size based on content
+        const lineCount = sqlText.split('\n').length;
+        const lineHeight = 1.4; // Matches textarea line-height
+        const fontSize = 0.8; // rem
+        const approxLineHeightPx = fontSize * 16 * lineHeight;
+        const contentHeight = lineCount * approxLineHeightPx;
+        const windowChrome = 120; // Header + padding + margins
+        const calculatedHeight = contentHeight + windowChrome;
+
+        // Initial size: content-based but capped at 60vh
+        const initialWidth = Math.min(900, window.innerWidth * 0.7);
+        const maxHeight = window.innerHeight * 0.6;
+        const initialHeight = Math.min(calculatedHeight, maxHeight, 800);
+        const initialLeft = (window.innerWidth - initialWidth) / 2;
+        const initialTop = (window.innerHeight - initialHeight) / 2;
+
+        sqlWindow.style.cssText = `
+            position: fixed;
+            left: ${initialLeft}px;
+            top: ${initialTop}px;
+            width: ${initialWidth}px;
+            height: ${initialHeight}px;
+            max-width: 80vw;
+            max-height: 90vh;
+            background: rgba(248, 249, 250, 0.98);
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        `;
+
+        // Header
+        const header = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        header.className = 'header';
+        header.style.cssText = `
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px 6px 0 0;
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        `;
+
+        // Header title
+        const headerTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+        headerTitle.textContent = `📝 ${tableName} - SQL Definition`;
+        header.appendChild(headerTitle);
+
+        // Close button
+        const closeBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            line-height: 1;
+        `;
+        closeBtn.addEventListener('click', () => {
+            sqlWindow.remove();
+            // Reset triggering button text if provided
+            if (triggeringButton) {
+                const originalText = triggeringButton.getAttribute('data-original-text');
+                if (originalText) {
+                    triggeringButton.textContent = originalText;
+                }
+            }
+        });
+        header.appendChild(closeBtn);
+
+        // Content area
+        const content = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        content.className = 'container-content';
+        content.style.cssText = `
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        `;
+
+        // SQL textarea
+        const sqlTextarea = document.createElementNS('http://www.w3.org/1999/xhtml', 'textarea');
+        sqlTextarea.value = sqlText;
+        sqlTextarea.readOnly = true;
+        sqlTextarea.style.cssText = `
+            width: 100%;
+            flex: 1;
+            min-height: 100px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            padding: 12px;
+            padding-top: 40px;
+            resize: none;
+            color: #2c3e50;
+            line-height: 1.4;
+            box-sizing: border-box;
+            overflow-y: auto;
+        `;
+        content.appendChild(sqlTextarea);
+
+        // Copy button - overlayed on top right of textarea
+        const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        copyBtn.textContent = '📋';
+        copyBtn.style.cssText = `
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            padding: 8px 10px;
+            background: rgba(52, 152, 219, 0.95);
+            color: white;
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        `;
+        copyBtn.addEventListener('mouseenter', () => {
+            copyBtn.style.background = 'rgba(41, 128, 185, 0.95)';
+            copyBtn.style.transform = 'scale(1.1)';
+        });
+        copyBtn.addEventListener('mouseleave', () => {
+            copyBtn.style.background = 'rgba(52, 152, 219, 0.95)';
+            copyBtn.style.transform = 'scale(1)';
+        });
+        copyBtn.addEventListener('click', () => {
+            copyToClipboard(sqlText, copyBtn);
+        });
+        content.appendChild(copyBtn);
+
+        // Resize handles
+        const nwHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        nwHandle.className = 'resize-handle nw';
+        nwHandle.style.cssText = `
+            position: absolute;
+            left: 2px;
+            top: 42px;
+            width: 16px;
+            height: 16px;
+            cursor: nw-resize;
+            background: rgba(52, 152, 219, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        `;
+        nwHandle.addEventListener('mouseenter', () => {
+            nwHandle.style.background = 'rgba(52, 152, 219, 0.6)';
+        });
+        nwHandle.addEventListener('mouseleave', () => {
+            nwHandle.style.background = 'rgba(52, 152, 219, 0.3)';
+        });
+
+        const seHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        seHandle.className = 'resize-handle se';
+        seHandle.style.cssText = `
+            position: absolute;
+            right: 2px;
+            bottom: 2px;
+            width: 16px;
+            height: 16px;
+            cursor: se-resize;
+            background: rgba(52, 152, 219, 0.3);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        `;
+        seHandle.addEventListener('mouseenter', () => {
+            seHandle.style.background = 'rgba(52, 152, 219, 0.6)';
+        });
+        seHandle.addEventListener('mouseleave', () => {
+            seHandle.style.background = 'rgba(52, 152, 219, 0.3)';
+        });
+
+        sqlWindow.appendChild(header);
+        sqlWindow.appendChild(content);
+        sqlWindow.appendChild(nwHandle);
+        sqlWindow.appendChild(seHandle);
+
+        // Append to overlay container (not document.body since we're in SVG context)
+        const overlayContainer = document.getElementById('overlay-container');
+        if (overlayContainer) {
+            overlayContainer.appendChild(sqlWindow);
+        } else {
+            // Fallback to document.body if overlay container not found
+            if (document.body) {
+                document.body.appendChild(sqlWindow);
+            }
+        }
+
+        // Prevent wheel events from propagating to underlying ERD
+        sqlWindow.addEventListener('wheel', (event) => {
+            event.stopPropagation();
+        }, { passive: false });
+
+        // Prevent all mouse events from propagating to underlying ERD
+        sqlWindow.addEventListener('mousedown', (event) => {
+            event.stopPropagation();
+        });
+
+        sqlWindow.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        // Make the window draggable and resizable
+        makeDraggable(sqlWindow, header);
+        makeResizable(sqlWindow, nwHandle, seHandle);
+
+        // Change the triggering button text to "Close SQL"
+        if (triggeringButton) {
+            // Store original text if not already stored
+            if (!triggeringButton.getAttribute('data-original-text')) {
+                triggeringButton.setAttribute('data-original-text', triggeringButton.textContent);
+            }
+            if (triggeringButton.textContent.includes('SQL')) {
+                triggeringButton.textContent = '❌ SQL';
+            } else if (triggeringButton.textContent.includes('👁️')) {
+                triggeringButton.textContent = '❌';
+            }
+        }
+    }
+
+    function showFunctionWindow(functionData, triggersUsingFunction, tablesUsingFunction) {
+        // Check if function window already exists, if so remove it
+        const existingFunctionWindow = document.getElementById('function-viewer-window');
+        if (existingFunctionWindow) {
+            existingFunctionWindow.remove();
+            return; // Exit early, window was closed
+        }
+
+        const functionName = functionData.name || 'Unknown Function';
+        const functionText = functionData.full_definition || functionData.body || '';
+
+        // Create the function viewer window
+        const functionWindow = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        functionWindow.id = 'function-viewer-window';
+        functionWindow.className = 'container';
+
+        // Calculate initial size based on content
+        const lineCount = functionText.split('\n').length;
+        const lineHeight = 1.4;
+        const fontSize = 0.8;
+        const approxLineHeightPx = fontSize * 16 * lineHeight;
+        const contentHeight = lineCount * approxLineHeightPx;
+        const windowChrome = 200; // Header + usage info + padding + margins
+        const calculatedHeight = contentHeight + windowChrome;
+
+        // Initial size: content-based but capped at 60vh
+        const initialWidth = Math.min(900, window.innerWidth * 0.7);
+        const maxHeight = window.innerHeight * 0.6;
+        const initialHeight = Math.min(calculatedHeight, maxHeight, 800);
+        const initialLeft = (window.innerWidth - initialWidth) / 2;
+        const initialTop = (window.innerHeight - initialHeight) / 2;
+
+        functionWindow.style.cssText = `
+            position: fixed;
+            left: ${initialLeft}px;
+            top: ${initialTop}px;
+            width: ${initialWidth}px;
+            height: ${initialHeight}px;
+            max-width: 80vw;
+            max-height: 90vh;
+            background: rgba(248, 249, 250, 0.98);
+            border: 2px solid #2ecc71;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        `;
+
+        // Header
+        const header = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        header.className = 'header';
+        header.style.cssText = `
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px 6px 0 0;
+            cursor: grab;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        `;
+
+        // Header title
+        const headerTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
+        headerTitle.textContent = `🔧 ${functionName}`;
+        header.appendChild(headerTitle);
+
+        // Close button
+        const closeBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            line-height: 1;
+        `;
+        closeBtn.addEventListener('click', () => {
+            functionWindow.remove();
+        });
+        header.appendChild(closeBtn);
+
+        // Content area
+        const content = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        content.className = 'container-content';
+        content.style.cssText = `
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        `;
+
+        // Usage information section
+        if (triggersUsingFunction.length > 0) {
+            const usageSection = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+            usageSection.style.cssText = `
+                margin-bottom: 12px;
+                padding: 12px;
+                background: rgba(46, 204, 113, 0.1);
+                border: 1px solid #2ecc71;
+                border-radius: 4px;
+            `;
+
+            const usageTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'h4');
+            usageTitle.textContent = `⚡ Used by ${triggersUsingFunction.length} Trigger(s)`;
+            usageTitle.style.cssText = `
+                margin: 0 0 8px 0;
+                font-size: 0.9rem;
+                color: #27ae60;
+            `;
+            usageSection.appendChild(usageTitle);
+
+            const usageList = document.createElementNS('http://www.w3.org/1999/xhtml', 'ul');
+            usageList.style.cssText = `
+                margin: 0;
+                padding-left: 20px;
+                font-size: 0.85rem;
+            `;
+
+            triggersUsingFunction.forEach(trigger => {
+                const listItem = document.createElementNS('http://www.w3.org/1999/xhtml', 'li');
+                listItem.textContent = `${trigger.triggerName} on ${trigger.tableName} (${trigger.event})`;
+                listItem.style.cssText = `
+                    margin-bottom: 4px;
+                    color: #555;
+                `;
+                usageList.appendChild(listItem);
+            });
+
+            usageSection.appendChild(usageList);
+            content.appendChild(usageSection);
+        } else {
+            const noUsageSection = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+            noUsageSection.style.cssText = `
+                margin-bottom: 12px;
+                padding: 12px;
+                background: rgba(189, 195, 199, 0.1);
+                border: 1px solid #bdc3c7;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                color: #7f8c8d;
+            `;
+            noUsageSection.textContent = 'ℹ️ This function is not currently used by any triggers.';
+            content.appendChild(noUsageSection);
+        }
+
+        // Textarea container with relative positioning for the copy button
+        const textareaContainer = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        textareaContainer.style.cssText = `
+            position: relative;
+            flex: 1;
+            display: flex;
+        `;
+
+        // Function definition textarea
+        const functionTextarea = document.createElementNS('http://www.w3.org/1999/xhtml', 'textarea');
+        functionTextarea.value = functionText;
+        functionTextarea.readOnly = true;
+        functionTextarea.style.cssText = `
+            width: 100%;
+            flex: 1;
+            min-height: 100px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            padding: 12px;
+            padding-top: 40px;
+            resize: none;
+            color: #2c3e50;
+            line-height: 1.4;
+            box-sizing: border-box;
+            overflow-y: auto;
+        `;
+        textareaContainer.appendChild(functionTextarea);
+
+        // Copy button - overlayed on top right of textarea
+        const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        copyBtn.textContent = '📋';
+        copyBtn.style.cssText = `
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 8px 10px;
+            background: rgba(46, 204, 113, 0.95);
+            color: white;
+            border: 1px solid #2ecc71;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        `;
+        copyBtn.addEventListener('mouseenter', () => {
+            copyBtn.style.background = 'rgba(39, 174, 96, 0.95)';
+            copyBtn.style.transform = 'scale(1.1)';
+        });
+        copyBtn.addEventListener('mouseleave', () => {
+            copyBtn.style.background = 'rgba(46, 204, 113, 0.95)';
+            copyBtn.style.transform = 'scale(1)';
+        });
+        copyBtn.addEventListener('click', () => {
+            copyToClipboard(functionText, copyBtn);
+        });
+        textareaContainer.appendChild(copyBtn);
+
+        content.appendChild(textareaContainer);
+
+        // Resize handles
+        const nwHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        nwHandle.className = 'resize-handle nw';
+        nwHandle.style.cssText = `
+            position: absolute;
+            left: 2px;
+            top: 42px;
+            width: 16px;
+            height: 16px;
+            cursor: nw-resize;
+            background: rgba(46, 204, 113, 0.3);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        `;
+        nwHandle.addEventListener('mouseenter', () => {
+            nwHandle.style.background = 'rgba(46, 204, 113, 0.6)';
+        });
+        nwHandle.addEventListener('mouseleave', () => {
+            nwHandle.style.background = 'rgba(46, 204, 113, 0.3)';
+        });
+
+        const seHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        seHandle.className = 'resize-handle se';
+        seHandle.style.cssText = `
+            position: absolute;
+            right: 2px;
+            bottom: 2px;
+            width: 16px;
+            height: 16px;
+            cursor: se-resize;
+            background: rgba(46, 204, 113, 0.3);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        `;
+        seHandle.addEventListener('mouseenter', () => {
+            seHandle.style.background = 'rgba(46, 204, 113, 0.6)';
+        });
+        seHandle.addEventListener('mouseleave', () => {
+            seHandle.style.background = 'rgba(46, 204, 113, 0.3)';
+        });
+
+        // Assemble window
+        functionWindow.appendChild(header);
+        functionWindow.appendChild(content);
+        functionWindow.appendChild(nwHandle);
+        functionWindow.appendChild(seHandle);
+
+        // Append to overlay container
+        const overlayContainer = document.getElementById('overlay-container');
+        if (overlayContainer) {
+            overlayContainer.appendChild(functionWindow);
+        }
+
+        // Prevent wheel events from propagating to underlying ERD
+        functionWindow.addEventListener('wheel', (event) => {
+            event.stopPropagation();
+        }, { passive: false });
+
+        // Prevent all mouse events from propagating to underlying ERD
+        functionWindow.addEventListener('mousedown', (event) => {
+            event.stopPropagation();
+        });
+
+        functionWindow.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        // Make the window draggable and resizable
+        makeDraggable(functionWindow, header);
+        makeResizable(functionWindow, nwHandle, seHandle);
+
+        // If there are tables using this function, highlight them
+        if (tablesUsingFunction.length > 0) {
+            clearAllHighlights();
+            highlightElements(tablesUsingFunction, []);
+        }
     }
 
     function downloadTextAsFile(text, filename) {
@@ -274,6 +911,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         closeBtn.addEventListener('click', (e) => {
             windowElem.style.display = 'none';
+
+            // If closing the selection container, also clear the selection
+            if (windowElem.id === 'selection-container') {
+                // Temporarily allow clearing by removing the visibility check
+                highlightedElementId = null;
+
+                Object.keys(tables).forEach(id => {
+                    const tableElement = document.getElementById(id);
+                    const miniTableElement = document.getElementById('mini-' + id);
+                    if (tableElement) {
+                        tableElement.classList.remove('highlighted');
+                        setElementColor(tableElement, tables[id].defaultColor, false, false);
+                    }
+                    if (miniTableElement) {
+                        miniTableElement.classList.remove('highlighted');
+                        setElementColor(miniTableElement, tables[id].defaultColor, false, false);
+                    }
+                });
+                Object.keys(edges).forEach(id => {
+                    const edgeElement = document.getElementById(id);
+                    const miniEdgeElement = document.getElementById('mini-' + id);
+                    if (edgeElement) {
+                        edgeElement.classList.remove('highlighted');
+                        setEdgeColor(edgeElement, edges[id].defaultColor, false);
+                    }
+                    if (miniEdgeElement) {
+                        miniEdgeElement.classList.remove('highlighted');
+                        setEdgeColor(miniEdgeElement, edges[id].defaultColor, false);
+                    }
+                });
+            }
         });
 
         allControls.closeBtn = closeBtn;
@@ -536,9 +1204,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function makeResizable(windowElem) {
-        // Get both handles
-        const nwHandle = windowElem.querySelector('#resize_handle_nw');
-        const seHandle = windowElem.querySelector('#resize_handle_se');
+        // Get both handles - try by ID first, then by class
+        const nwHandle = windowElem.querySelector('#resize_handle_nw') || windowElem.querySelector('.resize-handle.nw');
+        const seHandle = windowElem.querySelector('#resize_handle_se') || windowElem.querySelector('.resize-handle.se');
 
         if (nwHandle) {
             nwHandle.addEventListener('mousedown', function(event) {
@@ -546,7 +1214,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rect = windowElem.getBoundingClientRect();
 
                 // Ensure we have inline styles set for consistent positioning
-                if (!windowElem.style.left) {
+                // Skip setting left if right is already set (for right-aligned elements)
+                if (!windowElem.style.left && !windowElem.style.right) {
                     windowElem.style.left = `${rect.left}px`;
                 }
                 if (!windowElem.style.top) {
@@ -639,28 +1308,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateViewportIndicator = () => {
         if (!viewportIndicator) return;
+
+        // Get the bounding box of the main ERD content
         const mainBounds = getMainERDBounds();
         if (mainBounds.width === 0 || mainBounds.height === 0) return;
+
+        // Get the current transform matrix
         const ctm = mainGroup.getScreenCTM();
         if (!ctm) return;
         const invCtm = ctm.inverse();
-        const pt1 = svg.createSVGPoint();
-        pt1.x = 0; pt1.y = 0;
-        const svgPt1 = pt1.matrixTransform(invCtm);
-        const pt2 = svg.createSVGPoint();
+
+        // Get the viewport dimensions (browser window size)
         const viewport = getViewportDimensions();
-        pt2.x = viewport.width; pt2.y = viewport.height;
+
+        // Transform viewport corners from screen space to SVG coordinate space
+        const pt1 = svg.createSVGPoint();
+        pt1.x = 0;
+        pt1.y = 0;
+        const svgPt1 = pt1.matrixTransform(invCtm);
+
+        const pt2 = svg.createSVGPoint();
+        pt2.x = viewport.width;
+        pt2.y = viewport.height;
         const svgPt2 = pt2.matrixTransform(invCtm);
+
+        // Calculate visible area dimensions in SVG coordinate space
         const visibleWidth = svgPt2.x - svgPt1.x;
         const visibleHeight = svgPt2.y - svgPt1.y;
+
+        // Calculate the visible area's position and size relative to the main ERD bounds
+        // This gives us the percentage of the ERD that is visible
         const relLeft = (svgPt1.x - mainBounds.x) / mainBounds.width;
         const relTop = (svgPt1.y - mainBounds.y) / mainBounds.height;
         const relWidth = visibleWidth / mainBounds.width;
         const relHeight = visibleHeight / mainBounds.height;
-        viewportIndicator.style.left = `${Math.max(0, Math.min(1, relLeft)) * 100}%`;
-        viewportIndicator.style.top = `${Math.max(0, Math.min(1, relTop)) * 100}%`;
-        viewportIndicator.style.width = `${Math.max(0, Math.min(1, relWidth)) * 100}%`;
-        viewportIndicator.style.height = `${Math.max(0, Math.min(1, relHeight)) * 100}%`;
+
+        // Now position using percentages (simpler and should work correctly)
+        viewportIndicator.style.left = `${Math.max(0, Math.min(100, relLeft * 100))}%`;
+        viewportIndicator.style.top = `${Math.max(0, Math.min(100, relTop * 100))}%`;
+        viewportIndicator.style.width = `${Math.max(0, Math.min(100, relWidth * 100))}%`;
+        viewportIndicator.style.height = `${Math.max(0, Math.min(100, relHeight * 100))}%`;
     };
 
     const applyTransform = () => {
@@ -671,39 +1358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(updateViewportIndicator);
     };
 
-    const updateSelectionContainerPosition = () => {
-        const selectionContainer = document.getElementById('selection-container');
-        const metadataContainer = document.getElementById('metadata-container');
-        const miniatureContainer = document.getElementById('miniature-container');
-
-        // Don't auto-position if user has manually moved the selection container
-        if (selectionContainerManuallyPositioned) {
-            return;
-        }
-
-        if (selectionContainer && metadataContainer) {
-            const metadataRect = metadataContainer.getBoundingClientRect();
-            const margin = 16; // Same margin as other containers
-
-            // Set width to be similar to metadata container
-            const selectionWidth = metadataRect.width * 1.5;
-
-            // Calculate max height (75% of viewport height)
-            const viewport = getViewportDimensions();
-            const maxHeight = Math.floor(viewport.height * 0.75);
-
-            // Position to the right of metadata container (original working position)
-            const leftPos = metadataRect.right + margin;
-            const topPos = metadataRect.top;
-
-            selectionContainer.style.position = 'fixed';
-            selectionContainer.style.width = `${selectionWidth}px`;
-            selectionContainer.style.maxHeight = `${maxHeight}px`;
-            selectionContainer.style.left = `${leftPos}px`;
-            selectionContainer.style.top = `${topPos}px`;
-            selectionContainer.style.zIndex = '10001';
-        }
-    };
 
     const onViewportChange = () => {
         requestAnimationFrame(updateViewportIndicator);
@@ -1300,31 +1954,277 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Table Information Section
             html += '<div class="selection-section">';
-            html += `<h3>📊 Selected Tables (${selectedTables.length})</h3>`;
+            html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">`;
+            html += `<h3 style="margin: 0;">📊 Selected Tables (${selectedTables.length})</h3>`;
+            html += `<button id="generate-focused-erd-btn" class="db-action-btn" style="
+                padding: 6px 12px;
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                white-space: nowrap;
+            ">
+                🔍 Generate Focused ERD
+            </button>`;
+            html += `</div>`;
+
+            // Add collapsible settings panel
+            html += `<div id="focused-erd-settings" style="
+                max-height: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                transition: max-height 0.3s ease-out;
+                margin-bottom: 12px;
+            ">
+                <div style="
+                    background: rgba(46, 125, 219, 0.08);
+                    border: 1px solid rgba(46, 125, 219, 0.2);
+                    border-radius: 4px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    pointer-events: auto;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; font-size: 0.9rem; color: #2e7ddb;">⚙️ Graphviz Layout Settings</h4>
+                        <button id="generate-focused-erd-confirm" class="db-action-btn" style="
+                            padding: 6px 16px;
+                            background: linear-gradient(135deg, #2e7ddb, #1e5bb8);
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        ">
+                            Create ERD from ${selectedTables.length} ${selectedTables.length === 1 ? 'table' : 'tables'}
+                        </button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; font-size: 0.8rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Rank Direction</label>
+                            <select id="focused-rankdir" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; background: white; cursor: pointer;">
+                                <option value="TB">Top to Bottom</option>
+                                <option value="LR">Left to Right</option>
+                                <option value="BT">Bottom to Top</option>
+                                <option value="RL">Right to Left</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Pack Mode</label>
+                            <select id="focused-packmode" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; background: white; cursor: pointer;">
+                                <option value="array">Array</option>
+                                <option value="cluster">Cluster</option>
+                                <option value="graph">Graph</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Node Separation</label>
+                            <input type="number" id="focused-nodesep" value="0.5" step="0.1" min="0" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Rank Separation</label>
+                            <input type="number" id="focused-ranksep" value="1.2" step="0.1" min="0" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Edge Separation</label>
+                            <input type="number" id="focused-esep" value="8" step="1" min="0" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Font Name</label>
+                            <input type="text" id="focused-fontname" value="Sans-Serif" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Graph Font Size</label>
+                            <input type="number" id="focused-fontsize" value="24" step="1" min="8" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Node Font Size</label>
+                            <input type="number" id="focused-node-fontsize" value="20" step="1" min="8" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Edge Font Size</label>
+                            <input type="number" id="focused-edge-fontsize" value="16" step="1" min="8" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Node Style</label>
+                            <input type="text" id="focused-node-style" value="filled" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; box-sizing: border-box;">
+                        </div>
+
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; color: #6c757d; font-weight: 500;">Node Shape</label>
+                            <select id="focused-node-shape" style="width: 100%; padding: 6px; border-radius: 3px; border: 1px solid #ced4da; background: white; cursor: pointer;">
+                                <option value="rect">Rectangle</option>
+                                <option value="box">Box</option>
+                                <option value="ellipse">Ellipse</option>
+                                <option value="circle">Circle</option>
+                                <option value="plaintext">Plain Text</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
             selectedTables.forEach((tableId, index) => {
                 const tableData = graphData.tables[tableId];
                 const safeTableId = escapeHtml(tableId);
                 if (index === 0) {
-                    html += `<div style="margin-bottom: 12px;">`;
+                    // Primary table row with its SQL buttons
+                    html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">`;
                     html += `<span class="table-name" data-table-id="${safeTableId}" style="font-size: 1.1rem; font-weight: 600;">${safeTableId}</span>`;
-                } else {
-                    html += `<span class="table-name" data-table-id="${safeTableId}">${safeTableId}</span>`;
+                    // Add View SQL and Copy SQL buttons for the primary table
+                    if (tableData && tableData.sql) {
+                        html += `<button id="view-table-sql" class="db-action-btn" style="
+                            padding: 4px 8px;
+                            background: rgba(52, 152, 219, 0.1);
+                            color: #3498db;
+                            border: 1px solid #3498db;
+                            border-radius: 4px;
+                            font-size: 0.75rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " title="View table SQL in a window">
+                            👁️ SQL
+                        </button>`;
+                        html += `<button id="copy-table-sql" class="db-action-btn" style="
+                            padding: 4px 8px;
+                            background: rgba(52, 152, 219, 0.1);
+                            color: #3498db;
+                            border: 1px solid #3498db;
+                            border-radius: 4px;
+                            font-size: 0.75rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " title="Copy SQL to clipboard">
+                            📋
+                        </button>`;
+                    }
+                    html += `</div>`;
                 }
-                if (index === 0) html += `</div>`;
             });
-            html += '</div>';
+
+            // Additional table names row with copy button
+            if (selectedTables.length > 1) {
+                html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">`;
+
+                // Copy button on the left
+                html += `<button id="copy-all-table-names" class="db-action-btn" style="
+                    padding: 4px 8px;
+                    background: rgba(52, 152, 219, 0.1);
+                    color: #3498db;
+                    border: 1px solid #3498db;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    flex-shrink: 0;
+                " title="Copy all table names to clipboard">
+                    📋
+                </button>`;
+
+                // Additional table names
+                selectedTables.forEach((tableId, index) => {
+                    if (index > 0) {
+                        const safeTableId = escapeHtml(tableId);
+                        html += `<span class="table-name" data-table-id="${safeTableId}">${safeTableId}</span>`;
+                    }
+                });
+
+                html += '</div>'; // Close additional table names row
+            }
 
             // Add table details for the primary table
             const primaryTableData = graphData.tables[primaryTable];
             if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers.length > 0) {
                 html += '<div class="selection-section">';
                 html += '<h3>⚡ Triggers</h3>';
-                primaryTableData.triggers.forEach(trigger => {
-                    html += '<div class="trigger-info">';
-                    html += `<span class="trigger-name">${escapeHtml(trigger.trigger_name)}</span>`;
-                    html += `<span class="trigger-event">${escapeHtml(trigger.event)}</span>`;
+                primaryTableData.triggers.forEach((trigger, triggerIndex) => {
+                    html += '<div class="trigger-info" style="margin-bottom: 8px;">';
+                    html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">`;
+                    html += `<span class="trigger-name" style="font-weight: 600;">${escapeHtml(trigger.trigger_name)}</span>`;
+                    html += `<span class="trigger-event" style="font-size: 0.8rem; color: #7f8c8d;">${escapeHtml(trigger.event)}</span>`;
+                    if (trigger.full_line) {
+                        html += `<button class="view-trigger-function" data-trigger-index="${triggerIndex}" style="
+                            padding: 2px 6px;
+                            background: rgba(52, 152, 219, 0.1);
+                            color: #3498db;
+                            border: 1px solid #3498db;
+                            border-radius: 3px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " title="View trigger function">
+                            👁️
+                        </button>`;
+                        html += `<button class="copy-trigger-function" data-trigger-index="${triggerIndex}" style="
+                            padding: 2px 6px;
+                            background: rgba(52, 152, 219, 0.1);
+                            color: #3498db;
+                            border: 1px solid #3498db;
+                            border-radius: 3px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " title="Copy trigger function">
+                            📋
+                        </button>`;
+                    }
+                    html += `</div>`;
                     if (trigger.function) {
-                        html += `<div style="font-size: 0.8rem; color: #7f8c8d; margin-top: 2px;">→ ${escapeHtml(trigger.function)}${trigger.function_args ? '(' + escapeHtml(trigger.function_args) + ')' : '()'}</div>`;
+                        const functionName = trigger.function;
+                        const safeFunctionName = sanitizeLabel(functionName);
+                        const functionData = graphData.functions && graphData.functions[safeFunctionName];
+
+                        html += `<div style="font-size: 0.75rem; color: #7f8c8d; display: flex; align-items: center; gap: 8px; margin-top: 4px;">`;
+                        html += `<span>→ ${escapeHtml(functionName)}${trigger.function_args ? '(' + escapeHtml(trigger.function_args) + ')' : '()'}</span>`;
+
+                        if (functionData && functionData.full_definition) {
+                            html += `<button class="view-function-definition" data-function-name="${escapeHtml(safeFunctionName)}" style="
+                                padding: 2px 6px;
+                                background: rgba(46, 204, 113, 0.1);
+                                color: #2ecc71;
+                                border: 1px solid #2ecc71;
+                                border-radius: 3px;
+                                font-size: 0.7rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            " title="View function definition">
+                                👁️
+                            </button>`;
+                            html += `<button class="copy-function-definition" data-function-name="${escapeHtml(safeFunctionName)}" style="
+                                padding: 2px 6px;
+                                background: rgba(46, 204, 113, 0.1);
+                                color: #2ecc71;
+                                border: 1px solid #2ecc71;
+                                border-radius: 3px;
+                                font-size: 0.7rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            " title="Copy function definition">
+                                📋
+                            </button>`;
+                        }
+                        html += `</div>`;
                     }
                     html += '</div>';
                 });
@@ -1339,8 +2239,11 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
-                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}">`;
+                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}" style="position: relative;">`;
+                    html += `<div style="display: flex; align-items: center; justify-content: space-between;">`;
                     html += `<h4>🔑 ${escapeHtml(edge.fromColumn)} → ${escapeHtml(edge.toColumn)}</h4>`;
+                    html += `<button class="copy-sql-text" data-sql-text="${escapeHtml(edge.fkText)}" style="background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.9rem; opacity: 0.6; transition: opacity 0.2s;" title="Copy SQL">📋</button>`;
+                    html += `</div>`;
                     html += `<pre>${escapeHtml(edge.fkText)}</pre>`;
                     html += '</div>';
                 } else {
@@ -1353,21 +2256,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add Generate SVG buttons
         html += `
             <div style="margin-top: 20px; padding-top: 16px; border-top: 2px solid #ecf0f1;">
-                <button id="generate-focused-erd-btn" class="db-action-btn" style="
-                    width: 100%;
-                    padding: 10px 16px;
-                    margin-bottom: 8px;
-                    background: linear-gradient(135deg, #3498db, #2980b9);
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                ">
-                    🔍 Generate Focused ERD & Reload
-                </button>
                 <button id="generate-selected-svg-btn" class="db-action-btn" style="
                     width: 100%;
                     padding: 10px 16px;
@@ -1424,66 +2312,12 @@ document.addEventListener('DOMContentLoaded', () => {
             inner.appendChild(errorDiv);
         }
 
-        // Add click event listeners to table names (mouseover effects removed for performance)
+        // Add click event listeners to table names
         const tableNames = inner.querySelectorAll('.table-name');
         tableNames.forEach(tableNameSpan => {
             const tableId = tableNameSpan.getAttribute('data-table-id');
 
-            // Mouseover event - apply saturation effect instead of highlighting
-            tableNameSpan.addEventListener('mouseover', () => {
-                // Get the table element in the SVG
-                const tableElement = document.getElementById(tableId);
-                const miniTableElement = document.getElementById('mini-' + tableId);
-
-                if (tableElement) {
-                    // Apply saturation effect with double saturation (2.0 factor)
-                    setSaturationEffect(tableElement, 2.0, false);
-                }
-
-                // Also apply to the miniature version
-                if (miniTableElement) {
-                    setSaturationEffect(miniTableElement, 2.0, false);
-                }
-            });
-
-            // Mouseout event - restore original appearance
-            tableNameSpan.addEventListener('mouseout', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const tableElement = document.getElementById(tableId);
-                const miniTableElement = document.getElementById('mini-' + tableId);
-
-                if (tableElement) {
-                    setSaturationEffect(tableElement, 2.0, true);
-
-                    // If this table should still be highlighted, ensure highlighting is maintained
-                    if (highlightedElementId &&
-                        (highlightedElementId === tableId ||
-                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId =>
-                             edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
-                        // Re-apply highlighting to maintain background colors
-                        tableElement.classList.add('highlighted');
-                        setElementColor(tableElement, tables[tableId].defaultColor, true, true);
-                    }
-                }
-
-                // Also restore the miniature version
-                if (miniTableElement) {
-                    setSaturationEffect(miniTableElement, 2.0, true);
-
-                    // Maintain highlighting for mini version too
-                    if (highlightedElementId &&
-                        (highlightedElementId === tableId ||
-                         (tables[highlightedElementId] && tables[highlightedElementId].edges.some(edgeId =>
-                             edges[edgeId] && edges[edgeId].tables.includes(tableId))))) {
-                        miniTableElement.classList.add('highlighted');
-                        setElementColor(miniTableElement, tables[tableId].defaultColor, true, true);
-                    }
-                }
-            });
-
-            // ADD THE NEW CLICK HANDLER HERE
+            // Click handler
             tableNameSpan.addEventListener('click', (e) => {
                 e.preventDefault(); // Prevent scrolling
                 e.stopPropagation();
@@ -1522,52 +2356,214 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Add click event listeners to edge names (mouseover effects removed for performance)
+        // Edge names - no mouse event handlers needed
         const edgeNames = inner.querySelectorAll('.edge-name');
         edgeNames.forEach(edgeNameLi => {
             const edgeId = edgeNameLi.getAttribute('data-edge-id');
+            // Mouse events handled at table/view container level only
+        });
 
-            // Mouseover event - apply saturation effect to the edge
-            edgeNameLi.addEventListener('mouseover', () => {
-                const edgeElement = document.getElementById(edgeId);
-                const miniEdgeElement = document.getElementById('mini-' + edgeId);
+        // Copy all table names button handler
+        const copyAllTableNamesBtn = document.getElementById('copy-all-table-names');
+        if (copyAllTableNamesBtn) {
+            copyAllTableNamesBtn.addEventListener('click', () => {
+                const tableNames = selectedTables.join('\n');
+                copyToClipboard(tableNames, copyAllTableNamesBtn);
+            });
+        }
 
-                if (edgeElement) {
-                    setEdgeSaturationEffect(edgeElement, 2.0, false);
-                }
-
-                if (miniEdgeElement) {
-                    setEdgeSaturationEffect(miniEdgeElement, 2.0, false);
+        // Copy table SQL button handler
+        const copyTableSqlBtn = document.getElementById('copy-table-sql');
+        if (copyTableSqlBtn) {
+            copyTableSqlBtn.addEventListener('click', () => {
+                const primaryTable = selectedTables[0];
+                const primaryTableData = graphData.tables[primaryTable];
+                if (primaryTableData && primaryTableData.sql) {
+                    copyToClipboard(primaryTableData.sql, copyTableSqlBtn);
                 }
             });
+        }
 
-            // Mouseout event - restore original edge appearance
-            edgeNameLi.addEventListener('mouseout', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const edgeElement = document.getElementById(edgeId);
-                const miniEdgeElement = document.getElementById('mini-' + edgeId);
-
-                if (edgeElement) {
-                    setEdgeSaturationEffect(edgeElement, 2.0, true);
+        // View table SQL button handler - opens a new window
+        const viewTableSqlBtn = document.getElementById('view-table-sql');
+        if (viewTableSqlBtn) {
+            viewTableSqlBtn.addEventListener('click', () => {
+                const primaryTable = selectedTables[0];
+                const primaryTableData = graphData.tables[primaryTable];
+                if (primaryTableData && primaryTableData.sql) {
+                    showSqlWindow(primaryTable, primaryTableData.sql, viewTableSqlBtn);
                 }
+            });
+        }
 
-                if (miniEdgeElement) {
-                    setEdgeSaturationEffect(miniEdgeElement, 2.0, true);
+        // View trigger function button handlers
+        const viewTriggerButtons = inner.querySelectorAll('.view-trigger-function');
+        viewTriggerButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const triggerIndex = parseInt(btn.getAttribute('data-trigger-index'));
+                const primaryTable = selectedTables[0];
+                const primaryTableData = graphData.tables[primaryTable];
+                if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers[triggerIndex]) {
+                    const trigger = primaryTableData.triggers[triggerIndex];
+                    const triggerText = trigger.full_line || '';
+                    showSqlWindow(`${trigger.trigger_name} - Trigger Function`, triggerText, btn);
                 }
             });
         });
 
-        // Add event listener for Generate SVG button
-        // Generate Focused ERD button handler
+        // Copy trigger function button handlers
+        const copyTriggerButtons = inner.querySelectorAll('.copy-trigger-function');
+        copyTriggerButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const triggerIndex = parseInt(btn.getAttribute('data-trigger-index'));
+                const primaryTable = selectedTables[0];
+                const primaryTableData = graphData.tables[primaryTable];
+                if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers[triggerIndex]) {
+                    const trigger = primaryTableData.triggers[triggerIndex];
+                    const triggerText = trigger.full_line || '';
+                    copyToClipboard(triggerText, btn);
+                }
+            });
+        });
+
+        // View function definition button handlers
+        const viewFunctionButtons = inner.querySelectorAll('.view-function-definition');
+        viewFunctionButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const functionName = btn.getAttribute('data-function-name');
+                const functionData = graphData.functions && graphData.functions[functionName];
+                if (functionData && functionData.full_definition) {
+                    showSqlWindow(`${functionData.name} - Function Definition`, functionData.full_definition, btn);
+                }
+            });
+        });
+
+        // Copy function definition button handlers
+        const copyFunctionButtons = inner.querySelectorAll('.copy-function-definition');
+        copyFunctionButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const functionName = btn.getAttribute('data-function-name');
+                const functionData = graphData.functions && graphData.functions[functionName];
+                if (functionData && functionData.full_definition) {
+                    copyToClipboard(functionData.full_definition, btn);
+                }
+            });
+        });
+
+        // Copy SQL text button handlers
+        const copySqlButtons = inner.querySelectorAll('.copy-sql-text');
+        copySqlButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sqlText = btn.getAttribute('data-sql-text');
+                copyToClipboard(sqlText, btn);
+            });
+        });
+
+        // Generate Focused ERD button handler - toggle settings panel
         const focusedErdBtn = document.getElementById('generate-focused-erd-btn');
+        const focusedSettingsPanel = document.getElementById('focused-erd-settings');
+
+        if (focusedErdBtn && focusedSettingsPanel) {
+            focusedErdBtn.addEventListener('click', () => {
+                const isOpen = focusedSettingsPanel.style.maxHeight !== '0px' && focusedSettingsPanel.style.maxHeight !== '';
+
+                if (isOpen) {
+                    // Collapse
+                    focusedSettingsPanel.style.maxHeight = '0';
+                    focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+                } else {
+                    // Expand - increased to accommodate all settings
+                    focusedSettingsPanel.style.maxHeight = '800px';
+                    focusedErdBtn.textContent = '🔼 Hide Settings';
+                }
+            });
+        }
+
+        // Add event listeners to stop propagation for all inputs in the settings panel
+        if (focusedSettingsPanel) {
+            focusedSettingsPanel.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+            });
+            focusedSettingsPanel.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            focusedSettingsPanel.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
+        }
+
+        // Print ERD button handler - creates a print-friendly version
+        const printErdBtn = document.getElementById('print-erd-btn');
+        if (printErdBtn) {
+            printErdBtn.addEventListener('click', () => {
+                // Hide all interactive UI elements for printing
+                const elementsToHide = [
+                    document.getElementById('metadata-container'),
+                    document.getElementById('miniature-container'),
+                    document.getElementById('selection-container'),
+                    document.getElementById('overlay-container')
+                ];
+
+                // Store original display values
+                const originalDisplayValues = elementsToHide.map(el => el ? el.style.display : null);
+
+                // Hide elements
+                elementsToHide.forEach(el => {
+                    if (el) el.style.display = 'none';
+                });
+
+                // Reset zoom and pan to show full ERD
+                if (mainGroup) {
+                    const mainBounds = mainGroup.getBBox();
+                    const viewport = getViewportDimensions();
+
+                    // Calculate scale to fit the entire ERD with padding
+                    const padding = 50;
+                    const scaleX = (viewport.width - padding * 2) / mainBounds.width;
+                    const scaleY = (viewport.height - padding * 2) / mainBounds.height;
+                    const scale = Math.min(scaleX, scaleY, 1.0);
+
+                    // Center the ERD
+                    const centerX = mainBounds.x + mainBounds.width / 2;
+                    const centerY = mainBounds.y + mainBounds.height / 2;
+
+                    // Calculate translation to center
+                    const tx = (viewport.width / 2) - (centerX * scale);
+                    const ty = (viewport.height / 2) - (centerY * scale);
+
+                    // Apply transform
+                    mainGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+                }
+
+                // Wait a bit for rendering, then print
+                setTimeout(() => {
+                    window.print();
+
+                    // Restore hidden elements after print dialog closes
+                    setTimeout(() => {
+                        elementsToHide.forEach((el, index) => {
+                            if (el && originalDisplayValues[index] !== null) {
+                                el.style.display = originalDisplayValues[index] || '';
+                            }
+                        });
+                    }, 100);
+                }, 100);
+            });
+        }
+
+        // Generate Focused ERD confirm button handler - actually generate the ERD
+        const focusedErdConfirmBtn = document.getElementById('generate-focused-erd-confirm');
         const focusedStatusDiv = document.getElementById('focused-erd-status');
 
-        if (focusedErdBtn) {
-            focusedErdBtn.addEventListener('click', async () => {
-                focusedErdBtn.disabled = true;
-                focusedErdBtn.textContent = '⏳ Generating...';
+        if (focusedErdConfirmBtn) {
+            focusedErdConfirmBtn.addEventListener('click', async () => {
+                focusedErdConfirmBtn.disabled = true;
+                focusedErdConfirmBtn.textContent = '⏳ Generating...';
 
                 if (focusedStatusDiv) {
                     focusedStatusDiv.style.display = 'block';
@@ -1579,27 +2575,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 try {
                     // Get selected table and edge IDs
-                    // selectedTables and selectedEdges are already arrays of string IDs (sanitized), not objects
-                    // Convert sanitized IDs back to original table names using graph data
                     const selectedTableIds = selectedTables.map(sanitizedId => {
                         const tableData = graphData.tables[sanitizedId];
-                        return tableData?.originalName || sanitizedId;  // Fallback to sanitized if originalName not found
+                        return tableData?.originalName || sanitizedId;
                     });
                     const selectedEdgeIds = selectedEdges;
 
-                    // Get Graphviz settings from the UI
+                    // Get Graphviz settings from the focused ERD settings panel
                     const graphvizSettings = {
-                        packmode: document.getElementById('gv-packmode')?.value || 'array',
-                        rankdir: document.getElementById('gv-rankdir')?.value || 'TB',
-                        esep: document.getElementById('gv-esep')?.value || '8',
-                        node_sep: document.getElementById('gv-node-sep')?.value || '0.5',
-                        rank_sep: document.getElementById('gv-rank-sep')?.value || '1.2',
-                        fontname: document.getElementById('gv-fontname')?.value || 'Arial',
-                        fontsize: parseInt(document.getElementById('gv-fontsize')?.value) || 18,
-                        node_fontsize: parseInt(document.getElementById('gv-node-fontsize')?.value) || 14,
-                        edge_fontsize: parseInt(document.getElementById('gv-edge-fontsize')?.value) || 12,
-                        node_style: document.getElementById('gv-node-style')?.value || 'rounded,filled',
-                        node_shape: document.getElementById('gv-node-shape')?.value || 'rect'
+                        packmode: document.getElementById('focused-packmode')?.value || 'array',
+                        rankdir: document.getElementById('focused-rankdir')?.value || 'TB',
+                        esep: document.getElementById('focused-esep')?.value || '8',
+                        node_sep: document.getElementById('focused-nodesep')?.value || '0.5',
+                        rank_sep: document.getElementById('focused-ranksep')?.value || '1.2',
+                        fontname: document.getElementById('focused-fontname')?.value || 'Sans-Serif',
+                        fontsize: parseInt(document.getElementById('focused-fontsize')?.value) || 24,
+                        node_fontsize: parseInt(document.getElementById('focused-node-fontsize')?.value) || 20,
+                        edge_fontsize: parseInt(document.getElementById('focused-edge-fontsize')?.value) || 16,
+                        node_style: document.getElementById('focused-node-style')?.value || 'filled',
+                        node_shape: document.getElementById('focused-node-shape')?.value || 'rect'
                     };
 
                     // Send request to generate focused ERD
@@ -1617,15 +2611,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (result.success && result.new_file) {
                         if (focusedStatusDiv) {
-                            focusedStatusDiv.textContent = 'Success! Reloading with focused view...';
+                            focusedStatusDiv.textContent = 'Success! Opening in popup...';
                             focusedStatusDiv.style.background = 'rgba(76, 175, 80, 0.1)';
                             focusedStatusDiv.style.border = '1px solid rgba(76, 175, 80, 0.3)';
                             focusedStatusDiv.style.color = '#2e7d32';
                         }
 
-                        // Reload page with new focused ERD
+                        // Open focused ERD in a popup window
                         setTimeout(() => {
-                            window.location.href = `/${result.new_file}`;
+                            const screenWidth = window.screen.availWidth;
+                            const screenHeight = window.screen.availHeight;
+                            const popupWidth = Math.floor(screenWidth * 0.8);
+                            const popupHeight = Math.floor(screenHeight * 0.8);
+                            const left = Math.floor((screenWidth - popupWidth) / 2);
+                            const top = Math.floor((screenHeight - popupHeight) / 2);
+
+                            window.open(
+                                `/${result.new_file}`,
+                                'focusedERD',
+                                `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,toolbar=no,menubar=no,location=no`
+                            );
+                            focusedErdConfirmBtn.textContent = '✓ Generate ERD';
+                            focusedErdConfirmBtn.disabled = false;
+                            if (focusedStatusDiv) {
+                                setTimeout(() => {
+                                    focusedStatusDiv.style.display = 'none';
+                                }, 2000);
+                            }
+                            // Collapse the settings panel after successful generation
+                            if (focusedSettingsPanel) {
+                                focusedSettingsPanel.style.maxHeight = '0';
+                            }
+                            if (focusedErdBtn) {
+                                focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+                            }
                         }, 500);
                     } else {
                         throw new Error(result.message || 'Failed to generate focused ERD');
@@ -1638,8 +2657,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         focusedStatusDiv.style.border = '1px solid rgba(244, 67, 54, 0.3)';
                         focusedStatusDiv.style.color = '#c62828';
                     }
-                    focusedErdBtn.textContent = '🔍 Generate Focused ERD & Reload';
-                    focusedErdBtn.disabled = false;
+                    focusedErdConfirmBtn.textContent = '✓ Generate ERD';
+                    focusedErdConfirmBtn.disabled = false;
                 }
             });
         }
@@ -1730,8 +2749,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Position the selection container
-        updateSelectionContainerPosition();
     }
 
     function hideSelectionWindow() {
@@ -1754,8 +2771,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Also check if selection-container is being dragged (it has its own drag system)
+        // Don't clear if selection-container is visible (user is actively working with a selection)
         const selectionContainer = document.getElementById('selection-container');
+        const isSelectionVisible = selectionContainer &&
+            selectionContainer.style.display !== 'none' &&
+            window.getComputedStyle(selectionContainer).display !== 'none';
+
+        if (isSelectionVisible) {
+            return;
+        }
+
+        // Also check if selection-container is being dragged (it has its own drag system)
         if (selectionContainer && selectionContainer._dragState) {
             return;
         }
@@ -2250,7 +3276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Auto-zoom for focused ERD ---
     // If this is a focused ERD (check URL contains 'focused'), zoom all the way out
     let lockedMinZoom = null;
-    if (window.location.pathname.includes('focused') && mainGroup) {
+    if (mainGroup) {
         // Simulate scrolling out to the absolute minimum
         let previousS = userS;
         for (let i = 0; i < 200; i++) {
@@ -2337,31 +3363,34 @@ document.addEventListener('DOMContentLoaded', () => {
             let clickedElement = event.target;
             let tableId = null, edgeId = null;
 
-            // First, try to find a node or edge by traversing up the DOM tree
-            while (clickedElement && clickedElement !== svg) {
-                // Check for node class AND valid table ID
-                if (clickedElement.classList && clickedElement.classList.contains('node')) {
+            // First, use closest() to check if we're within a node or edge
+            const nodeElement = event.target.closest('.node');
+            const edgeElement = event.target.closest('.edge');
+
+            // If we found a node element, get its table ID
+            if (nodeElement && nodeElement.id && tables[nodeElement.id]) {
+                tableId = nodeElement.id;
+            }
+            // If we found an edge element
+            else if (edgeElement && edgeElement.id) {
+                edgeId = edgeElement.id;
+            }
+            // Fallback: traverse up looking for any element with a known table/edge ID
+            else {
+                clickedElement = event.target;
+                while (clickedElement && clickedElement !== svg) {
+                    // Check if element ID directly matches a known table
                     if (clickedElement.id && tables[clickedElement.id]) {
                         tableId = clickedElement.id;
                         break;
                     }
+                    // Check for edge ID pattern
+                    if (clickedElement.id && clickedElement.id.startsWith('edge-')) {
+                        edgeId = clickedElement.id;
+                        break;
+                    }
+                    clickedElement = clickedElement.parentElement;
                 }
-                // Check for edge class
-                if (clickedElement.classList && clickedElement.classList.contains('edge')) {
-                    edgeId = clickedElement.id;
-                    break;
-                }
-                // Also check if element ID directly matches a known table (even without node class)
-                if (clickedElement.id && tables[clickedElement.id]) {
-                    tableId = clickedElement.id;
-                    break;
-                }
-                // Check for edge ID pattern
-                if (clickedElement.id && clickedElement.id.startsWith('edge-')) {
-                    edgeId = clickedElement.id;
-                    break;
-                }
-                clickedElement = clickedElement.parentElement;
             }
 
             // Handle table click
@@ -2406,8 +3435,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Allow recentering on empty space - everything except nodes, edges, and containers
             if (!isOnNode && !isOnEdge && !isOnContainer) {
-                // Clear all highlights and restore original state
-                clearAllHighlights();
+                // Check if selection container is visible - if so, don't clear selection
+                const selectionContainer = document.getElementById('selection-container');
+                const isSelectionVisible = selectionContainer &&
+                    selectionContainer.style.display !== 'none' &&
+                    window.getComputedStyle(selectionContainer).display !== 'none';
+
+                // Only clear highlights if selection container is not visible
+                if (!isSelectionVisible) {
+                    clearAllHighlights();
+                }
 
                 // Center the view on the clicked point
                 const svgRect = svg.getBoundingClientRect();
@@ -2432,6 +3469,68 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+    });
+
+    // Double-click handler to zoom to connected nodes
+    document.addEventListener('dblclick', function (event) {
+        if (event.target.closest('svg')) {
+            const nodeElement = event.target.closest('.node');
+
+            if (nodeElement && nodeElement.id && tables[nodeElement.id]) {
+                const tableId = nodeElement.id;
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Get all connected tables and edges
+                const connectedEdges = tables[tableId].edges;
+                const connectedTables = [tableId, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+                const uniqueTables = [...new Set(connectedTables)];
+
+                // Calculate bounding box for all connected nodes
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                let foundAny = false;
+
+                uniqueTables.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        try {
+                            const bbox = element.getBBox();
+                            minX = Math.min(minX, bbox.x);
+                            minY = Math.min(minY, bbox.y);
+                            maxX = Math.max(maxX, bbox.x + bbox.width);
+                            maxY = Math.max(maxY, bbox.y + bbox.height);
+                            foundAny = true;
+                        } catch (e) {
+                            console.warn('Could not get bbox for', id);
+                        }
+                    }
+                });
+
+                if (foundAny) {
+                    // Add padding around the bounding box
+                    const padding = 100;
+                    minX -= padding;
+                    minY -= padding;
+                    maxX += padding;
+                    maxY += padding;
+
+                    // Calculate center and dimensions
+                    const centerX = (minX + maxX) / 2;
+                    const centerY = (minY + maxY) / 2;
+                    const width = maxX - minX;
+                    const height = maxY - minY;
+
+                    // Calculate zoom level to fit the bounding box in viewport
+                    const viewport = getViewportDimensions();
+                    const scaleX = viewport.width / width;
+                    const scaleY = viewport.height / height;
+                    const newScale = Math.min(scaleX, scaleY, 2.0) * 0.75; // Max 2x zoom, 75% to leave more margin
+
+                    // Zoom to the calculated center and scale
+                    zoomToPoint(centerX, centerY, newScale);
+                }
+            }
+        }
     });
 
     // Function to enhance edge clickability by adding invisible click areas
@@ -2528,6 +3627,7 @@ document.addEventListener('DOMContentLoaded', () => {
         makeCollapsible('source-info-header', 'source-info-content');
         makeCollapsible('schema-stats-header', 'schema-stats-content');
         makeCollapsible('graphviz-settings-header', 'graphviz-settings-content');
+        makeCollapsible('db-config-header', 'db-config-content');
     }
 
     /**
@@ -2633,11 +3733,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Check if we're viewing a focused ERD and show/hide the focused button
+        // Check if we're viewing a focused ERD and show/hide the appropriate button
         const applyFocusedBtn = document.getElementById('apply-focused-settings-btn');
+        const applyRegularBtn = document.getElementById('apply-graphviz-settings-btn');
         if (applyFocusedBtn && graphData.includedTables) {
-            // We're viewing a focused ERD - show the focused button
+            // We're viewing a focused ERD - show the focused button, hide the regular button
             applyFocusedBtn.style.display = 'block';
+            if (applyRegularBtn) {
+                applyRegularBtn.style.display = 'none';
+            }
         }
 
         // Apply Focused Settings button handler
@@ -3425,6 +4529,116 @@ document.addEventListener('DOMContentLoaded', () => {
         populateViewSelector();
     }
 
+    // Function Selector functionality
+    function initializeFunctionSelector() {
+        const functionSelector = document.getElementById('function-selector');
+        if (!functionSelector) {
+            console.warn('Function selector element not found');
+            return;
+        }
+
+        // Make sure we have access to the functions data
+        const functions = graphData.functions || {};
+        if (!functions || Object.keys(functions).length === 0) {
+            console.log('No functions data available for function selector');
+            // Still populate with empty selector
+            const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'No Functions (0)';
+            functionSelector.appendChild(defaultOption);
+            return;
+        }
+
+        console.log('Initializing function selector with', Object.keys(functions).length, 'functions');
+
+        // Function to populate the selector with functions
+        function populateFunctionSelector() {
+            // Clear existing options
+            while (functionSelector.firstChild) {
+                functionSelector.removeChild(functionSelector.firstChild);
+            }
+
+            const functionsToDisplay = Object.keys(functions);
+            const optionText = `All Functions (${functionsToDisplay.length})`;
+
+            console.log('About to populate function selector with options:', optionText);
+
+            // Add the default option
+            const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+            defaultOption.value = '';
+            defaultOption.textContent = optionText;
+            functionSelector.appendChild(defaultOption);
+
+            // Add function options (sorted)
+            functionsToDisplay.sort().forEach((functionId, index) => {
+                const option = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
+                option.value = functionId;
+                option.textContent = functions[functionId].name || functionId;
+                functionSelector.appendChild(option);
+
+                // Log progress for first few and last few
+                if (index < 3 || index >= functionsToDisplay.length - 3) {
+                    console.log(`Added function option ${index + 1}: ${functionId}, total options now: ${functionSelector.options.length}`);
+                }
+            });
+
+            console.log('Populated function selector with', functionsToDisplay.length, 'functions, final option count:', functionSelector.options.length);
+        }
+
+        // Handle selector change
+        functionSelector.addEventListener('change', function() {
+            const selectedFunctionId = this.value;
+            if (!selectedFunctionId) return;
+
+            const functionData = functions[selectedFunctionId];
+            if (functionData) {
+                // Find all triggers that use this function
+                const triggersUsingFunction = [];
+                const tablesUsingFunction = [];
+
+                for (const [tableId, tableData] of Object.entries(graphData.tables || {})) {
+                    if (tableData.triggers && tableData.triggers.length > 0) {
+                        tableData.triggers.forEach(trigger => {
+                            const triggerFunctionName = sanitizeLabel(trigger.function);
+                            if (triggerFunctionName === selectedFunctionId) {
+                                triggersUsingFunction.push({
+                                    tableName: tableData.originalName || tableId,
+                                    triggerName: trigger.trigger_name,
+                                    event: trigger.event
+                                });
+                                if (!tablesUsingFunction.includes(tableId)) {
+                                    tablesUsingFunction.push(tableId);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Show function definition window with usage info
+                showFunctionWindow(functionData, triggersUsingFunction, tablesUsingFunction);
+            }
+
+            // Reset selector to default option
+            this.selectedIndex = 0;
+        });
+
+        // Prevent drag events from interfering with function selector interaction
+        functionSelector.addEventListener('mousedown', function(event) {
+            event.stopPropagation();
+        });
+
+        functionSelector.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
+        functionSelector.addEventListener('focus', function(event) {
+            event.stopPropagation();
+        });
+
+        // Initial population
+        populateFunctionSelector();
+    }
+
 
     function initializeSvgView() {
 
@@ -3442,54 +4656,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Skip zoom-to-fit for focused ERD pages - they're already zoomed out
-            if (window.location.pathname.includes('focused')) {
-                updateViewportIndicator();
-                return;
-            }
-
-            // Calculate center of the diagram
-            const centerX = mainBounds.x + mainBounds.width / 2;
-            const centerY = mainBounds.y + mainBounds.height / 2;
-
-            // Calculate zoom level (fit the diagram with some padding, but more zoomed in)
-            const viewport = getViewportDimensions();
-            const viewportWidth = viewport.width;
-            const viewportHeight = viewport.height;
-            const scaleX = viewportWidth / (mainBounds.width * 0.8); // Less padding = more zoomed in
-            const scaleY = viewportHeight / (mainBounds.height * 0.8);
-            const scale = Math.min(scaleX, scaleY, 1.5); // Allow zoom in up to 1.5x
-
-            // Reset and apply transformation
-            userTx = 0;
-            userTy = 0;
-            userS = scale;
-
-
-            // Use zoomToPoint for consistent positioning
-            zoomToPoint(centerX, centerY, scale);
-
-            // Force viewport indicator update
             updateViewportIndicator();
-
-            // Enhance edge clickability by adding invisible click areas
-            enhanceEdgeClickability();
-
-            // Ensure viewport indicator is visible
-            if (viewportIndicator) {
-                viewportIndicator.style.display = 'block';
-                viewportIndicator.style.opacity = '1';
-                viewportIndicator.style.border = '2px solid #ff4081';
-                viewportIndicator.style.backgroundColor = 'rgba(255, 64, 129, 0.2)';
-                viewportIndicator.style.pointerEvents = 'all';
-
-                // Add this debug to check viewport indicator dimensions
-                const viStyle = window.getComputedStyle(viewportIndicator);
-            }
-
-
-            // Position containers
-            updateSelectionContainerPosition();
 
             // Add browser zoom level to metadata
             const addBrowserZoomToMetadata = () => {
@@ -3548,6 +4715,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Initialize view selector
             initializeViewSelector();
 
+            // Initialize function selector
+            initializeFunctionSelector();
+
             // Initialize database connection controls
             initializeDatabaseControls();
 
@@ -3562,6 +4732,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Parse and apply URL parameters after all containers are initialized
             parseUrlParameters();
+
+            // Check if this is a focused ERD page and auto-expand settings + zoom to fit
+            if (window.location.href.includes('focused')) {
+                setTimeout(() => {
+                    // Expand the Graphviz settings if metadata container is visible
+                    const metadataContainer = document.getElementById('metadata-container');
+                    const graphvizHeader = document.getElementById('graphviz-settings-header');
+                    const graphvizContent = document.getElementById('graphviz-settings-content');
+                    const isMetadataVisible = metadataContainer &&
+                        metadataContainer.style.display !== 'none' &&
+                        window.getComputedStyle(metadataContainer).display !== 'none';
+
+                    if (isMetadataVisible && graphvizHeader && graphvizContent) {
+                        // Expand the Graphviz settings section
+                        graphvizContent.style.display = 'block';
+                        const collapseIcon = graphvizHeader.querySelector('.collapse-icon');
+                        if (collapseIcon) {
+                            collapseIcon.textContent = '▼';
+                        }
+                    }
+
+                    // Auto-expand the focused ERD settings panel in selection container
+                    const focusedSettingsPanel = document.getElementById('focused-erd-settings');
+                    const focusedErdBtn = document.getElementById('generate-focused-erd-btn');
+                    if (focusedSettingsPanel && focusedErdBtn) {
+                        focusedSettingsPanel.style.maxHeight = '800px';
+                        focusedErdBtn.textContent = '🔼 Hide Settings';
+                    }
+
+                    // Zoom to fit the entire ERD in the viewable area
+                    if (mainGroup) {
+                        const mainBounds = mainGroup.getBBox();
+                        const viewport = getViewportDimensions();
+
+                        // Calculate scale to fit the entire ERD with some padding
+                        const padding = 50; // pixels of padding
+                        const scaleX = (viewport.width - padding * 2) / mainBounds.width;
+                        const scaleY = (viewport.height - padding * 2) / mainBounds.height;
+                        const scale = Math.min(scaleX, scaleY, 1.0); // Don't zoom in beyond 100%
+
+                        // Calculate center point
+                        const centerX = mainBounds.x + mainBounds.width / 2;
+                        const centerY = mainBounds.y + mainBounds.height / 2;
+
+                        // Apply zoom to fit
+                        zoomToPoint(centerX, centerY, scale);
+                    }
+                }, 500); // Delay to ensure everything is loaded
+            }
         } catch (error) {
             console.error("Error during SVG initialization:", error);
             setTimeout(initializeSvgView, 300);
@@ -3579,7 +4798,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.resizeTimer) clearTimeout(window.resizeTimer);
             window.resizeTimer = setTimeout(() => {
                 updateViewportIndicator();
-                updateSelectionContainerPosition();
             }, 250);
         });
     });

@@ -183,7 +183,7 @@ class ERDServer:
             view_columns_from_db = self.fetch_view_columns(host, port, database, user, password)
 
             # Parse and generate new ERD
-            tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+            tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
             # Enhance views with column information from database (if available)
             for view_name, columns in view_columns_from_db.items():
@@ -226,6 +226,8 @@ class ERDServer:
                 constraints=constraints,
                 triggers=triggers,
                 views=views,
+                functions=functions,
+                settings=settings,
             )
 
             # Update the server's SVG file reference and source params
@@ -258,7 +260,7 @@ class ERDServer:
                 sql_dump = f.read()
             
             # Parse and generate new ERD
-            tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+            tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
             constraints = extract_constraint_info(foreign_keys)
             
             if errors:
@@ -289,6 +291,8 @@ class ERDServer:
                 constraints=constraints,
                 triggers=triggers,
                 views=views,
+                functions=functions,
+                settings=settings,
             )
             
             # Update source params with new filepath
@@ -605,7 +609,7 @@ class ERDServer:
                         return
 
                     # Parse the schema
-                    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
                     # Enhance views with column information from database (if available)
                     for view_name, columns in view_columns_from_db.items():
@@ -648,6 +652,8 @@ class ERDServer:
                         constraints=constraints,
                         triggers=triggers,
                         views=views,
+                functions=functions,
+                settings=settings,
                     )
 
                     # Update server instance to use the new focused ERD
@@ -724,7 +730,7 @@ class ERDServer:
                         return
 
                     # Parse the schema
-                    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
                     # Enhance views with column information from database (if available)
                     for view_name, columns in view_columns_from_db.items():
@@ -771,6 +777,8 @@ class ERDServer:
                         constraints=constraints,
                         triggers=triggers,
                         views=views,
+                functions=functions,
+                settings=settings,
                     )
 
                     # Read the generated SVG file
@@ -860,7 +868,7 @@ class ERDServer:
                         return
 
                     # Parse the schema
-                    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
                     # Enhance views with column information from database (if available)
                     for view_name, columns in view_columns_from_db.items():
@@ -903,6 +911,8 @@ class ERDServer:
                         constraints=constraints,
                         triggers=triggers,
                         views=views,
+                functions=functions,
+                settings=settings,
                     )
 
                     # Update server instance to use the new focused ERD
@@ -976,7 +986,7 @@ class ERDServer:
                         return
 
                     # Parse the schema
-                    tables, foreign_keys, triggers, errors, views = parse_sql_dump(sql_dump)
+                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
 
                     # Enhance views with column information from database (if available)
                     for view_name, columns in view_columns_from_db.items():
