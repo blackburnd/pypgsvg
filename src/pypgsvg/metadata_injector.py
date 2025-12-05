@@ -59,7 +59,7 @@ def generate_miniature_erd(
         return svg
 
     scaled_svg = replace_svg_tag(main_svg_content, miniature_width, miniature_height)
-    # Return SVG string and dimensions
+
     return (scaled_svg, miniature_width, miniature_height)
 
 
@@ -381,6 +381,22 @@ def inject_metadata_into_svg(
                     ">
                         🤖 AI-Optimize Layout
                     </button>
+                    <button id="apply-focused-settings-btn" class="db-action-btn" style="
+                        width: 100%;
+                        padding: 8px 12px;
+                        margin-bottom: 8px;
+                        background: linear-gradient(135deg, #e67e22, #d35400);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        display: none;
+                    ">
+                        🔍 Apply Settings &amp; Regenerate Focused ERD
+                    </button>
                     <button id="apply-graphviz-settings-btn" class="db-action-btn" style="
                         width: 100%;
                         padding: 8px 12px;
@@ -420,10 +436,11 @@ def inject_metadata_into_svg(
     minimap_html = ''
     if miniature_svg:
         minimap_html = f'''
-<div id="miniature-container" class="miniature-container container" style="z-index:10000;" >
-  <div class="header" id="miniature-header">Directed GraphOverview
-  </div>
+<div id="miniature-container" class="miniature-container container">
+  <div class="header" id="miniature-header">
+    Directed Graph Overview
     <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
+  </div>
   <div class="miniature-inner-container container-content" id="miniature-inner-container">
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
@@ -458,14 +475,12 @@ def inject_metadata_into_svg(
     all_overlays_html = f"""
         {instructions_html}
         {metadata_html}
-        <div class='metadata-minimap-row'>
-            {minimap_html}
-        </div>
+        {minimap_html}
         {selection_html}
     """
     overlay_container_html = f'''
     <foreignObject id="overlay-container" x="0" y="0" width="100%" height="100%" pointer-events="none">
-        <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif; z-index: 9999;">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif;">
             {all_overlays_html}
         </div>
     </foreignObject>

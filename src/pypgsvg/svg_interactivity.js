@@ -124,13 +124,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectionContainer = document.getElementById('selection-container');
             
             if (metadataContainer) {
-                metadataContainer.style.display = 'none';
+                metadataContainer.style.display = '';
             }
             if (miniatureContainer) {
-                miniatureContainer.style.display = 'none';
+                miniatureContainer.style.display = '';
             }
             if (selectionContainer) {
-                selectionContainer.style.display = 'none';
+                selectionContainer.style.display = '';
             }
         }
     }
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const miniatureContainer = document.getElementById('miniature-container');
         const selectionContainer = document.getElementById('selection-container');
         
-        const displayValue = infoWindowsVisible ? 'block' : 'none';
+        const displayValue = infoWindowsVisible ? 'block' : 'block';
         
         if (metadataContainer) {
             metadataContainer.style.display = displayValue;
@@ -636,13 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Core Functions ---
     const getMainERDBounds = () => mainGroup.getBBox();
-    const applyTransform = () => {
-        const finalS = userS * initialS;
-        const finalTx = (userTx * initialS) + initialTx;
-        const finalTy = (userTy * initialS) + initialTy;
-        mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
-        requestAnimationFrame(updateViewportIndicator);
-    };
 
     const updateViewportIndicator = () => {
         if (!viewportIndicator) return;
@@ -670,26 +663,25 @@ document.addEventListener('DOMContentLoaded', () => {
         viewportIndicator.style.height = `${Math.max(0, Math.min(1, relHeight)) * 100}%`;
     };
 
+    const applyTransform = () => {
+        const finalS = userS * initialS;
+        const finalTx = (userTx * initialS) + initialTx;
+        const finalTy = (userTy * initialS) + initialTy;
+        mainGroup.setAttribute('transform', `translate(${finalTx} ${finalTy}) scale(${finalS})`);
+        requestAnimationFrame(updateViewportIndicator);
+    };
+
     const updateSelectionContainerPosition = () => {
         const selectionContainer = document.getElementById('selection-container');
         const metadataContainer = document.getElementById('metadata-container');
         const miniatureContainer = document.getElementById('miniature-container');
 
-        console.log('updateSelectionContainerPosition called', {
-            selectionContainer: !!selectionContainer,
-            metadataContainer: !!metadataContainer,
-            miniatureContainer: !!miniatureContainer,
-            manuallyPositioned: selectionContainerManuallyPositioned
-        });
-
         // Don't auto-position if user has manually moved the selection container
         if (selectionContainerManuallyPositioned) {
-            console.log('Selection container manually positioned, skipping auto-positioning');
             return;
         }
 
-        if (selectionContainer && metadataContainer && miniatureContainer) {
-            const miniatureRect = miniatureContainer.getBoundingClientRect();
+        if (selectionContainer && metadataContainer) {
             const metadataRect = metadataContainer.getBoundingClientRect();
             const margin = 16; // Same margin as other containers
 
@@ -700,17 +692,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const viewport = getViewportDimensions();
             const maxHeight = Math.floor(viewport.height * 0.75);
 
-            const leftPos = miniatureRect.right + margin;
-            const topPos = miniatureRect.top;
-
-            console.log(`Selection container positioning:`, {
-                viewport: `${viewport.width}x${viewport.height}`,
-                miniatureRect: miniatureRect,
-                leftPos,
-                topPos,
-                selectionWidth,
-                maxHeight
-            });
+            // Position to the right of metadata container (original working position)
+            const leftPos = metadataRect.right + margin;
+            const topPos = metadataRect.top;
 
             selectionContainer.style.position = 'fixed';
             selectionContainer.style.width = `${selectionWidth}px`;
@@ -718,8 +702,6 @@ document.addEventListener('DOMContentLoaded', () => {
             selectionContainer.style.left = `${leftPos}px`;
             selectionContainer.style.top = `${topPos}px`;
             selectionContainer.style.zIndex = '10001';
-
-            console.log(`Selection container positioned at left: ${leftPos}px, top: ${topPos}px`);
         }
     };
 
@@ -1318,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Table Information Section
             html += '<div class="selection-section">';
-            html += '<h3>📊 Selected Tables</h3>';
+            html += `<h3>📊 Selected Tables (${selectedTables.length})</h3>`;
             selectedTables.forEach((tableId, index) => {
                 const tableData = graphData.tables[tableId];
                 const safeTableId = escapeHtml(tableId);
@@ -1353,7 +1335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Foreign Keys Section
         if (selectedEdges.length) {
             html += '<div class="selection-section">';
-            html += '<h3>🔗 Foreign Key Relationships</h3>';
+            html += `<h3>🔗 Foreign Key Relationships (${selectedEdges.length})</h3>`;
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
@@ -1597,8 +1579,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 try {
                     // Get selected table and edge IDs
-                    const selectedTableIds = selectedTables.map(t => t.id);
-                    const selectedEdgeIds = selectedEdges.map(e => e.id);
+                    // selectedTables and selectedEdges are already arrays of string IDs (sanitized), not objects
+                    // Convert sanitized IDs back to original table names using graph data
+                    const selectedTableIds = selectedTables.map(sanitizedId => {
+                        const tableData = graphData.tables[sanitizedId];
+                        return tableData?.originalName || sanitizedId;  // Fallback to sanitized if originalName not found
+                    });
+                    const selectedEdgeIds = selectedEdges;
 
                     // Get Graphviz settings from the UI
                     const graphvizSettings = {
@@ -1666,8 +1653,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 try {
                     // Get selected table and edge IDs
-                    const selectedTableIds = selectedTables.map(t => t.id);
-                    const selectedEdgeIds = selectedEdges.map(e => e.id);
+                    // selectedTables and selectedEdges are already arrays of string IDs (sanitized), not objects
+                    // Convert sanitized IDs back to original table names using graph data
+                    const selectedTableIds = selectedTables.map(sanitizedId => {
+                        const tableData = graphData.tables[sanitizedId];
+                        return tableData?.originalName || sanitizedId;  // Fallback to sanitized if originalName not found
+                    });
+                    const selectedEdgeIds = selectedEdges;
 
                     // Get Graphviz settings from the UI
                     const graphvizSettings = {
@@ -1737,6 +1729,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Position the selection container
+        updateSelectionContainerPosition();
     }
 
     function hideSelectionWindow() {
@@ -1849,22 +1844,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rect = miniatureContainer.getBoundingClientRect();
 
-            // Ensure we have inline styles set for consistent positioning
-            if (!miniatureContainer.style.left) {
-                miniatureContainer.style.left = `${rect.left}px`;
-            }
-            if (!miniatureContainer.style.top) {
-                miniatureContainer.style.top = `${rect.top}px`;
-            }
+            // Convert right positioning to left for dragging
+            const viewport = getViewportDimensions();
+            const currentRight = parseFloat(miniatureContainer.style.right) || 16;
+            const currentTop = parseFloat(miniatureContainer.style.top) || 16;
+            const currentLeft = viewport.width - rect.width - currentRight;
 
-            // Use the same isolated approach as selection container
+            // Switch to left-based positioning for dragging
+            miniatureContainer.style.left = `${currentLeft}px`;
+            miniatureContainer.style.right = '';
+
             const miniatureDragState = {
                 type: 'miniature-window',
                 target: miniatureContainer,
                 startX: event.clientX,
                 startY: event.clientY,
-                offsetX: parseFloat(miniatureContainer.style.left),
-                offsetY: parseFloat(miniatureContainer.style.top)
+                offsetX: currentLeft,
+                offsetY: currentTop
             };
 
             miniatureContainer.classList.add('dragging');
@@ -2251,6 +2247,46 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.min(scaleX, scaleY) * 0.5; // Added multiplier to allow zooming out beyond fit
     }
 
+    // --- Auto-zoom for focused ERD ---
+    // If this is a focused ERD (check URL contains 'focused'), zoom all the way out
+    let lockedMinZoom = null;
+    if (window.location.pathname.includes('focused') && mainGroup) {
+        // Simulate scrolling out to the absolute minimum
+        let previousS = userS;
+        for (let i = 0; i < 200; i++) {
+            const mainBounds = getMainERDBounds();
+            const viewport = getViewportDimensions();
+            const scaleX = viewport.width / mainBounds.width;
+            const scaleY = viewport.height / mainBounds.height;
+            const calculatedMin = Math.min(scaleX, scaleY) * 0.5;
+            userS = userS * 0.96;
+            if (userS < calculatedMin) {
+                userS = calculatedMin;
+            }
+            if (userS === previousS) {
+                break;
+            }
+            previousS = userS;
+        }
+        lockedMinZoom = userS;
+
+        // Center horizontally and position at 50% vertically
+        const mainBounds = getMainERDBounds();
+        const viewport = getViewportDimensions();
+        const scaledWidth = mainBounds.width * userS * initialS;
+        const scaledHeight = mainBounds.height * userS * initialS;
+
+        // Horizontally centered
+        const centerX = (viewport.width - scaledWidth) / 2;
+        // 50% down vertically
+        const centerY = viewport.height * 0.5 - scaledHeight / 2;
+
+        userTx = (centerX - mainBounds.x * userS * initialS) / initialS;
+        userTy = (centerY - mainBounds.y * userS * initialS) / initialS;
+
+        applyTransform();
+    }
+
     svg.addEventListener('wheel', (event) => {
         // Check if mouse is over selection container - if so, let it scroll naturally
         const selectionContainer = document.getElementById('selection-container');
@@ -2269,7 +2305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dir = event.deltaY < 0 ? 1 : -1;
         const scaleAmount = 1 + dir * 0.04;
         let newS = userS * scaleAmount;
-        const minZoom = getMinZoomToFit();
+        const minZoom = lockedMinZoom !== null ? lockedMinZoom : getMinZoomToFit();
         newS = Math.max(minZoom, Math.min(5, newS)); // Clamp to minZoom
         const pt = svg.createSVGPoint();
         pt.x = event.clientX;
@@ -2597,6 +2633,70 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Check if we're viewing a focused ERD and show/hide the focused button
+        const applyFocusedBtn = document.getElementById('apply-focused-settings-btn');
+        if (applyFocusedBtn && graphData.includedTables) {
+            // We're viewing a focused ERD - show the focused button
+            applyFocusedBtn.style.display = 'block';
+        }
+
+        // Apply Focused Settings button handler
+        if (applyFocusedBtn) {
+            applyFocusedBtn.addEventListener('click', async () => {
+                applyFocusedBtn.disabled = true;
+                applyFocusedBtn.textContent = '⏳ Applying Settings...';
+                showStatus('Regenerating focused ERD with new settings...', 'info');
+
+                try {
+                    // Collect Graphviz settings from UI
+                    const graphvizSettings = {
+                        packmode: document.getElementById('gv-packmode')?.value || 'array',
+                        rankdir: document.getElementById('gv-rankdir')?.value || 'TB',
+                        esep: document.getElementById('gv-esep')?.value || '8',
+                        node_sep: document.getElementById('gv-node-sep')?.value || '0.5',
+                        rank_sep: document.getElementById('gv-rank-sep')?.value || '1.2',
+                        fontname: document.getElementById('gv-fontname')?.value || 'Arial',
+                        fontsize: parseInt(document.getElementById('gv-fontsize')?.value) || 18,
+                        node_fontsize: parseInt(document.getElementById('gv-node-fontsize')?.value) || 14,
+                        edge_fontsize: parseInt(document.getElementById('gv-edge-fontsize')?.value) || 12,
+                        node_style: document.getElementById('gv-node-style')?.value || 'rounded,filled',
+                        node_shape: document.getElementById('gv-node-shape')?.value || 'rect'
+                    };
+
+                    // Send request to regenerate focused ERD with the same tables
+                    const response = await fetch('/api/apply_focused_settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            table_ids: graphData.includedTables,
+                            graphviz_settings: graphvizSettings
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showStatus('Focused ERD settings applied! Reloading...', 'success');
+
+                        // Reload the page with the updated focused ERD
+                        setTimeout(() => {
+                            window.location.href = `/${result.new_file}`;
+                        }, 500);
+                    } else {
+                        showStatus(`Error: ${result.message || 'Failed to apply settings'}`, 'error');
+                        applyFocusedBtn.textContent = '🔍 Apply Settings & Regenerate Focused ERD';
+                        applyFocusedBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error applying focused settings:', error);
+                    showStatus(`Error: ${error.message}`, 'error');
+                    applyFocusedBtn.textContent = '🔍 Apply Settings & Regenerate Focused ERD';
+                    applyFocusedBtn.disabled = false;
+                }
+            });
+        }
+
+        // Apply Settings button handler (full ERD regeneration)
         applyBtn.addEventListener('click', async () => {
             applyBtn.disabled = true;
             applyBtn.textContent = '⏳ Applying Settings...';
@@ -3342,6 +3442,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Skip zoom-to-fit for focused ERD pages - they're already zoomed out
+            if (window.location.pathname.includes('focused')) {
+                updateViewportIndicator();
+                return;
+            }
+
             // Calculate center of the diagram
             const centerX = mainBounds.x + mainBounds.width / 2;
             const centerY = mainBounds.y + mainBounds.height / 2;
@@ -3381,17 +3487,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const viStyle = window.getComputedStyle(viewportIndicator);
             }
 
-            // Position miniature container next to metadata container
-            const metadataContainer = document.getElementById('metadata-container');
-            if (miniatureContainer && metadataContainer) {
-                const metadataRect = metadataContainer.getBoundingClientRect();
-                const margin = 16; // 16px margin between containers
-
-                miniatureContainer.style.position = 'fixed';
-                miniatureContainer.style.left = `${metadataRect.right + margin}px`;
-                miniatureContainer.style.top = `${metadataRect.top}px`;
-
-            }
 
             // Position containers
             updateSelectionContainerPosition();
