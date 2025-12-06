@@ -363,6 +363,23 @@ def inject_metadata_into_svg(
         <div class="metadata-section">
             <h3 class="collapsible-header" id="graphviz-settings-header" style="cursor: pointer; user-select: none;">
                 <span class="collapse-icon">▶</span> ⚙️ Graphviz Settings
+                    <button id="apply-focused-settings-btn" class="db-action-btn" style="
+                        min-width: 1%;
+                        padding: 8px 12px;
+                        margin-bottom: 8px;
+                        background: linear-gradient(135deg, #e67e22, #d35400);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        display: none;
+                    ">
+                        Regenerate ERD
+                    </button>
+
             </h3>
             <div id="graphviz-settings-content" style="display: none;">
                 <div class="graphviz-settings-grid">
@@ -424,22 +441,6 @@ def inject_metadata_into_svg(
                     </div>
                 </div>
                 <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #ddd;">
-                    <button id="apply-focused-settings-btn" class="db-action-btn" style="
-                        width: 100%;
-                        padding: 8px 12px;
-                        margin-bottom: 8px;
-                        background: linear-gradient(135deg, #e67e22, #d35400);
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        display: none;
-                    ">
-                        🔍 Apply Settings &amp; Regenerate Focused ERD
-                    </button>
                     <button id="apply-graphviz-settings-btn" class="db-action-btn" style="
                         width: 100%;
                         padding: 8px 12px;
