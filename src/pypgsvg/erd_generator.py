@@ -368,7 +368,8 @@ def generate_erd_with_graphviz(
     # Render the graph and get SVG content directly
     try:
         # Use pipe() to get the SVG content directly without file I/O issues
-        svg_content = dot.pipe(format='svg', encoding='utf-8')
+        svg_bytes = dot.pipe(format='svg')
+        svg_content = svg_bytes.decode('utf-8') if isinstance(svg_bytes, bytes) else svg_bytes
         actual_svg_path = output_file + ".svg"
         print(f"--- ERD generated successfully: {actual_svg_path} ---")
     except Exception as e:

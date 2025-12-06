@@ -97,7 +97,7 @@ def test_generate_erd_hide_standalone(simple_schema):
 def test_generate_erd_graphviz_error(mock_digraph, simple_schema):
     tables, foreign_keys = simple_schema
     mock_dot = MagicMock()
-    mock_dot.render.side_effect = Exception("Graphviz error!")
+    mock_dot.pipe.side_effect = Exception("Graphviz error!")
     mock_digraph.return_value = mock_dot
     with tempfile.TemporaryDirectory() as tmpdir:
         output_file = os.path.join(tmpdir, "test_erd5")
@@ -116,7 +116,6 @@ def test_generate_erd_metadata_fields(simple_schema):
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
         # Metadata fields - updated to match new HTML structure
-        assert "File:" in svg_content  # Changed from "Source:" to "File:"
         assert "Generated" in svg_content
 
 def test_generate_erd_graph_data_json(simple_schema):

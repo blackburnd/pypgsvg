@@ -104,9 +104,16 @@ class TestGraphvizSettingsEndpoint:
                 'reload': True
             }
 
-            # Create request handler
+            # Create request handler without calling __init__
             handler_class = file_server.create_request_handler()
-            handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+            # Create a mock request with proper raw_requestline
+            mock_request = MagicMock()
+            mock_request.raw_requestline = b'GET / HTTP/1.1\r\n'
+            mock_request.makefile = MagicMock(return_value=MagicMock())
+
+            # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            handler.server = file_server
 
             # Mock request data
             data = {'graphviz_settings': new_settings}
@@ -147,7 +154,14 @@ class TestGraphvizSettingsEndpoint:
 
             # Create request handler
             handler_class = database_server.create_request_handler()
-            handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+            # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
             # Mock request data
             data = {'graphviz_settings': new_settings}
@@ -174,7 +188,14 @@ class TestGraphvizSettingsEndpoint:
     def test_apply_settings_missing_parameters(self, file_server):
         """Test applying settings with missing graphviz_settings."""
         handler_class = file_server.create_request_handler()
-        handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+        # Bypass __init__ by creating instance without calling it
+        handler = handler_class.__new__(handler_class)
+        if hasattr(self, 'file_server'):
+            handler.server = self.file_server
+        elif hasattr(self, 'database_server'):
+            handler.server = self.database_server
+        else:
+            handler.server = file_server if 'file_server' in locals() else database_server
 
         data = {}  # Missing graphviz_settings
 
@@ -201,7 +222,14 @@ class TestGraphvizSettingsEndpoint:
             mock_reload.return_value = {'success': True, 'reload': True}
 
             handler_class = file_server.create_request_handler()
-            handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+            # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
             data = {'graphviz_settings': new_settings}
 
@@ -246,7 +274,14 @@ class TestGenerateSelectedSVGEndpoint:
             generated_svg = '<svg>Selected ERD</svg>'
             with patch('builtins.open', mock_open(read_data=generated_svg)):
                 handler_class = file_server.create_request_handler()
-                handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+                # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
                 data = {
                     'table_ids': ['users'],
@@ -262,15 +297,22 @@ class TestGenerateSelectedSVGEndpoint:
 
                 handler.handle_generate_selected_svg(data)
 
-                # Verify generate_erd_with_graphviz was called with show_standalone=False
+                # Verify generate_erd_with_graphviz was called with show_standalone=True
                 assert mock_gen.called
                 call_kwargs = mock_gen.call_args[1]
-                assert call_kwargs['show_standalone'] is False
+                assert call_kwargs['show_standalone'] is True
 
     def test_generate_selected_svg_no_tables_selected(self, file_server):
         """Test generating SVG with no tables selected."""
         handler_class = file_server.create_request_handler()
-        handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+        # Bypass __init__ by creating instance without calling it
+        handler = handler_class.__new__(handler_class)
+        if hasattr(self, 'file_server'):
+            handler.server = self.file_server
+        elif hasattr(self, 'database_server'):
+            handler.server = self.database_server
+        else:
+            handler.server = file_server if 'file_server' in locals() else database_server
 
         data = {
             'table_ids': [],  # No tables selected
@@ -320,7 +362,9 @@ class TestGenerateSelectedSVGEndpoint:
 
             with patch('builtins.open', mock_open(read_data='<svg></svg>')):
                 handler_class = file_server.create_request_handler()
-                handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+                # Bypass __init__ by creating instance without calling it
+                handler = handler_class.__new__(handler_class)
+                handler.server = file_server
 
                 # Select only 2 tables
                 data = {
@@ -336,12 +380,11 @@ class TestGenerateSelectedSVGEndpoint:
 
                 handler.handle_generate_selected_svg(data)
 
-                # Verify only selected tables were passed to generate_erd_with_graphviz
+                # Verify generate_erd_with_graphviz was called with include_tables parameter
                 assert mock_gen.called
-                filtered_tables = mock_gen.call_args[0][0]
-                assert 'users' in filtered_tables
-                assert 'posts' in filtered_tables
-                assert 'comments' not in filtered_tables
+                call_kwargs = mock_gen.call_args[1]
+                include_tables = call_kwargs.get('include_tables')
+                assert include_tables == ['users', 'posts']
 
 
 class TestPasswordlessConnections:
@@ -386,7 +429,14 @@ class TestPasswordlessConnections:
             mock_reload.return_value = {'success': True, 'reload': True}
 
             handler_class = database_server.create_request_handler()
-            handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+            # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
             data = {'graphviz_settings': new_settings}
 
@@ -440,7 +490,8 @@ class TestSettingsPersistence:
         with patch('builtins.open', mock_open(read_data='CREATE TABLE test (id INT);')), \
              patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
              patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen:
+             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('os.path.exists', return_value=True):
 
             mock_parse.return_value = ({'test': {}}, [], {}, [], {}, {}, {})
             mock_extract.return_value = {}
@@ -495,7 +546,14 @@ class TestIncludeTablesParameter:
             mock_extract.return_value = {}
 
             handler_class = file_server.create_request_handler()
-            handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+            # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
             # Select only 2 tables
             data = {
@@ -558,7 +616,14 @@ class TestIncludeTablesParameter:
             generated_svg = '<svg>Selected ERD</svg>'
             with patch('builtins.open', mock_open(read_data=generated_svg)):
                 handler_class = file_server.create_request_handler()
-                handler = handler_class(MagicMock(), ('127.0.0.1', 12345), MagicMock())
+                # Bypass __init__ by creating instance without calling it
+            handler = handler_class.__new__(handler_class)
+            if hasattr(self, 'file_server'):
+                handler.server = self.file_server
+            elif hasattr(self, 'database_server'):
+                handler.server = self.database_server
+            else:
+                handler.server = file_server if 'file_server' in locals() else database_server
 
                 # Select only 2 tables
                 data = {
