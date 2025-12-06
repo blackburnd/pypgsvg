@@ -32,7 +32,7 @@ def run_main_with_args(args, mock_file_content=None, raise_file_error=None, pars
             mparse.return_value = ({"users": {"columns": []}}, [], {}, parse_errors or [], {}, {}, {})
             if gen_exception:
                 mgen.side_effect = gen_exception
-            yield mfile, mparse, mgen, mweb
+            yield mfile, mparse, mgen, mserver
 
 def test_main_success(tmp_path, fake_sql):
     # Normal run, all options, --view, --show-standalone
@@ -40,13 +40,13 @@ def test_main_success(tmp_path, fake_sql):
     with patch("sys.stdout", out):
         for extra in ([], ["--view"], ["--show-standalone", "true"], ["--view", "--show-standalone", "true"]):
             args = [str(tmp_path/"schema.sql"), "-o", str(tmp_path/"out")] + extra
-            with run_main_with_args(args, mock_file_content=fake_sql) as (mfile, mparse, mgen, mweb):
+            with run_main_with_args(args, mock_file_content=fake_sql) as (mfile, mparse, mgen, mserver):
                 mainmod.main()
                 assert mgen.called
                 if "--view" in args:
-                    assert mweb.called
+                    assert mserver.called
                 else:
-                    assert not mweb.called
+                    assert not mserver.called
                 assert "Successfully generated ERD" in out.getvalue()
                 out.truncate(0)
                 out.seek(0)

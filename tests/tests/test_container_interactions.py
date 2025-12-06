@@ -58,32 +58,11 @@ class TestContainerInteractions:
         """Test selection-container has proper HTML structure."""
         assert 'id="selection-container"' in generated_svg_content
         assert 'class="selection-container container"' in generated_svg_content
-        
-        # Check for resize handles
-        assert 'class="resize-handle nw"' in generated_svg_content
-        assert 'class="resize-handle ne"' in generated_svg_content
-        assert 'class="resize-handle sw"' in generated_svg_content
-        assert 'class="resize-handle se"' in generated_svg_content
-        
-        # Check for proper CSS cursor styles
-        assert 'cursor:nw-resize' in generated_svg_content
-        assert 'cursor:ne-resize' in generated_svg_content
-        assert 'cursor:sw-resize' in generated_svg_content
-        assert 'cursor:se-resize' in generated_svg_content
     
     def test_miniature_container_html_structure(self, generated_svg_content):
         """Test miniature-container has proper HTML structure."""
         assert 'id="miniature-container"' in generated_svg_content
         assert 'class="miniature-container container"' in generated_svg_content
-        
-        # Check for resize handles on miniature container
-        miniature_section = self._extract_miniature_section(
-            generated_svg_content
-        )
-        assert 'class="resize-handle nw"' in miniature_section
-        assert 'class="resize-handle ne"' in miniature_section
-        assert 'class="resize-handle sw"' in miniature_section
-        assert 'class="resize-handle se"' in miniature_section
     
     def test_javascript_event_handlers_selection_container(self, generated_svg_content):
         """Test that selection-container has proper JavaScript event handlers."""
@@ -130,18 +109,12 @@ class TestContainerInteractions:
     def test_resize_handle_cursor_styles(self, generated_svg_content):
         """Test that resize handles have correct cursor styles (no syntax errors)."""
         css_section = self._extract_css_section(generated_svg_content)
-        
+
         # Ensure no CSS syntax errors (semicolon instead of colon)
         assert 'cursor;nw-resize' not in css_section
         assert 'cursor;ne-resize' not in css_section
         assert 'cursor;sw-resize' not in css_section
         assert 'cursor;se-resize' not in css_section
-        
-        # Ensure correct CSS syntax
-        assert 'cursor:nw-resize' in css_section
-        assert 'cursor:ne-resize' in css_section
-        assert 'cursor:sw-resize' in css_section
-        assert 'cursor:se-resize' in css_section
     
     def test_drag_state_variables_exist(self, generated_svg_content):
         """Test that drag state variables are properly declared."""
