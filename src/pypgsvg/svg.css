@@ -134,6 +134,7 @@
     visibility: visible !important;
     width: 100%;
     height: auto;
+    max-height: 25vh;
     min-height: 100px;
 }
 
@@ -234,6 +235,7 @@
 
 /* Selection Container */
 #selection-container {
+    display: none;
     position: fixed !important;
     left: 30px;
     top: 30px;
@@ -250,10 +252,10 @@
     overflow: hidden;
     min-width: 200px;
     max-width: 80vw;
-    width: 325px;
+    width: 375px;
     min-height: 45px;
     max-height: 80vh;
-    height: auto;
+    height: 500px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transform: none !important;
     margin: 0 !important;
@@ -278,14 +280,14 @@
 }
 
 #selection-container .container-content{
-
     font-size: 0.8rem;
     opacity: 1;
     cursor: grab;
     pointer-events: auto;
     padding: 15px;
-    max-height: calc(60vh - 60px);
+    height: 100%;
     overflow-y: auto;
+    box-sizing: border-box;
 }
 
 #selection-container.dragging {
@@ -1044,4 +1046,599 @@
     display: inline-block;
     transition: transform 0.2s ease;
     font-size: 0.8em;
+}
+
+.collapsible-header.collapsed .collapse-icon {
+    transform: rotate(90deg);
+}
+
+/* ===============================
+   DATABASE CONFIGURATION STYLES
+   =============================== */
+
+/* No settings message */
+.no-settings-message {
+    color: #999;
+    font-style: italic;
+    padding: 8px;
+}
+
+/* Settings table */
+.settings-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.settings-table thead tr {
+    background: #ecf0f1;
+}
+
+.settings-table th {
+    padding: 6px;
+    text-align: left;
+    border: 1px solid #ddd;
+    font-weight: 600;
+}
+
+.settings-table td {
+    padding: 6px;
+    border: 1px solid #ddd;
+    font-family: monospace;
+}
+
+.settings-table td:first-child {
+    color: #2c3e50;
+}
+
+.settings-table td:last-child {
+    color: #34495e;
+}
+
+/* Section headers */
+.section-header {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+/* Original connection/file info boxes */
+.original-connection,
+.original-file-info {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 12px;
+    padding: 6px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+/* Database select dropdown */
+#db-database {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: white;
+    cursor: pointer;
+}
+
+/* Refresh databases button */
+#refresh-databases-btn {
+    margin-top: 4px;
+    width: 100%;
+    padding: 6px;
+    background: #9E9E9E;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+#refresh-databases-btn:hover {
+    background: #757575;
+}
+
+/* Database connection buttons container */
+.db-connection-buttons,
+.file-reload-buttons {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+/* Test connection button */
+#test-connection-btn {
+    flex: 1;
+    padding: 8px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+#test-connection-btn:hover {
+    background: #45a049;
+}
+
+/* Reload buttons */
+#reload-from-db-btn,
+#reload-from-file-btn {
+    flex: 1;
+    padding: 8px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+#reload-from-db-btn:hover,
+#reload-from-file-btn:hover {
+    background: #0b7dda;
+}
+
+/* Status messages */
+#connection-status,
+#file-status {
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: none;
+}
+
+/* Header with flex layout */
+.header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Print button */
+#print-erd-btn {
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#print-erd-btn:hover {
+    background: linear-gradient(135deg, #7f8c8d, #6c7a7b);
+}
+
+/* Window controls positioning */
+.window-controls-top-right {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    z-index: 10010;
+}
+
+/* Collapsible content */
+.collapsible-content {
+    display: none;
+}
+
+.collapsible-content.expanded {
+    display: block;
+}
+
+/* Apply focused settings button */
+#apply-focused-settings-btn {
+    margin-left: auto;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#apply-focused-settings-btn:hover {
+    background: linear-gradient(135deg, #d35400, #ba4a00);
+}
+
+/* Settings divider */
+.settings-divider {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+}
+
+/* Apply graphviz settings button */
+#apply-graphviz-settings-btn {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#apply-graphviz-settings-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #21618c);
+}
+
+/* Apply settings status message */
+#apply-settings-status {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
+}
+
+#apply-settings-status.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: #2e7d32;
+}
+
+#apply-settings-status.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #c62828;
+}
+
+/* Scrollable config content */
+.scrollable-config {
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.resize-handle.nw {
+    left: 2px;
+    top: 24px;
+    cursor: nw-resize;
+}
+
+.resize-handle.se {
+    right: 2px;
+    bottom: 2px;
+    cursor: se-resize;
+}
+
+/* SQL Viewer Window */
+#sql-viewer-window {
+    position: fixed;
+    max-width: 60vw;
+    max-height: 70vh;
+    background: rgba(248, 249, 250, 0.98);
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+#sql-viewer-window .header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#sql-viewer-window .header button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+#sql-viewer-window .container-content {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+#sql-viewer-window textarea {
+    width: 100%;
+    flex: 1;
+    min-height: 100px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    padding: 12px;
+    padding-top: 40px;
+    resize: none;
+    color: #2c3e50;
+    line-height: 1.4;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+#sql-viewer-window .copy-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    padding: 8px 10px;
+    background: rgba(52, 152, 219, 0.95);
+    color: white;
+    border: 1px solid #3498db;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+#sql-viewer-window .copy-btn:hover {
+    background: rgba(41, 128, 185, 0.95);
+    transform: scale(1.1);
+}
+
+#sql-viewer-window .resize-handle {
+    transition: all 0.2s ease;
+    background: rgba(52, 152, 219, 0.3);
+    border: 1px solid rgba(52, 152, 219, 0.5);
+}
+
+#sql-viewer-window .resize-handle:hover {
+    background: rgba(52, 152, 219, 0.6);
+}
+
+#sql-viewer-window .resize-handle.nw {
+    top: 42px;
+}
+
+/* Function Viewer Window */
+#function-viewer-window {
+    position: fixed;
+    max-width: 60vw;
+    max-height: 70vh;
+    background: rgba(248, 249, 250, 0.98);
+    border: 2px solid #2ecc71;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+#function-viewer-window .header {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    cursor: grab;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#function-viewer-window .header button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+#function-viewer-window .container-content {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+#function-viewer-window .function-info {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+#function-viewer-window .function-info strong {
+    color: #2c3e50;
+}
+
+#function-viewer-window .function-usage-section {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid #2ecc71;
+    border-radius: 4px;
+}
+
+#function-viewer-window .function-usage-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #27ae60;
+}
+
+#function-viewer-window .function-usage-section ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.85rem;
+}
+
+#function-viewer-window .function-usage-section li {
+    margin-bottom: 4px;
+    color: #555;
+}
+
+#function-viewer-window .function-no-usage {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(189, 195, 199, 0.1);
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+#function-viewer-window .textarea-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+}
+
+#function-viewer-window textarea {
+    width: 100%;
+    flex: 1;
+    min-height: 100px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    padding: 12px;
+    padding-top: 40px;
+    resize: none;
+    color: #2c3e50;
+    line-height: 1.4;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+#function-viewer-window .copy-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    padding: 8px 10px;
+    background: rgba(46, 204, 113, 0.95);
+    color: white;
+    border: 1px solid #2ecc71;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+#function-viewer-window .copy-btn:hover {
+    background: rgba(39, 174, 96, 0.95);
+    transform: scale(1.1);
+}
+
+#function-viewer-window .resize-handle {
+    transition: all 0.2s ease;
+    background: rgba(46, 204, 113, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.5);
+}
+
+#function-viewer-window .resize-handle:hover {
+    background: rgba(46, 204, 113, 0.6);
+}
+
+#function-viewer-window .resize-handle.nw {
+    top: 42px;
+}
+
+/* SQL/Code Expansion Callout - No title bar, overlays from button */
+.sql-expansion {
+    position: fixed;
+    pointer-events: auto;
+}
+
+.expansion-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.expansion-textarea {
+    width: 100%;
+    height: 100%;
+    min-height: 60px;
+    background: #ffffff;
+    border: none;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    padding: 4px;
+    resize: none;
+    color: #2c3e50;
+    line-height: 1.15;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+}
+
+.expansion-copy-btn {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    padding: 2px 8px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.expansion-copy-btn:hover {
+    background: #2980b9;
+    transform: scale(1.05);
 }

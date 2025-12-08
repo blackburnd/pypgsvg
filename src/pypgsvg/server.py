@@ -457,12 +457,12 @@ class ERDServer:
                     return
                 
                 try:
-                    # Query databases using psql command
+                    # Query databases with table counts using psql command
                     env = os.environ.copy()
                     if password:
                         env['PGPASSWORD'] = password
-                    
-                    # Connect to 'postgres' database to query list of databases
+
+                    # First get list of databases
                     cmd = [
                         'psql',
                         '-h', host,
@@ -473,7 +473,7 @@ class ERDServer:
                         '-A',  # Unaligned output
                         '-c', "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"
                     ]
-                    
+
                     result = subprocess.run(
                         cmd,
                         env=env,
@@ -481,10 +481,47 @@ class ERDServer:
                         text=True,
                         check=True
                     )
-                    
+
                     # Parse database list
-                    databases = [db.strip() for db in result.stdout.strip().split('\n') if db.strip()]
-                    
+                    database_names = [db.strip() for db in result.stdout.strip().split('\n') if db.strip()]
+
+                    # Get table count for each database
+                    databases = []
+                    for db_name in database_names:
+                        try:
+                            # Query table count for this database
+                            count_cmd = [
+                                'psql',
+                                '-h', host,
+                                '-p', str(port),
+                                '-U', user,
+                                '-d', db_name,
+                                '-t',
+                                '-A',
+                                '-c', "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema');"
+                            ]
+
+                            count_result = subprocess.run(
+                                count_cmd,
+                                env=env,
+                                capture_output=True,
+                                text=True,
+                                check=True,
+                                timeout=5  # Timeout after 5 seconds per database
+                            )
+
+                            table_count = int(count_result.stdout.strip() or 0)
+                            databases.append({
+                                "name": db_name,
+                                "table_count": table_count
+                            })
+                        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+                            # If we can't get table count, include database with unknown count
+                            databases.append({
+                                "name": db_name,
+                                "table_count": -1  # -1 indicates unknown
+                            })
+
                     self.send_json_response({
                         "success": True,
                         "databases": databases

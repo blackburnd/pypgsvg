@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
-    let userTx = 0, userTy = 0, userS = 1;
+    let userTx = 0, userTy = 0, userS = 0.5; // Start at 50% zoom (halfway in)
     let isPanning = false;
     let startX = 0, startY = 0;
     let dragThreshold = 5;
@@ -150,265 +150,248 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showSqlWindow(tableName, sqlText, triggeringButton) {
-        // Check if SQL window already exists, if so remove it
-        const existingSqlWindow = document.getElementById('sql-viewer-window');
-        if (existingSqlWindow) {
-            existingSqlWindow.remove();
-            // Reset button text if provided
+    function showSqlWindow(tableName, sqlText, triggeringButton, clickEvent = null) {
+        // Check if expansion already exists for this button
+        const buttonId = triggeringButton ? triggeringButton.getAttribute('data-expansion-id') : null;
+        const existingExpansion = buttonId ? document.getElementById(buttonId) : null;
+
+        if (existingExpansion) {
+            // Toggle off - remove expansion and reset button
+            existingExpansion.remove();
             if (triggeringButton) {
-                const originalText = triggeringButton.getAttribute('data-original-text');
-                if (originalText) {
-                    triggeringButton.textContent = originalText;
-                }
+                triggeringButton.textContent = '👁️';
+                triggeringButton.removeAttribute('data-expansion-id');
             }
-            return; // Exit early, window was closed
+            return;
         }
 
-        // Split SQL into lines for individual line copying
-        const sqlLines = sqlText.split('\n');
-
-        // Create the SQL viewer window - use HTML namespace explicitly
-        const sqlWindow = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        sqlWindow.id = 'sql-viewer-window';
-        sqlWindow.className = 'container';
-
-        // Calculate initial size based on content
-        const lineCount = sqlText.split('\n').length;
-        const lineHeight = 1.4; // Matches textarea line-height
-        const fontSize = 0.8; // rem
-        const approxLineHeightPx = fontSize * 16 * lineHeight;
-        const contentHeight = lineCount * approxLineHeightPx;
-        const windowChrome = 120; // Header + padding + margins
-        const calculatedHeight = contentHeight + windowChrome;
-
-        // Initial size: content-based but capped at 60vh
-        const initialWidth = Math.min(900, window.innerWidth * 0.7);
-        const maxHeight = window.innerHeight * 0.6;
-        const initialHeight = Math.min(calculatedHeight, maxHeight, 800);
-        const initialLeft = (window.innerWidth - initialWidth) / 2;
-        const initialTop = (window.innerHeight - initialHeight) / 2;
-
-        sqlWindow.style.cssText = `
-            position: fixed;
-            left: ${initialLeft}px;
-            top: ${initialTop}px;
-            width: ${initialWidth}px;
-            height: ${initialHeight}px;
-            max-width: 80vw;
-            max-height: 90vh;
-            background: rgba(248, 249, 250, 0.98);
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            z-index: 100000;
-            display: flex;
-            flex-direction: column;
-            pointer-events: auto;
-        `;
-
-        // Header
-        const header = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        header.className = 'header';
-        header.style.cssText = `
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 12px 16px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px 6px 0 0;
-            cursor: grab;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        `;
-
-        // Header title
-        const headerTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
-        headerTitle.textContent = `📝 ${tableName} - SQL Definition`;
-        header.appendChild(headerTitle);
-
-        // Close button
-        const closeBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
-        closeBtn.textContent = '✕';
-        closeBtn.style.cssText = `
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            line-height: 1;
-        `;
-        closeBtn.addEventListener('click', () => {
-            sqlWindow.remove();
-            // Reset triggering button text if provided
-            if (triggeringButton) {
-                const originalText = triggeringButton.getAttribute('data-original-text');
-                if (originalText) {
-                    triggeringButton.textContent = originalText;
-                }
+        // Close any other open expansions
+        const allExpansions = document.querySelectorAll('.sql-expansion');
+        allExpansions.forEach(exp => {
+            const relatedBtn = document.querySelector(`[data-expansion-id="${exp.id}"]`);
+            if (relatedBtn) {
+                relatedBtn.textContent = '👁️';
+                relatedBtn.removeAttribute('data-expansion-id');
             }
+            exp.remove();
         });
-        header.appendChild(closeBtn);
 
-        // Content area
-        const content = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        content.className = 'container-content';
-        content.style.cssText = `
-            padding: 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        `;
+        // Create unique ID for this expansion
+        const expansionId = 'sql-expansion-' + Date.now();
+
+        // Determine eye direction based on where content will appear
+        let eyeEmoji = '👀'; // Default open eyes looking forward
+
+        if (triggeringButton) {
+            triggeringButton.setAttribute('data-expansion-id', expansionId);
+        }
+
+        // Create inline expansion container (no title bar, just content)
+        const expansion = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        expansion.id = expansionId;
+        expansion.className = 'sql-expansion';
+
+        // Content container (no title bar)
+        const textareaContainer = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+        textareaContainer.className = 'expansion-content';
 
         // SQL textarea
         const sqlTextarea = document.createElementNS('http://www.w3.org/1999/xhtml', 'textarea');
+        sqlTextarea.className = 'expansion-textarea';
         sqlTextarea.value = sqlText;
         sqlTextarea.readOnly = true;
-        sqlTextarea.style.cssText = `
-            width: 100%;
-            flex: 1;
-            min-height: 100px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            padding: 12px;
-            padding-top: 40px;
-            resize: none;
-            color: #2c3e50;
-            line-height: 1.4;
-            box-sizing: border-box;
-            overflow-y: auto;
-        `;
-        content.appendChild(sqlTextarea);
+        textareaContainer.appendChild(sqlTextarea);
 
-        // Copy button - overlayed on top right of textarea
+        // Copy button
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        copyBtn.className = 'expansion-copy-btn';
         copyBtn.textContent = '📋';
-        copyBtn.style.cssText = `
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            padding: 8px 10px;
-            background: rgba(52, 152, 219, 0.95);
-            color: white;
-            border: 1px solid #3498db;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s ease;
-        `;
-        copyBtn.addEventListener('mouseenter', () => {
-            copyBtn.style.background = 'rgba(41, 128, 185, 0.95)';
-            copyBtn.style.transform = 'scale(1.1)';
-        });
-        copyBtn.addEventListener('mouseleave', () => {
-            copyBtn.style.background = 'rgba(52, 152, 219, 0.95)';
-            copyBtn.style.transform = 'scale(1)';
-        });
-        copyBtn.addEventListener('click', () => {
+        copyBtn.title = 'Copy to clipboard';
+        copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             copyToClipboard(sqlText, copyBtn);
         });
-        content.appendChild(copyBtn);
+        textareaContainer.appendChild(copyBtn);
 
-        // Resize handles
-        const nwHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        nwHandle.className = 'resize-handle nw';
-        nwHandle.style.cssText = `
-            position: absolute;
-            left: 2px;
-            top: 42px;
-            width: 16px;
-            height: 16px;
-            cursor: nw-resize;
-            background: rgba(52, 152, 219, 0.3);
-            border: 1px solid rgba(52, 152, 219, 0.5);
-            border-radius: 3px;
-            transition: all 0.2s ease;
-        `;
-        nwHandle.addEventListener('mouseenter', () => {
-            nwHandle.style.background = 'rgba(52, 152, 219, 0.6)';
-        });
-        nwHandle.addEventListener('mouseleave', () => {
-            nwHandle.style.background = 'rgba(52, 152, 219, 0.3)';
-        });
+        expansion.appendChild(textareaContainer);
 
-        const seHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        seHandle.className = 'resize-handle se';
-        seHandle.style.cssText = `
-            position: absolute;
-            right: 2px;
-            bottom: 2px;
-            width: 16px;
-            height: 16px;
-            cursor: se-resize;
-            background: rgba(52, 152, 219, 0.3);
-            border: 1px solid rgba(52, 152, 219, 0.5);
-            border-radius: 3px;
-            transition: all 0.2s ease;
-        `;
-        seHandle.addEventListener('mouseenter', () => {
-            seHandle.style.background = 'rgba(52, 152, 219, 0.6)';
-        });
-        seHandle.addEventListener('mouseleave', () => {
-            seHandle.style.background = 'rgba(52, 152, 219, 0.3)';
-        });
+        // Position expansion at the button location, extending outward
+        if (triggeringButton) {
+            // Get button position relative to viewport
+            const buttonRect = triggeringButton.getBoundingClientRect();
 
-        sqlWindow.appendChild(header);
-        sqlWindow.appendChild(content);
-        sqlWindow.appendChild(nwHandle);
-        sqlWindow.appendChild(seHandle);
-
-        // Append to overlay container (not document.body since we're in SVG context)
-        const overlayContainer = document.getElementById('overlay-container');
-        if (overlayContainer) {
-            overlayContainer.appendChild(sqlWindow);
-        } else {
-            // Fallback to document.body if overlay container not found
-            if (document.body) {
-                document.body.appendChild(sqlWindow);
+            // ALWAYS use click event coordinates - do NOT use button position
+            if (!clickEvent) {
+                console.error('No click event provided to showSqlWindow!');
+                return;
             }
+
+            // Log everything to debug the offset issue
+            console.log('=== CLICK EVENT DEBUG ===');
+            console.log('clickEvent.clientX:', clickEvent.clientX);
+            console.log('clickEvent.clientY:', clickEvent.clientY);
+            console.log('clickEvent.pageX:', clickEvent.pageX);
+            console.log('clickEvent.pageY:', clickEvent.pageY);
+            console.log('clickEvent.screenX:', clickEvent.screenX);
+            console.log('clickEvent.screenY:', clickEvent.screenY);
+            console.log('clickEvent.offsetX:', clickEvent.offsetX);
+            console.log('clickEvent.offsetY:', clickEvent.offsetY);
+            console.log('buttonRect:', {
+                left: buttonRect.left,
+                top: buttonRect.top,
+                right: buttonRect.right,
+                bottom: buttonRect.bottom,
+                width: buttonRect.width,
+                height: buttonRect.height
+            });
+            console.log('window.scrollX:', window.scrollX);
+            console.log('window.scrollY:', window.scrollY);
+            console.log('=========================');
+
+            // Get the SVG element and its current transform
+            const svgElement = document.querySelector('svg');
+            const svgTransform = svgElement ? svgElement.getCTM() : null;
+
+            console.log('SVG Transform Matrix:', svgTransform);
+
+            // Get selection-container position to convert viewport coords to relative coords
+            const selectionContainer = document.querySelector('.selection-container');
+            const containerRect = selectionContainer ? selectionContainer.getBoundingClientRect() : null;
+
+            // Ensure selection-container allows overflow so content isn't clipped
+            if (selectionContainer) {
+                selectionContainer.style.overflow = 'visible';
+            }
+
+            console.log('Container rect:', containerRect);
+            console.log('Button rect:', buttonRect);
+
+            // Use button position relative to container for Y (so top aligns with button)
+            // Use click X position relative to container
+            let clickX = clickEvent.clientX - (containerRect ? containerRect.left : 0);
+            let clickY = buttonRect.top - (containerRect ? containerRect.top : 0);
+
+            console.log('Positioning at:', { clickX, clickY, note: 'Y aligned with button top' });
+
+            // Append to the selection-container so it appears inside it
+            if (!selectionContainer) {
+                console.error('selection-container not found! Falling back to button parent');
+                const targetContainer = triggeringButton.parentElement;
+                if (targetContainer) {
+                    targetContainer.appendChild(expansion);
+                } else {
+                    console.error('Button parent also not found!');
+                    return;
+                }
+            } else {
+                console.log('Appending to selection-container');
+                selectionContainer.appendChild(expansion);
+            }
+
+            // Calculate expansion dimensions based on content
+            // Estimate character width for monospace font (0.75rem ~= 12px, each char ~= 7.2px)
+            const charWidth = 7.2;
+            const lines = sqlText.split('\n');
+            const maxLineLength = Math.max(...lines.map(line => line.length), 20); // Minimum 20 chars
+            const lineCount = lines.length;
+
+            // Calculate width based on longest line, with min/max constraints
+            const contentWidth = maxLineLength * charWidth + 40; // +40 for padding and scrollbar
+            const expansionWidth = Math.min(Math.max(contentWidth, 250), 700); // Between 250px and 700px
+
+            // Calculate height based on line count
+            const lineHeight = 14; // ~1.15 line-height * 0.75rem font
+            const contentHeight = lineCount * lineHeight + 30; // +30 for padding
+            const expansionHeight = Math.min(Math.max(contentHeight, 100), 400); // Between 100px and 400px
+
+            // Determine if we should place to the right or left of the button
+            const spaceOnRight = window.innerWidth - buttonRect.left;
+            const spaceOnLeft = buttonRect.left;
+            const placeOnRight = spaceOnRight >= expansionWidth || spaceOnRight > spaceOnLeft;
+
+            // Calculate position - place RIGHT next to the click position
+            let left, top;
+
+            if (placeOnRight) {
+                // Place starting right at the click X position
+                left = clickX;
+                eyeEmoji = '👉'; // Eyes looking right
+
+                // Ensure it doesn't go off right edge
+                if (left + expansionWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - expansionWidth - 10;
+                }
+            } else {
+                // Place ending right at the click X position
+                left = clickX - expansionWidth;
+                eyeEmoji = '👈'; // Eyes looking left
+
+                // Ensure it doesn't go off left edge
+                if (left < 10) {
+                    left = 10;
+                }
+            }
+
+            // Position vertically right at the click Y position - NO MODIFICATIONS
+            top = clickY;
+
+            // Calculate available space from this position down
+            const availableHeightFromTop = window.innerHeight - top - 10;
+            let finalHeight = Math.min(expansionHeight, availableHeightFromTop);
+
+            // Ensure we have at least some minimum height
+            if (finalHeight < 100) {
+                finalHeight = 100;
+            }
+
+            // Update button emoji to show direction
+            if (triggeringButton) {
+                triggeringButton.textContent = eyeEmoji;
+            }
+
+            // Set position styles - use absolute positioning relative to selection-container
+            expansion.style.setProperty('position', 'absolute', 'important');
+            expansion.style.setProperty('left', `${left}px`, 'important');
+            expansion.style.setProperty('top', `${top}px`, 'important');
+            expansion.style.setProperty('width', `${expansionWidth}px`, 'important');
+            expansion.style.setProperty('max-width', `${Math.min(expansionWidth, window.innerWidth - left - 10)}px`, 'important');
+            expansion.style.setProperty('height', `${finalHeight}px`, 'important');
+            expansion.style.setProperty('max-height', `${finalHeight}px`, 'important');
+            expansion.style.setProperty('z-index', '100001', 'important');
+            expansion.style.setProperty('margin', '0', 'important');
+            expansion.style.setProperty('padding', '0', 'important');
+            expansion.style.setProperty('background', 'rgba(255, 255, 255, 0.98)', 'important');
+            expansion.style.setProperty('border', '1px solid #3498db', 'important');
+            expansion.style.setProperty('border-radius', '2px', 'important');
+            expansion.style.setProperty('box-shadow', '0 2px 10px rgba(0, 0, 0, 0.3)', 'important');
+            expansion.style.setProperty('pointer-events', 'auto', 'important');
+            expansion.style.setProperty('display', 'block', 'important');
+            expansion.style.setProperty('box-sizing', 'border-box', 'important');
+
+            console.log('Expansion positioned:', {
+                clickX, clickY,
+                placeOnRight,
+                left, top,
+                width: expansionWidth,
+                height: expansionHeight,
+                maxLineLength,
+                lineCount,
+                eyeEmoji
+            });
         }
 
-        // Prevent wheel events from propagating to underlying ERD
-        sqlWindow.addEventListener('wheel', (event) => {
+        // Prevent event propagation
+        expansion.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        expansion.addEventListener('mousedown', (event) => {
+            event.stopPropagation();
+        });
+
+        expansion.addEventListener('wheel', (event) => {
             event.stopPropagation();
         }, { passive: false });
-
-        // Prevent all mouse events from propagating to underlying ERD
-        sqlWindow.addEventListener('mousedown', (event) => {
-            event.stopPropagation();
-        });
-
-        sqlWindow.addEventListener('click', (event) => {
-            event.stopPropagation();
-        });
-
-        // Make the window draggable and resizable
-        makeDraggable(sqlWindow, header);
-        makeResizable(sqlWindow, nwHandle, seHandle);
-
-        // Change the triggering button text to "Close SQL"
-        if (triggeringButton) {
-            // Store original text if not already stored
-            if (!triggeringButton.getAttribute('data-original-text')) {
-                triggeringButton.setAttribute('data-original-text', triggeringButton.textContent);
-            }
-            if (triggeringButton.textContent.includes('SQL')) {
-                triggeringButton.textContent = '❌ SQL';
-            } else if (triggeringButton.textContent.includes('👁️')) {
-                triggeringButton.textContent = '❌';
-            }
-        }
     }
 
     function showFunctionWindow(functionData, triggersUsingFunction, tablesUsingFunction) {
@@ -436,117 +419,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const windowChrome = 200; // Header + usage info + padding + margins
         const calculatedHeight = contentHeight + windowChrome;
 
-        // Initial size: content-based but capped at 60vh
-        const initialWidth = Math.min(900, window.innerWidth * 0.7);
-        const maxHeight = window.innerHeight * 0.6;
-        const initialHeight = Math.min(calculatedHeight, maxHeight, 800);
-        const initialLeft = (window.innerWidth - initialWidth) / 2;
-        const initialTop = (window.innerHeight - initialHeight) / 2;
+        // Initial size: narrower and shorter to stay within visible area
+        const initialWidth = Math.min(600, window.innerWidth - 40); // 20px margin on each side
+        const availableHeight = window.innerHeight - 40; // 20px margin top and bottom
+        const initialHeight = Math.min(calculatedHeight, availableHeight, 500);
 
-        functionWindow.style.cssText = `
-            position: fixed;
-            left: ${initialLeft}px;
-            top: ${initialTop}px;
-            width: ${initialWidth}px;
-            height: ${initialHeight}px;
-            max-width: 80vw;
-            max-height: 90vh;
-            background: rgba(248, 249, 250, 0.98);
-            border: 2px solid #2ecc71;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            z-index: 100000;
-            display: flex;
-            flex-direction: column;
-            pointer-events: auto;
-        `;
+        // Center the window, but ensure it stays on screen
+        let initialLeft = (window.innerWidth - initialWidth) / 2;
+        let initialTop = (window.innerHeight - initialHeight) / 2;
 
-        // Header
+        // Ensure window doesn't go off screen edges
+        if (initialLeft < 20) initialLeft = 20;
+        if (initialTop < 20) initialTop = 20;
+        if (initialLeft + initialWidth > window.innerWidth - 20) {
+            initialLeft = window.innerWidth - initialWidth - 20;
+        }
+        if (initialTop + initialHeight > window.innerHeight - 20) {
+            initialTop = window.innerHeight - initialHeight - 20;
+        }
+
+        // Set position and size dynamically (CSS handles the rest)
+        functionWindow.style.left = `${initialLeft}px`;
+        functionWindow.style.top = `${initialTop}px`;
+        functionWindow.style.width = `${initialWidth}px`;
+        functionWindow.style.height = `${initialHeight}px`;
+
+        // Header (styled via CSS)
         const header = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
         header.className = 'header';
-        header.style.cssText = `
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            padding: 12px 16px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px 6px 0 0;
-            cursor: grab;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        `;
 
         // Header title
         const headerTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
         headerTitle.textContent = `🔧 ${functionName}`;
         header.appendChild(headerTitle);
 
-        // Close button
+        // Close button (styled via CSS)
         const closeBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
         closeBtn.textContent = '✕';
-        closeBtn.style.cssText = `
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            line-height: 1;
-        `;
         closeBtn.addEventListener('click', () => {
             functionWindow.remove();
         });
         header.appendChild(closeBtn);
 
-        // Content area
+        // Content area (styled via CSS)
         const content = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
         content.className = 'container-content';
-        content.style.cssText = `
-            padding: 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-            position: relative;
-        `;
 
-        // Usage information section
+        // Usage information section (styled via CSS)
         if (triggersUsingFunction.length > 0) {
             const usageSection = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-            usageSection.style.cssText = `
-                margin-bottom: 12px;
-                padding: 12px;
-                background: rgba(46, 204, 113, 0.1);
-                border: 1px solid #2ecc71;
-                border-radius: 4px;
-            `;
+            usageSection.className = 'function-usage-section';
 
             const usageTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'h4');
             usageTitle.textContent = `⚡ Used by ${triggersUsingFunction.length} Trigger(s)`;
-            usageTitle.style.cssText = `
-                margin: 0 0 8px 0;
-                font-size: 0.9rem;
-                color: #27ae60;
-            `;
             usageSection.appendChild(usageTitle);
 
             const usageList = document.createElementNS('http://www.w3.org/1999/xhtml', 'ul');
-            usageList.style.cssText = `
-                margin: 0;
-                padding-left: 20px;
-                font-size: 0.85rem;
-            `;
 
             triggersUsingFunction.forEach(trigger => {
                 const listItem = document.createElementNS('http://www.w3.org/1999/xhtml', 'li');
                 listItem.textContent = `${trigger.triggerName} on ${trigger.tableName} (${trigger.event})`;
-                listItem.style.cssText = `
-                    margin-bottom: 4px;
-                    color: #555;
-                `;
                 usageList.appendChild(listItem);
             });
 
@@ -554,76 +486,25 @@ document.addEventListener('DOMContentLoaded', () => {
             content.appendChild(usageSection);
         } else {
             const noUsageSection = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-            noUsageSection.style.cssText = `
-                margin-bottom: 12px;
-                padding: 12px;
-                background: rgba(189, 195, 199, 0.1);
-                border: 1px solid #bdc3c7;
-                border-radius: 4px;
-                font-size: 0.85rem;
-                color: #7f8c8d;
-            `;
+            noUsageSection.className = 'function-no-usage';
             noUsageSection.textContent = 'ℹ️ This function is not currently used by any triggers.';
             content.appendChild(noUsageSection);
         }
 
-        // Textarea container with relative positioning for the copy button
+        // Textarea container with relative positioning for the copy button (styled via CSS)
         const textareaContainer = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
-        textareaContainer.style.cssText = `
-            position: relative;
-            flex: 1;
-            display: flex;
-        `;
+        textareaContainer.className = 'textarea-container';
 
-        // Function definition textarea
+        // Function definition textarea (styled via CSS)
         const functionTextarea = document.createElementNS('http://www.w3.org/1999/xhtml', 'textarea');
         functionTextarea.value = functionText;
         functionTextarea.readOnly = true;
-        functionTextarea.style.cssText = `
-            width: 100%;
-            flex: 1;
-            min-height: 100px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            padding: 12px;
-            padding-top: 40px;
-            resize: none;
-            color: #2c3e50;
-            line-height: 1.4;
-            box-sizing: border-box;
-            overflow-y: auto;
-        `;
         textareaContainer.appendChild(functionTextarea);
 
-        // Copy button - overlayed on top right of textarea
+        // Copy button - overlayed on top right of textarea (styled via CSS)
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
+        copyBtn.className = 'copy-btn';
         copyBtn.textContent = '📋';
-        copyBtn.style.cssText = `
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 8px 10px;
-            background: rgba(46, 204, 113, 0.95);
-            color: white;
-            border: 1px solid #2ecc71;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s ease;
-        `;
-        copyBtn.addEventListener('mouseenter', () => {
-            copyBtn.style.background = 'rgba(39, 174, 96, 0.95)';
-            copyBtn.style.transform = 'scale(1.1)';
-        });
-        copyBtn.addEventListener('mouseleave', () => {
-            copyBtn.style.background = 'rgba(46, 204, 113, 0.95)';
-            copyBtn.style.transform = 'scale(1)';
-        });
         copyBtn.addEventListener('click', () => {
             copyToClipboard(functionText, copyBtn);
         });
@@ -631,48 +512,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         content.appendChild(textareaContainer);
 
-        // Resize handles
+        // Resize handles (styled via CSS)
         const nwHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
         nwHandle.className = 'resize-handle nw';
-        nwHandle.style.cssText = `
-            position: absolute;
-            left: 2px;
-            top: 42px;
-            width: 16px;
-            height: 16px;
-            cursor: nw-resize;
-            background: rgba(46, 204, 113, 0.3);
-            border: 1px solid rgba(46, 204, 113, 0.5);
-            border-radius: 3px;
-            transition: all 0.2s ease;
-        `;
-        nwHandle.addEventListener('mouseenter', () => {
-            nwHandle.style.background = 'rgba(46, 204, 113, 0.6)';
-        });
-        nwHandle.addEventListener('mouseleave', () => {
-            nwHandle.style.background = 'rgba(46, 204, 113, 0.3)';
-        });
 
         const seHandle = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
         seHandle.className = 'resize-handle se';
-        seHandle.style.cssText = `
-            position: absolute;
-            right: 2px;
-            bottom: 2px;
-            width: 16px;
-            height: 16px;
-            cursor: se-resize;
-            background: rgba(46, 204, 113, 0.3);
-            border: 1px solid rgba(46, 204, 113, 0.5);
-            border-radius: 3px;
-            transition: all 0.2s ease;
-        `;
-        seHandle.addEventListener('mouseenter', () => {
-            seHandle.style.background = 'rgba(46, 204, 113, 0.6)';
-        });
-        seHandle.addEventListener('mouseleave', () => {
-            seHandle.style.background = 'rgba(46, 204, 113, 0.3)';
-        });
 
         // Assemble window
         functionWindow.appendChild(header);
@@ -1950,27 +1795,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (selectedTables.length) {
             let primaryTable = selectedTables[0];
-            selection_header.textContent = `📋 ${primaryTable}`;
+            const primaryTableData = graphData.tables[primaryTable];
+            const primaryTableDisplayName = primaryTableData && primaryTableData.originalName ? primaryTableData.originalName : primaryTable;
+            selection_header.textContent = `📋 ${primaryTableDisplayName}`;
 
-            // Table Information Section
             html += '<div class="selection-section">';
-            html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">`;
-            html += `<h3 style="margin: 0;">📊 Selected Tables (${selectedTables.length})</h3>`;
-            html += `<button id="generate-focused-erd-btn" class="db-action-btn" style="
-                padding: 6px 12px;
-                background: linear-gradient(135deg, #3498db, #2980b9);
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 0.85rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-            ">
-                🔍 Generate Focused ERD
-            </button>`;
-            html += `</div>`;
 
             // Add collapsible settings panel
             html += `<div id="focused-erd-settings" style="
@@ -2079,58 +1908,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>`;
 
-            selectedTables.forEach((tableId, index) => {
-                const tableData = graphData.tables[tableId];
-                const safeTableId = escapeHtml(tableId);
-                if (index === 0) {
-                    // Primary table row with its SQL buttons
-                    html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">`;
-                    html += `<span class="table-name" data-table-id="${safeTableId}" style="font-size: 1.1rem; font-weight: 600;">${safeTableId}</span>`;
-                    // Add View SQL and Copy SQL buttons for the primary table
-                    if (tableData && tableData.sql) {
-                        html += `<button id="view-table-sql" class="db-action-btn" style="
-                            padding: 4px 8px;
-                            background: rgba(52, 152, 219, 0.1);
-                            color: #3498db;
-                            border: 1px solid #3498db;
-                            border-radius: 4px;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                        " title="View table SQL in a window">
-                            👁️ SQL
-                        </button>`;
-                        html += `<button id="copy-table-sql" class="db-action-btn" style="
-                            padding: 4px 8px;
-                            background: rgba(52, 152, 219, 0.1);
-                            color: #3498db;
-                            border: 1px solid #3498db;
-                            border-radius: 4px;
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                        " title="Copy SQL to clipboard">
-                            📋
-                        </button>`;
-                    }
-                    html += `</div>`;
-                }
-            });
+            // Primary table row with its SQL buttons (horizontal layout)
+            const safePrimaryTable = escapeHtml(primaryTable);
+            const safePrimaryDisplayName = escapeHtml(primaryTableDisplayName);
+            html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 0;">`;
+            html += `<span class="table-name" data-table-id="${safePrimaryTable}" style="font-size: 1.05rem; font-weight: 600; flex: 1;">${safePrimaryDisplayName}</span>`;
+            // Add View SQL and Copy SQL buttons for the primary table
+            if (primaryTableData && primaryTableData.sql) {
+                html += `<button id="view-table-sql" class="db-action-btn" style="
+                    padding: 5px 10px;
+                    background: rgba(52, 152, 219, 0.15);
+                    color: #3498db;
+                    border: 1px solid #3498db;
+                    border-radius: 4px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " title="View table SQL">
+                    👁️ SQL
+                </button>`;
+                html += `<button id="copy-table-sql" class="db-action-btn" style="
+                    padding: 5px 10px;
+                    background: rgba(52, 152, 219, 0.15);
+                    color: #3498db;
+                    border: 1px solid #3498db;
+                    border-radius: 4px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " title="Copy SQL to clipboard">
+                    📋
+                </button>`;
+            }
+            html += `</div>`;
 
-            // Additional table names row with copy button
+            // Connected Tables section - collapsible by default
             if (selectedTables.length > 1) {
-                html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">`;
+                html += `<div style="margin: 12px 0 8px 0; background: rgba(52, 152, 219, 0.05); border-radius: 6px; border: 1px solid rgba(52, 152, 219, 0.15); padding: 10px;">`;
+
+                // Header with collapse icon and Generate Focused ERD button
+                html += `<div id="connected-tables-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; margin-bottom: 10px;">`;
+                html += `<div style="display: flex; align-items: center; gap: 8px;">`;
+                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">🔗 Connected Tables (${selectedTables.length - 1})</h3>`;
+                html += `</div>`;
+
+                // Only show "Generate Focused ERD" button if we're NOT already in a focused ERD
+                if (!graphData.includedTables) {
+                    html += `<button id="generate-focused-erd-btn" class="db-action-btn" style="
+                        padding: 4px 10px;
+                        background: linear-gradient(135deg, #3498db, #2980b9);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                    " onclick="event.stopPropagation();">
+                        🔍 Generate Focused ERD
+                    </button>`;
+                }
+                html += `</div>`;
+
+                // Collapsible content - hidden by default
+                html += `<div id="connected-tables-content" style="display: none;">`;
+                html += `<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid rgba(52, 152, 219, 0.15);">`;
 
                 // Copy button on the left
                 html += `<button id="copy-all-table-names" class="db-action-btn" style="
                     padding: 4px 8px;
-                    background: rgba(52, 152, 219, 0.1);
+                    background: rgba(52, 152, 219, 0.15);
                     color: #3498db;
                     border: 1px solid #3498db;
                     border-radius: 4px;
-                    font-size: 0.85rem;
+                    font-size: 0.75rem;
                     cursor: pointer;
                     transition: all 0.2s ease;
                     flex-shrink: 0;
@@ -2141,19 +1997,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Additional table names
                 selectedTables.forEach((tableId, index) => {
                     if (index > 0) {
+                        const tableData = graphData.tables[tableId];
+                        const displayName = tableData && tableData.originalName ? tableData.originalName : tableId;
                         const safeTableId = escapeHtml(tableId);
-                        html += `<span class="table-name" data-table-id="${safeTableId}">${safeTableId}</span>`;
+                        const safeDisplayName = escapeHtml(displayName);
+                        html += `<span class="table-name" data-table-id="${safeTableId}">${safeDisplayName}</span>`;
                     }
                 });
 
-                html += '</div>'; // Close additional table names row
+                html += '</div>'; // Close table names row
+                html += '</div>'; // Close collapsible content
+                html += '</div>'; // Close connected tables section
             }
 
-            // Add table details for the primary table
-            const primaryTableData = graphData.tables[primaryTable];
+            // Triggers section - collapsible
             if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers.length > 0) {
-                html += '<div class="selection-section">';
-                html += '<h3>⚡ Triggers</h3>';
+                html += '<div style="margin: 12px 0 8px 0;">';
+                html += `<div id="triggers-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(241, 196, 15, 0.05); border-radius: 4px; border: 1px solid rgba(241, 196, 15, 0.15);">`;
+                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">⚡ Triggers (${primaryTableData.triggers.length})</h3>`;
+                html += `</div>`;
+                html += `<div id="triggers-content" style="display: none; margin-top: 8px;">`;
                 primaryTableData.triggers.forEach((trigger, triggerIndex) => {
                     html += '<div class="trigger-info" style="margin-bottom: 8px;">';
                     html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">`;
@@ -2228,29 +2092,155 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     html += '</div>';
                 });
-                html += '</div>';
+                html += '</div>'; // Close triggers content
+                html += '</div>'; // Close triggers section
             }
         }
 
-        // Foreign Keys Section
+        // Foreign Keys Section - collapsible
         if (selectedEdges.length) {
-            html += '<div class="selection-section">';
-            html += `<h3>🔗 Foreign Key Relationships (${selectedEdges.length})</h3>`;
+            html += '<div style="margin: 12px 0 8px 0;">';
+            html += `<div id="foreign-keys-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(231, 76, 60, 0.05); border-radius: 4px; border: 1px solid rgba(231, 76, 60, 0.15);">`;
+            html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
+            html += `<h3 style="margin: 0; font-size: 0.9rem;">🔗 Foreign Key Relationships (${selectedEdges.length})</h3>`;
+            html += `</div>`;
+            html += `<div id="foreign-keys-content" style="display: none; margin-top: 8px;">`;
             for (const edgeId of selectedEdges) {
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
-                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}" style="position: relative;">`;
-                    html += `<div style="display: flex; align-items: center; justify-content: space-between;">`;
-                    html += `<h4>🔑 ${escapeHtml(edge.fromColumn)} → ${escapeHtml(edge.toColumn)}</h4>`;
-                    html += `<button class="copy-sql-text" data-sql-text="${escapeHtml(edge.fkText)}" style="background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.9rem; opacity: 0.6; transition: opacity 0.2s;" title="Copy SQL">📋</button>`;
+                    // Extract constraint name from fkText if available
+                    const constraintMatch = edge.fkText.match(/CONSTRAINT\s+(\S+)/i);
+                    const constraintName = constraintMatch ? constraintMatch[1] : '';
+
+                    // Extract cascade actions from fkText
+                    const onDeleteMatch = edge.fkText.match(/ON\s+DELETE\s+(CASCADE|SET\s+NULL|SET\s+DEFAULT|RESTRICT|NO\s+ACTION)/i);
+                    const onUpdateMatch = edge.fkText.match(/ON\s+UPDATE\s+(CASCADE|SET\s+NULL|SET\s+DEFAULT|RESTRICT|NO\s+ACTION)/i);
+                    const onDelete = onDeleteMatch ? onDeleteMatch[1].toUpperCase().replace(/\s+/g, ' ') : null;
+                    const onUpdate = onUpdateMatch ? onUpdateMatch[1].toUpperCase().replace(/\s+/g, ' ') : null;
+
+                    // Helper function to get badge style based on action type
+                    const getActionBadge = (action, type) => {
+                        if (!action) return '';
+                        let color, bgColor, icon;
+
+                        if (action === 'CASCADE') {
+                            color = '#c0392b';
+                            bgColor = 'rgba(192, 57, 43, 0.15)';
+                            icon = '⚠️';
+                        } else if (action === 'SET NULL') {
+                            color = '#f39c12';
+                            bgColor = 'rgba(243, 156, 18, 0.15)';
+                            icon = '∅';
+                        } else if (action === 'SET DEFAULT') {
+                            color = '#3498db';
+                            bgColor = 'rgba(52, 152, 219, 0.15)';
+                            icon = '⟲';
+                        } else if (action === 'RESTRICT') {
+                            color = '#8e44ad';
+                            bgColor = 'rgba(142, 68, 173, 0.15)';
+                            icon = '🚫';
+                        } else { // NO ACTION
+                            color = '#95a5a6';
+                            bgColor = 'rgba(149, 165, 166, 0.15)';
+                            icon = '—';
+                        }
+
+                        return `<span style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 3px;
+                            padding: 2px 6px;
+                            background: ${bgColor};
+                            color: ${color};
+                            border: 1px solid ${color}40;
+                            border-radius: 3px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            font-family: monospace;
+                            white-space: nowrap;
+                        ">${icon} ${type}: ${action}</span>`;
+                    };
+
+                    // Get table names from edge.tables array [fromTable, toTable]
+                    const fromTableId = edge.tables && edge.tables[0] ? edge.tables[0] : '';
+                    const toTableId = edge.tables && edge.tables[1] ? edge.tables[1] : '';
+                    // Get original names with dots for display
+                    const fromTableData = graphData.tables[fromTableId];
+                    const toTableData = graphData.tables[toTableId];
+                    const fromTable = fromTableData && fromTableData.originalName ? fromTableData.originalName : fromTableId;
+                    const toTable = toTableData && toTableData.originalName ? toTableData.originalName : toTableId;
+
+                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}" style="
+                        background: rgba(189, 195, 199, 0.08);
+                        border: 1px solid rgba(189, 195, 199, 0.3);
+                        border-radius: 4px;
+                        padding: 8px 10px;
+                        margin: 4px 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                    ">`;
+                    html += `<div style="flex: 1; min-width: 0;">`;
+                    html += `<div style="font-weight: 600; color: #c0392b; font-size: 0.85rem; margin-bottom: 4px; line-height: 1.3;">`;
+                    html += `🔑 ${escapeHtml(fromTable)}.${escapeHtml(edge.fromColumn)} → ${escapeHtml(toTable)}.${escapeHtml(edge.toColumn)}`;
                     html += `</div>`;
-                    html += `<pre>${escapeHtml(edge.fkText)}</pre>`;
+
+                    // Add cascade action badges
+                    if (onDelete || onUpdate) {
+                        html += `<div style="display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">`;
+                        if (onDelete) html += getActionBadge(onDelete, 'DEL');
+                        if (onUpdate) html += getActionBadge(onUpdate, 'UPD');
+                        html += `</div>`;
+                    }
+
+                    if (constraintName) {
+                        html += `<div style="font-size: 0.7rem; color: #95a5a6; font-family: monospace;">`;
+                        html += `${escapeHtml(constraintName)}`;
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                    html += `<div style="display: flex; gap: 4px; flex-shrink: 0;">`;
+                    html += `<button class="view-fk-sql" data-edge-id="${escapeHtml(edgeId)}" style="
+                        padding: 4px 8px;
+                        background: rgba(231, 76, 60, 0.1);
+                        color: #e74c3c;
+                        border: 1px solid #e74c3c;
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    " title="View foreign key SQL">
+                        👁️
+                    </button>`;
+                    html += `<button class="copy-fk-sql" data-edge-id="${escapeHtml(edgeId)}" style="
+                        padding: 4px 8px;
+                        background: rgba(231, 76, 60, 0.1);
+                        color: #e74c3c;
+                        border: 1px solid #e74c3c;
+                        border-radius: 4px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    " title="Copy foreign key SQL">
+                        📋
+                    </button>`;
+                    html += `</div>`;
                     html += '</div>';
                 } else {
-                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}">${escapeHtml(edgeId)}</div>`;
+                    html += `<div class="edge-name" data-edge-id="${escapeHtml(edgeId)}" style="
+                        padding: 6px 8px;
+                        background: rgba(189, 195, 199, 0.1);
+                        border-radius: 4px;
+                        margin: 4px 0;
+                        font-size: 0.85rem;
+                    ">${escapeHtml(edgeId)}</div>`;
                 }
             }
-            html += '</div>';
+            html += '</div>'; // Close foreign keys content
+            html += '</div>'; // Close foreign keys section
         }
 
         // Add Generate SVG buttons
@@ -2387,16 +2377,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // View table SQL button handler - opens a new window
         const viewTableSqlBtn = document.getElementById('view-table-sql');
         if (viewTableSqlBtn) {
-            viewTableSqlBtn.addEventListener('click', () => {
+            viewTableSqlBtn.addEventListener('click', (e) => {
                 const primaryTable = selectedTables[0];
                 const primaryTableData = graphData.tables[primaryTable];
                 if (primaryTableData && primaryTableData.sql) {
-                    showSqlWindow(primaryTable, primaryTableData.sql, viewTableSqlBtn);
+                    showSqlWindow(primaryTable, primaryTableData.sql, viewTableSqlBtn, e);
                 }
             });
         }
 
-        // View trigger function button handlers
+        // View trigger function button handlers - use same inline expansion as SQL
         const viewTriggerButtons = inner.querySelectorAll('.view-trigger-function');
         viewTriggerButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -2407,7 +2397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers[triggerIndex]) {
                     const trigger = primaryTableData.triggers[triggerIndex];
                     const triggerText = trigger.full_line || '';
-                    showSqlWindow(`${trigger.trigger_name} - Trigger Function`, triggerText, btn);
+                    showSqlWindow(`${trigger.trigger_name} - Trigger`, triggerText, btn, e);
                 }
             });
         });
@@ -2428,7 +2418,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // View function definition button handlers
+        // View function definition button handlers - use same inline expansion as SQL
         const viewFunctionButtons = inner.querySelectorAll('.view-function-definition');
         viewFunctionButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -2436,7 +2426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const functionName = btn.getAttribute('data-function-name');
                 const functionData = graphData.functions && graphData.functions[functionName];
                 if (functionData && functionData.full_definition) {
-                    showSqlWindow(`${functionData.name} - Function Definition`, functionData.full_definition, btn);
+                    showSqlWindow(`${functionData.name} - Function`, functionData.full_definition, btn, e);
                 }
             });
         });
@@ -2454,13 +2444,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Copy SQL text button handlers
-        const copySqlButtons = inner.querySelectorAll('.copy-sql-text');
-        copySqlButtons.forEach(btn => {
+        // View foreign key SQL button handlers - use same inline expansion as SQL
+        const viewFkSqlButtons = inner.querySelectorAll('.view-fk-sql');
+        viewFkSqlButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const sqlText = btn.getAttribute('data-sql-text');
-                copyToClipboard(sqlText, btn);
+                const edgeId = btn.getAttribute('data-edge-id');
+                const edge = graphData.edges[edgeId];
+                if (edge && edge.fkText) {
+                    const fkLabel = `${edge.fromColumn} → ${edge.toColumn}`;
+                    showSqlWindow(fkLabel, edge.fkText, btn, e);
+                }
+            });
+        });
+
+        // Copy foreign key SQL button handlers
+        const copyFkSqlButtons = inner.querySelectorAll('.copy-fk-sql');
+        copyFkSqlButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const edgeId = btn.getAttribute('data-edge-id');
+                const edge = graphData.edges[edgeId];
+                if (edge && edge.fkText) {
+                    copyToClipboard(edge.fkText, btn);
+                }
             });
         });
 
@@ -2481,6 +2488,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     focusedSettingsPanel.style.maxHeight = '800px';
                     focusedErdBtn.textContent = '🔼 Hide Settings';
                 }
+            });
+        }
+
+        // Add collapsible section handlers
+        const connectedTablesHeader = document.getElementById('connected-tables-header');
+        const connectedTablesContent = document.getElementById('connected-tables-content');
+        if (connectedTablesHeader && connectedTablesContent) {
+            connectedTablesHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = connectedTablesContent.style.display !== 'none';
+                connectedTablesContent.style.display = isExpanded ? 'none' : 'block';
+                const icon = connectedTablesHeader.querySelector('.collapse-icon');
+                if (icon) icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+            });
+        }
+
+        const triggersHeader = document.getElementById('triggers-header');
+        const triggersContent = document.getElementById('triggers-content');
+        if (triggersHeader && triggersContent) {
+            triggersHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = triggersContent.style.display !== 'none';
+                triggersContent.style.display = isExpanded ? 'none' : 'block';
+                const icon = triggersHeader.querySelector('.collapse-icon');
+                if (icon) icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
+            });
+        }
+
+        const foreignKeysHeader = document.getElementById('foreign-keys-header');
+        const foreignKeysContent = document.getElementById('foreign-keys-content');
+        if (foreignKeysHeader && foreignKeysContent) {
+            foreignKeysHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = foreignKeysContent.style.display !== 'none';
+                foreignKeysContent.style.display = isExpanded ? 'none' : 'block';
+                const icon = foreignKeysHeader.querySelector('.collapse-icon');
+                if (icon) icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(90deg)';
             });
         }
 
@@ -3557,10 +3601,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Expand
                     content.style.display = 'block';
                     if (icon) icon.textContent = '▼';
+
+                    // If expanding graphviz settings, show the regenerate buttons
+                    if (contentId === 'graphviz-settings-content') {
+                        const applyBtn = document.getElementById('apply-graphviz-settings-btn');
+                        const applyFocusedBtn = document.getElementById('apply-focused-settings-btn');
+                        const optimizeBtn = document.getElementById('optimize-layout-btn');
+
+                        if (applyBtn) applyBtn.style.display = 'block';
+                        if (applyFocusedBtn && graphData.includedTables) applyFocusedBtn.style.display = 'block';
+                        if (optimizeBtn) optimizeBtn.style.display = 'block';
+                    }
                 } else {
                     // Collapse
                     content.style.display = 'none';
                     if (icon) icon.textContent = '▶';
+
+                    // If collapsing graphviz settings, hide the regenerate buttons
+                    if (contentId === 'graphviz-settings-content') {
+                        const applyBtn = document.getElementById('apply-graphviz-settings-btn');
+                        const applyFocusedBtn = document.getElementById('apply-focused-settings-btn');
+                        const optimizeBtn = document.getElementById('optimize-layout-btn');
+
+                        if (applyBtn) applyBtn.style.display = 'none';
+                        if (applyFocusedBtn) applyFocusedBtn.style.display = 'none';
+                        if (optimizeBtn) optimizeBtn.style.display = 'none';
+                    }
                 }
             });
         };
@@ -3570,6 +3636,18 @@ document.addEventListener('DOMContentLoaded', () => {
         makeCollapsible('schema-stats-header', 'schema-stats-content');
         makeCollapsible('graphviz-settings-header', 'graphviz-settings-content');
         makeCollapsible('db-config-header', 'db-config-content');
+
+        // Initially hide the regenerate buttons until graphviz section is expanded
+        const graphvizContent = document.getElementById('graphviz-settings-content');
+        if (graphvizContent && graphvizContent.style.display === 'none') {
+            const applyBtn = document.getElementById('apply-graphviz-settings-btn');
+            const applyFocusedBtn = document.getElementById('apply-focused-settings-btn');
+            const optimizeBtn = document.getElementById('optimize-layout-btn');
+
+            if (applyBtn) applyBtn.style.display = 'none';
+            if (applyFocusedBtn) applyFocusedBtn.style.display = 'none';
+            if (optimizeBtn) optimizeBtn.style.display = 'none';
+        }
     }
 
     /**
@@ -3954,33 +4032,47 @@ document.addEventListener('DOMContentLoaded', () => {
                             console.log('Current database to restore:', currentDb);
                             console.log('Available databases:', result.databases);
                             console.log('Number of databases returned:', result.databases.length);
-                            
+
                             // Clear and populate dropdown (avoid innerHTML in SVG context)
                             while (dbSelect.firstChild) {
                                 dbSelect.removeChild(dbSelect.firstChild);
                             }
                             console.log('Cleared dropdown, options count:', dbSelect.options.length);
-                            
+
                             result.databases.forEach((db, index) => {
                                 const option = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
-                                option.value = db;
-                                option.textContent = db;
-                                if (db === currentDb) {
+                                // Handle both old format (string) and new format (object with name and table_count)
+                                const dbName = typeof db === 'string' ? db : db.name;
+                                const tableCount = typeof db === 'object' ? db.table_count : -1;
+
+                                option.value = dbName;
+                                // Display database name with table count
+                                if (tableCount === 0) {
+                                    option.textContent = `${dbName} (no tables)`;
+                                    option.style.color = '#999';  // Gray out databases with no tables
+                                } else if (tableCount > 0) {
+                                    option.textContent = `${dbName} (${tableCount} table${tableCount !== 1 ? 's' : ''})`;
+                                } else {
+                                    // -1 or unknown count
+                                    option.textContent = dbName;
+                                }
+
+                                if (dbName === currentDb) {
                                     option.selected = true;
-                                    console.log('Marking database as selected:', db);
+                                    console.log('Marking database as selected:', dbName);
                                 }
                                 dbSelect.appendChild(option);
-                                console.log(`Added option ${index + 1}: ${db}`);
+                                console.log(`Added option ${index + 1}: ${dbName} (${tableCount} tables)`);
                             });
-                            
+
                             console.log('Dropdown populated with', dbSelect.options.length, 'databases');
                             console.log('Selected index:', dbSelect.selectedIndex);
                             console.log('Selected value:', dbSelect.value);
-                            
+
                             // Update the shared last selected database state
                             lastSelectedDatabase = dbSelect.value;
                             console.log('Updated lastSelectedDatabase to:', lastSelectedDatabase);
-                            
+
                             showConnectionStatus(`✅ Found ${result.databases.length} databases`, 'success');
                         } else {
                             showConnectionStatus(`❌ Failed to query databases: ${result.message}`, 'error');
@@ -4746,6 +4838,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Parse and apply URL parameters after all containers are initialized
             parseUrlParameters();
+
+            // Auto-select the table with the most connections on initial load
+            setTimeout(() => {
+                // Find the table with the most connections
+                let mostConnectedTable = null;
+                let maxConnections = 0;
+
+                for (const tableId in tables) {
+                    const tableData = tables[tableId];
+                    if (tableData && tableData.edges) {
+                        const connectionCount = tableData.edges.length;
+                        if (connectionCount > maxConnections) {
+                            maxConnections = connectionCount;
+                            mostConnectedTable = tableId;
+                        }
+                    }
+                }
+
+                // If we found a table with connections, select it and zoom to fit all connected tables
+                if (mostConnectedTable && maxConnections > 0) {
+                    // Get connected edges and tables
+                    const connectedEdges = tables[mostConnectedTable].edges;
+                    const connectedTables = [mostConnectedTable, ...connectedEdges.map(edgeId => edges[edgeId].tables).flat()];
+                    const uniqueTables = [...new Set(connectedTables)];
+
+                    // Set highlighted element
+                    highlightedElementId = mostConnectedTable;
+
+                    // Highlight everything
+                    highlightElements(uniqueTables, connectedEdges);
+
+                    // Update metadata with new selection
+                    updateMetadataStats(uniqueTables, connectedEdges);
+
+                    // Show the selection window
+                    showSelectionWindow(uniqueTables, connectedEdges, null);
+
+                    // Calculate bounding box that encompasses all selected tables
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    let validTables = 0;
+
+                    uniqueTables.forEach(tableId => {
+                        const tableElement = document.getElementById(tableId);
+                        if (tableElement) {
+                            const bbox = tableElement.getBBox();
+                            minX = Math.min(minX, bbox.x);
+                            minY = Math.min(minY, bbox.y);
+                            maxX = Math.max(maxX, bbox.x + bbox.width);
+                            maxY = Math.max(maxY, bbox.y + bbox.height);
+                            validTables++;
+                        }
+                    });
+
+                    // If we found valid tables, zoom to fit all of them
+                    if (validTables > 0 && minX < maxX && minY < maxY) {
+                        const groupWidth = maxX - minX;
+                        const groupHeight = maxY - minY;
+                        const centerX = minX + groupWidth / 2;
+                        const centerY = minY + groupHeight / 2;
+
+                        // Calculate appropriate zoom level to fit all tables with padding
+                        const viewport = getViewportDimensions();
+                        const padding = 100; // pixels of padding around the group
+                        const scaleX = (viewport.width - padding * 2) / groupWidth;
+                        const scaleY = (viewport.height - padding * 2) / groupHeight;
+                        const scale = Math.min(scaleX, scaleY, 1.5); // Max 150% zoom
+
+                        // Apply zoom to center on all selected tables
+                        zoomToPoint(centerX, centerY, scale);
+                    }
+                }
+            }, 500); // Delay to ensure everything is loaded
 
             // Check if this is a focused ERD page and auto-expand settings + zoom to fit
             if (window.location.href.includes('focused')) {

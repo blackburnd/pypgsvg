@@ -26,16 +26,16 @@ def generate_db_config_table(settings):
         HTML string containing the settings table
     """
     if not settings or len(settings) == 0:
-        return '<p style="color: #999; font-style: italic; padding: 8px;">No database configuration settings found.</p>'
+        return '<p class="no-settings-message">No database configuration settings found.</p>'
 
-    html = '<table style="width: 100%; border-collapse: collapse;">'
-    html += '<thead><tr style="background: #ecf0f1;"><th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-weight: 600;">Setting</th><th style="padding: 6px; text-align: left; border: 1px solid #ddd; font-weight: 600;">Value</th></tr></thead>'
+    html = '<table class="settings-table">'
+    html += '<thead><tr><th>Setting</th><th>Value</th></tr></thead>'
     html += '<tbody>'
     for setting, value in sorted(settings.items()):
         # Escape HTML special characters
         setting_escaped = str(setting).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
         value_escaped = str(value).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-        html += f'<tr><td style="padding: 6px; border: 1px solid #ddd; font-family: monospace; color: #2c3e50;">{setting_escaped}</td><td style="padding: 6px; border: 1px solid #ddd; font-family: monospace; color: #34495e;">{value_escaped}</td></tr>'
+        html += f'<tr><td>{setting_escaped}</td><td>{value_escaped}</td></tr>'
     html += '</tbody></table>'
     return html
 
@@ -208,8 +208,8 @@ def inject_metadata_into_svg(
         source_section = f"""
             <div class="db-connection-section">
                 <div class="connection-header">
-                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: #555;">🔌 Current Connection</h4>
-                    <div class="original-connection" style="font-size: 0.85rem; color: #666; margin-bottom: 12px; padding: 6px; background: #f5f5f5; border-radius: 4px;">
+                    <h4 class="section-header">🔌 Current Connection</h4>
+                    <div class="original-connection">
                         <strong>Original:</strong> {file_info.get('connection', 'Unknown')}
                     </div>
                 </div>
@@ -223,10 +223,10 @@ def inject_metadata_into_svg(
                 </div>
                 <div class="metadata-single editable-field">
                     <span class="label">Database:</span>
-                    <select id="db-database" class="editable-value" style="width: 100%; padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85rem; background: white; cursor: pointer;">
+                    <select id="db-database" class="editable-value">
                         <option value="{file_info.get('database', 'Unknown')}">{file_info.get('database', 'Unknown')}</option>
                     </select>
-                    <button id="refresh-databases-btn" class="db-action-btn" style="margin-top: 4px; width: 100%; padding: 6px; background: #9E9E9E; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">
+                    <button id="refresh-databases-btn" class="db-action-btn">
                         🔄 Refresh Databases
                     </button>
                 </div>
@@ -238,23 +238,23 @@ def inject_metadata_into_svg(
                     <span class="label">Password:</span>
                     <input type="password" id="db-password" class="editable-value" value="" placeholder="Enter password" />
                 </div>
-                <div class="db-connection-buttons" style="margin-top: 12px; display: flex; gap: 8px;">
-                    <button id="test-connection-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                <div class="db-connection-buttons">
+                    <button id="test-connection-btn" class="db-action-btn">
                         🔍 Test Connection
                     </button>
-                    <button id="reload-from-db-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                    <button id="reload-from-db-btn" class="db-action-btn">
                         🔄 Reload ERD
                     </button>
                 </div>
-                <div id="connection-status" style="margin-top: 8px; padding: 6px; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
+                <div id="connection-status"></div>
             </div>"""
     else:
         # File-based source - show editable filepath when in server mode
         source_section = f"""
             <div class="file-source-section">
                 <div class="connection-header">
-                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: #555;">📁 Source File</h4>
-                    <div class="original-file-info" style="font-size: 0.85rem; color: #666; margin-bottom: 12px; padding: 6px; background: #f5f5f5; border-radius: 4px;">
+                    <h4 class="section-header">📁 Source File</h4>
+                    <div class="original-file-info">
                         <strong>Current:</strong> {file_info.get('filename', 'Unknown')}<br/>
                         <strong>Size:</strong> {file_info.get('filesize', 'Unknown')}
                     </div>
@@ -263,41 +263,31 @@ def inject_metadata_into_svg(
                     <span class="label">File Path:</span>
                     <input type="text" id="file-path" class="editable-value" value="{file_info.get('filename', '')}" placeholder="Enter path to SQL dump file" />
                 </div>
-                <div class="file-reload-buttons" style="margin-top: 12px; display: flex; gap: 8px;">
-                    <button id="reload-from-file-btn" class="db-action-btn" style="flex: 1; padding: 8px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                <div class="file-reload-buttons">
+                    <button id="reload-from-file-btn" class="db-action-btn">
                         🔄 Reload from File
                     </button>
                 </div>
-                <div id="file-status" style="margin-top: 8px; padding: 6px; border-radius: 4px; font-size: 0.85rem; display: none;"></div>
+                <div id="file-status"></div>
             </div>"""
     
     # HTML overlays
     metadata_html = f"""
 <div class='metadata-container container' id='metadata-container'>
-    <div class='header' style='display: flex; justify-content: space-between; align-items: center;'>
+    <div class='header header-flex'>
         <span>📊 Database Metadata</span>
-        <button id="print-erd-btn" class="db-action-btn" style="
-            padding: 4px 12px;
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        ">
+        <button id="print-erd-btn" class="db-action-btn">
             🖨️ Print
         </button>
     </div>
-    <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
+    <div class="window-controls window-controls-top-right"></div>
     <div class='metadata-inner-container container-content'>
-        
+
         <div class="metadata-section">
-            <h3 class="collapsible-header" id="source-info-header" style="cursor: pointer; user-select: none;">
+            <h3 class="collapsible-header" id="source-info-header">
                 <span class="collapse-icon">▶</span> 📁 Source Information
             </h3>
-            <div id="source-info-content" style="display: none;">
+            <div id="source-info-content" class="collapsible-content">
                 {source_section}
                 <div class="metadata-single">
                     <span class="label">Generated:</span>
@@ -307,10 +297,10 @@ def inject_metadata_into_svg(
         </div>
 
         <div class="metadata-section">
-            <h3 class="collapsible-header" id="schema-stats-header" style="cursor: pointer; user-select: none;">
+            <h3 class="collapsible-header" id="schema-stats-header">
                 <span class="collapse-icon">▶</span> 🗃️ Schema Statistics
             </h3>
-            <div id="schema-stats-content" style="display: none;">
+            <div id="schema-stats-content" class="collapsible-content">
             <div class="metadata-grid">
                 <div class="metadata-item table-selector-item">
                     <span class="label">Tables</span>
@@ -361,27 +351,14 @@ def inject_metadata_into_svg(
         </div>
 
         <div class="metadata-section">
-            <h3 class="collapsible-header" id="graphviz-settings-header" style="cursor: pointer; user-select: none;">
+            <h3 class="collapsible-header" id="graphviz-settings-header">
                 <span class="collapse-icon">▶</span> ⚙️ Graphviz Settings
-                    <button id="apply-focused-settings-btn" class="db-action-btn" style="
-                        min-width: 1%;
-                        padding: 8px 12px;
-                        margin-bottom: 8px;
-                        background: linear-gradient(135deg, #e67e22, #d35400);
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        display: none;
-                    ">
+                    <button id="apply-focused-settings-btn" class="db-action-btn" style="display:none">
                         Regenerate ERD
                     </button>
 
             </h3>
-            <div id="graphviz-settings-content" style="display: none;">
+            <div id="graphviz-settings-content" class="collapsible-content">
                 <div class="graphviz-settings-grid">
                     <div class="setting-item">
                         <label class="setting-label">Pack Mode</label>
@@ -440,39 +417,21 @@ def inject_metadata_into_svg(
                         <input type="text" id="gv-node-style" class="setting-input" value="{node_style}" />
                     </div>
                 </div>
-                <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #ddd;">
-                    <button id="apply-graphviz-settings-btn" class="db-action-btn" style="
-                        width: 100%;
-                        padding: 8px 12px;
-                        background: linear-gradient(135deg, #3498db, #2980b9);
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                    ">
+                <div class="settings-divider">
+                    <button id="apply-graphviz-settings-btn" class="db-action-btn">
                         🔄 Apply Settings &amp; Regenerate ERD
                     </button>
-                    <div id="apply-settings-status" style="
-                        margin-top: 8px;
-                        padding: 6px;
-                        border-radius: 3px;
-                        font-size: 0.8rem;
-                        text-align: center;
-                        display: none;
-                    "></div>
+                    <div id="apply-settings-status"></div>
                 </div>
             </div>
         </div>
 
         <div class="metadata-section">
-            <h3 class="collapsible-header" id="db-config-header" style="cursor: pointer; user-select: none;">
+            <h3 class="collapsible-header" id="db-config-header">
                 <span class="collapse-icon">▶</span> ⚙️ Database Configuration
             </h3>
-            <div id="db-config-content" style="display: none;">
-                <div style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;">
+            <div id="db-config-content" class="collapsible-content">
+                <div class="scrollable-config">
                     {generate_db_config_table(settings)}
                 </div>
             </div>
@@ -486,14 +445,14 @@ def inject_metadata_into_svg(
 <div id="miniature-container" class="miniature-container container">
   <div class="header" id="miniature-header">
     Directed Graph Overview
-    <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
+    <div class="window-controls window-controls-top-right"></div>
   </div>
   <div class="miniature-inner-container container-content" id="miniature-inner-container">
     {miniature_svg.replace('<svg', '<svg id="miniature-svg"')}
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle nw" id="resize_handle_nw"></div>
+  <div class="resize-handle se" id="resize_handle_se"></div>
 </div>
 '''
     instructions_html = (
@@ -504,15 +463,14 @@ def inject_metadata_into_svg(
         '</div>'
     )
     selection_html = f'''
-<div id="selection-container" class="selection-container container" 
-     style="display:none">
+<div id="selection-container" class="selection-container container">
   <div class="header" id="selection-header"></div>
-      <div class="window-controls" style="position:absolute;right:2px;top:2px;z-index:10010;"></div>
+      <div class="window-controls window-controls-top-right"></div>
   <div class="selection-container container-content" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
-  <div class="resize-handle nw" id="resize_handle_nw" style="position:absolute;left:2px;top:24px;width:16px;height:16px;cursor:nw-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
-  <div class="resize-handle se" id="resize_handle_se" style="position:absolute;right:2px;bottom:2px;width:16px;height:16px;cursor:se-resize;background:rgba(0,0,0,0.1);border-radius:3px;"></div>
+  <div class="resize-handle nw" id="resize_handle_nw"></div>
+  <div class="resize-handle se" id="resize_handle_se"></div>
 </div>
 '''
     all_overlays_html = f"""
@@ -523,7 +481,7 @@ def inject_metadata_into_svg(
     """
     overlay_container_html = f'''
     <foreignObject id="overlay-container" x="0" y="0" width="100vw" height="100vh" pointer-events="none">
-        <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; font-family: system-ui, -apple-system, sans-serif;">
+        <div xmlns="http://www.w3.org/1999/xhtml" id="overlay-container-div" class="overlay-container-div">
             {all_overlays_html}
         </div>
     </foreignObject>
