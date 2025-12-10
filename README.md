@@ -30,6 +30,32 @@
 
 ![](https://live.staticflickr.com/65535/54725569515_1a265e1695.jpg)
 
+#### 🎥 Feature Demonstrations
+
+**Smart Navigation & Initial View**
+<!-- TODO: Add animated GIF showing initial zoom to table with most connections -->
+*On load, the diagram automatically identifies and focuses on your schema's most connected table, providing immediate insight into the database architecture.*
+
+**Double-Click to Explore Relationships**
+<!-- TODO: Add animated GIF showing double-click navigation between tables -->
+*Double-click any table to instantly zoom and center on all its connected relationships. Perfect for exploring complex schemas interactively.*
+
+**Real-Time Graphviz Settings**
+<!-- TODO: Add animated GIF showing Graphviz settings modification and diagram regeneration -->
+*Modify layout parameters in real-time through the Metadata Panel. Change rank direction, spacing, and packmode settings to visualize your schema from different perspectives.*
+
+**Focused ERD Generation**
+<!-- TODO: Add animated GIF showing selection and focused ERD creation -->
+*Select specific tables and generate a simplified, focused diagram. Customize layout settings and create clean sub-diagrams for documentation or presentations.*
+
+**Database Querying & Switching**
+<!-- TODO: Add animated GIF showing database query and switching between databases -->
+*When connected to a PostgreSQL server, browse available databases with table counts and switch between them seamlessly without restarting.*
+
+**Print-Friendly Export**
+<!-- TODO: Add animated GIF showing print-friendly view generation -->
+*Generate clean, professional diagrams optimized for printing, PDFs, and documentation by automatically hiding interactive UI elements.*
+
 **Try it yourself:**
 ```bash
 # Download sample and generate interactive ERD
@@ -45,6 +71,9 @@ pypgsvg schema.dump --output demo_erd --view
 # Generate interactive ERD from schema dump
 pypgsvg schema.dump --output database_erd --view
 
+# Connect directly to PostgreSQL database with interactive features
+pypgsvg --host localhost --port 5432 --database mydb --user postgres --output live_erd --view
+
 # Enterprise automation (CI/CD ready)
 pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
 ```
@@ -53,15 +82,29 @@ pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR
 ```bash
 # Large schema optimization
 pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
-source venv/bin/activate && python -m src.pypgsvg Samples/complex_schema.dump --node-shape=ellipse --show-standalone=false --output=./Samples/complex_schema --rankdir LR --node-sep 2 --packmode
 
+# Direct database connection with custom layout
+pypgsvg --host prod-db.company.com --port 5432 --database analytics \
+  --user readonly --node-shape=ellipse --show-standalone=false \
+  --output=./docs/analytics_schema --rankdir LR --node-sep 2 --packmode graph
 
-# Custom layout for documentation
+# Custom layout for presentations and documentation
 pypgsvg schema.dump --rankdir LR --fontsize 20 --node-fontsize 16 --output presentation_erd
+
+# Interactive mode for database exploration
+pypgsvg --host localhost --database mydb --user postgres --view
+# Then use the UI to:
+# - Browse and switch between databases
+# - Modify Graphviz settings in real-time
+# - Generate focused ERDs of specific subsystems
+# - Export print-friendly versions for documentation
 ```
 
 ## Usage
-### Get Your PostgreSQL Schema
+
+### Option 1: From Schema Dump File
+
+#### Get Your PostgreSQL Schema
 If you don't have a schema dump, generate one with `pg_dump`:
 
 ```bash
@@ -74,14 +117,14 @@ pg_dump -h your-host -d database -U username -s -O -F plain --disable-triggers -
 
 Or use our [sample schema](https://github.com/blackburnd/pypgsvg/blob/main/Samples/complex_schema.dump) for testing.
 
-### Interactive ERD Generation
+#### Generate Interactive ERD
 
 **Basic usage:**
 ```bash
 pypgsvg schema.dump --output my_database_erd --view
 ```
 
-**Usage:**
+**Advanced usage:**
 ```bash
 pypgsvg schema.dump \
   --output docs/database_architecture \
@@ -92,12 +135,46 @@ pypgsvg schema.dump \
   --hide-standalone
 ```
 
+### Option 2: Direct Database Connection
+
+Connect directly to a live PostgreSQL database for interactive exploration:
+
+**Basic connection:**
+```bash
+pypgsvg --host localhost --port 5432 --database mydb --user postgres --view
+```
+
+**Production database (read-only):**
+```bash
+pypgsvg --host prod-db.company.com --port 5432 \
+  --database production --user readonly \
+  --output prod_schema --view
+```
+
+**Benefits of database connection mode:**
+- 🗄️ **Query available databases** - Browse all databases you have access to
+- 🔄 **Switch databases dynamically** - No need to regenerate or restart
+- 📊 **View table counts** - See database size before loading
+- ⚡ **Real-time schema** - Always see the current database structure
+
+**Interactive features in `--view` mode:**
+- Browse and switch between databases on the server
+- Modify Graphviz settings and regenerate layouts in real-time
+- Select tables to create focused sub-diagrams
+- Generate print-friendly exports for documentation
+- Double-click navigation and smart initial zoom
+
 **The generated SVG includes:**
-- 🖱️ **Interactive selection** - Click tables/edges to view SQL details
-- 📱 **Miniature navigator** - Overview panel for large schemas  
-- 📋 **Copy/download tools** - Export selected elements
-- 🎨 **Resizable panels** - Customize your workspace
-- ⌨️ **Keyboard shortcuts** - ESC/R to reset view
+- 🎯 **Smart initial zoom** - Automatically selects and focuses on the table with most connections
+- 🖱️ **Double-click navigation** - Double-click any table to zoom to all connected relationships
+- 📊 **Real-time diagram regeneration** - Modify Graphviz settings and regenerate instantly
+- 🔍 **Focused ERD creation** - Select specific tables to generate simplified sub-diagrams
+- 🗄️ **Database querying** - Browse and switch between databases on your PostgreSQL server
+- 📱 **Miniature navigator** - Interactive overview panel for large schemas
+- 🖨️ **Print-friendly export** - Clean diagram output for documentation
+- 📋 **Copy/download tools** - Export SQL definitions and selected elements
+- 🎨 **Resizable panels** - Fully customizable workspace layout
+- ⌨️ **Keyboard shortcuts** - ESC/R to reset view, pan and zoom controls
 
 > **Note:** For full interactivity, open the SVG file locally in your browser. GitHub restricts JavaScript for security.
 
@@ -138,10 +215,27 @@ else:
 
 | Argument | Type | Default | Description |
 |----------|------|---------|-------------|
-| `input_file` | **Required** | - | Path to the PostgreSQL dump file |
+| `input_file` | Optional | - | Path to the PostgreSQL dump file (optional if using database connection) |
 | `-o, --output` | String | `schema_erd` | Output file name (without extension) |
-| `--view` | Flag | `false` | Open the generated SVG in a browser |
+| `--view` | Flag | `false` | Open the generated SVG in a browser with full interactive features |
 | `--show-standalone` | String | `true` | Show/hide tables with no foreign key relationships |
+
+### Database Connection Arguments
+
+For connecting directly to a PostgreSQL database instead of using a dump file:
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--host` | String | - | PostgreSQL server hostname or IP address |
+| `--port` | Integer | `5432` | PostgreSQL server port |
+| `--database` | String | - | Database name to connect to |
+| `--user` | String | - | Database username for authentication |
+
+**Note:** When using database connection mode with `--view`, you can:
+- Query and browse all databases you have access to
+- Switch between databases without restarting
+- See table counts for each database
+- Generate ERDs from live database schemas
 
 ### Layout & Positioning
 
@@ -206,37 +300,76 @@ Use `--show-standalone false` to hide tables with no foreign key relationships.
 
 ---
 
-## 🎯 Interactive Components
+## 🎯 Interactive Features
 
-The generated SVG includes several interactive panels that can be moved, resized, and minimized:
-### 📊 Metadata Panel
-Displays comprehensive information about your database schema:
+The generated SVG provides a rich interactive experience with powerful navigation and analysis capabilities:
+
+### 🎬 Smart Initial View
+On load, the diagram automatically:
+- **Identifies the table with the most connections** and selects it
+- **Zooms to show all related tables** for immediate context
+- **Highlights relationships** to visualize the data flow
+
+This intelligent starting point helps you quickly understand the core of your database architecture.
+
+### 🖱️ Interactive Navigation
+
+**Double-Click Navigation:**
+- **Double-click any table** to instantly zoom and center the view on that table and all its connected relationships
+- Automatically highlights all foreign key connections for visual clarity
+- Perfect for exploring complex schemas and understanding table dependencies
+
+**Mouse & Keyboard Controls:**
+- **Click and drag** to pan around the diagram
+- **Scroll wheel** to zoom in/out
+- **Press ESC or R** to reset the view to initial zoom level
+- **Click tables/edges** to view detailed SQL information
+
+### 📊 Interactive Panels
+
+All panels can be moved, resized, minimized, and positioned to suit your workflow:
+
+#### Metadata Panel
+Comprehensive database schema information and controls:
 - **Schema statistics** (table count, columns, relationships)
-- **Generation parameters** used
-- **File information** and timestamps
-- **Interactive controls** (minimize, close, drag to reposition)
+- **⚙️ Graphviz Settings** - Modify and regenerate the diagram layout in real-time
+  - Change rank direction (TB, LR, BT, RL)
+  - Adjust node and rank separation
+  - Modify packmode settings
+  - Apply changes instantly to see different visualizations
+- **🗄️ Database Connection** - Query live databases (when using `--view` mode)
+  - Connect to PostgreSQL servers
+  - Browse available databases with table counts
+  - Switch between databases seamlessly
+- **🖨️ Print-Friendly View** - Generate clean diagrams for documentation
+- **Generation parameters** and file information
 
 [![Metadata Panel](https://live.staticflickr.com/65535/54725445018_efd3631f59.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
-### 🗺️ Miniature Overview
+#### Miniature Overview
 Navigate large schemas effortlessly:
-- **Interactive minimap** with viewport indicator
-- **Click to jump** to specific schema areas
-- **Drag viewport** for precise navigation
-- **Resizable panel** - make it larger for detailed navigation
+- **Interactive minimap** with real-time viewport indicator
+- **Click to jump** to specific schema areas instantly
+- **Drag viewport rectangle** for precise navigation
+- **Resizable panel** for detailed or compact overview
 
 [![Overview Panel](https://live.staticflickr.com/65535/54725569515_1a265e1695.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
-### 🔍 Selection Details
-View and export detailed SQL information:
-- **Table definitions** with column details and constraints
+#### Selection Details Panel
+View, analyze, and export SQL definitions:
+- **Table definitions** with complete column details and constraints
 - **Foreign key relationships** with full SQL syntax
 - **Trigger information** including execution details
-- **Copy button** for instant clipboard access
-- **Download button** for formatted text export
-- **Enterprise-friendly** emoji-free output option
+- **🔍 Generate Focused ERD** - Create a new diagram with only selected tables
+  - Select multiple tables and edges
+  - Customize Graphviz settings for the focused view
+  - Generate a clean, simplified diagram of just the relevant parts
+- **📋 Copy button** for instant clipboard access
+- **💾 Download button** for formatted text export
+- **Enterprise-friendly** output options
 
 [![Selection Panel](https://live.staticflickr.com/65535/54725469434_1300a2e147.jpg)](https://flic.kr/s/aHBqjCpNX1)
+
 **Example selection output:**
 ```
 📊 Selected Tables
@@ -254,6 +387,46 @@ ALTER TABLE ONLY public.association_map
     FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) 
     ON DELETE CASCADE;
 ```
+
+### 🔄 Dynamic Diagram Generation
+
+**Graphviz Settings Modification:**
+- Access settings through the Metadata Panel
+- Modify layout parameters in real-time:
+  - **Rank Direction**: Control graph flow (Top-Bottom, Left-Right, etc.)
+  - **Node Separation**: Adjust spacing between tables
+  - **Rank Separation**: Control distance between hierarchy levels
+  - **Packmode**: Choose how components are arranged
+- **Apply Settings** button regenerates the diagram instantly
+- No need to restart or regenerate from command line
+
+**Focused ERD Generation:**
+- Select specific tables and relationships in the diagram
+- Click "Generate Focused ERD" in the Selection Panel
+- Customize layout settings for the focused view
+- Creates a new, simplified diagram with only selected elements
+- Perfect for documentation, presentations, or analyzing specific subsystems
+
+### 🗄️ Database Server Integration
+
+When using `--view` mode with database connection parameters:
+- **Query available databases** on the PostgreSQL server
+- **Browse databases** with table counts to understand schema size
+- **Switch databases** on-the-fly without restarting
+- **Test connections** before loading schemas
+- **Real-time schema loading** directly from the database
+
+### 🖨️ Print-Friendly Export
+
+Generate clean, professional diagrams for documentation:
+- **Print button** in the Metadata Panel
+- Automatically hides interactive UI elements
+- Resets zoom to show full ERD optimally
+- Clean output suitable for:
+  - PDF generation
+  - Documentation
+  - Presentations
+  - Architecture reviews
 
 ---
 
