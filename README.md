@@ -393,10 +393,10 @@ ALTER TABLE ONLY public.association_map
 **Graphviz Settings Modification:**
 - Access settings through the Metadata Panel
 - Modify layout parameters in real-time:
-  - **Rank Direction**: Control graph flow (Top-Bottom, Left-Right, etc.)
-  - **Node Separation**: Adjust spacing between tables
-  - **Rank Separation**: Control distance between hierarchy levels
-  - **Packmode**: Choose how components are arranged
+  - **Rank Direction**: Control graph flow (TB=Top-Bottom, LR=Left-Right, BT=Bottom-Top, RL=Right-Left)
+  - **Node Separation**: Adjust spacing between tables (numeric value, default 0.5)
+  - **Rank Separation**: Control distance between hierarchy levels (numeric value, default 1.2)
+  - **Packmode**: Choose how components are arranged (array=grid pattern, cluster=group related, graph=optimize layout)
 - **Apply Settings** button regenerates the diagram instantly
 - No need to restart or regenerate from command line
 

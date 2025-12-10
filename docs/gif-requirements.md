@@ -106,7 +106,7 @@ The GIFs should be similar in style to those in the portfoliosite repository:
 ## Recording Tips
 
 1. **Use a clean test environment** with a well-structured sample database
-2. **Use the complex_schema.dump** sample from the Samples directory
+2. **Use the `Samples/complex_schema.dump`** file from the repository
 3. **Record at high resolution** (at least 1920x1080) then scale down
 4. **Use smooth cursor movements** - not too fast
 5. **Add subtle padding/margins** around the recording area
