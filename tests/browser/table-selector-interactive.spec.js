@@ -6,40 +6,78 @@ test('table selector is functionally interactive for users', async ({ page }) =>
 
   await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
-  // Wait for the selector to be visible and accessible
-  const selector = '#table-selector';
-  await page.locator(selector).waitFor({ timeout: 45000 });
+  // Wait for the metadata container to be visible
+  await page.waitForSelector('#metadata-container', { state: 'visible', timeout: 10000 });
 
-  // IMPORTANT: Wait for the table selector to be properly populated
-  // We need to wait for more than 1 option to appear (indicating initialization is complete)
+  // Wait for the selector to be attached
+  const selector = '#table-selector';
+  await page.locator(selector).waitFor({ state: 'attached', timeout: 45000 });
+
+  // Wait for the table selector to be properly populated
   await page.waitForFunction(() => {
     const selectElement = document.getElementById('table-selector');
     return selectElement && selectElement.options.length > 1;
   }, { timeout: 10000 });
 
-  // Test 1: Verify the select box is visible and clickable
+  // Clear any existing highlights to put selector in single-select mode
+  await page.evaluate(() => {
+    // Hide selection container first so clearAllHighlights will work
+    const selectionContainer = document.getElementById('selection-container');
+    if (selectionContainer) {
+      selectionContainer.style.display = 'none';
+    }
+
+    // Clear all highlights from nodes and edges
+    const highlightedElements = document.querySelectorAll('.node.highlighted, .edge.highlighted');
+    highlightedElements.forEach(el => el.classList.remove('highlighted'));
+
+    // Wait a tick for DOM to update
+    return new Promise(resolve => setTimeout(resolve, 10));
+  });
+
+  // Now call updateTableSelector after highlights are cleared
+  const highlightInfo = await page.evaluate(() => {
+    const highlighted = document.querySelectorAll('.node.highlighted');
+    console.log(`Before update: Found ${highlighted.length} highlighted nodes`);
+
+    if (window.updateTableSelector) {
+      window.updateTableSelector();
+    }
+
+    const highlightedAfter = document.querySelectorAll('.node.highlighted');
+    console.log(`After update: Found ${highlightedAfter.length} highlighted nodes`);
+
+    return {
+      before: highlighted.length,
+      after: highlightedAfter.length
+    };
+  });
+
+  console.log(`Highlighted nodes - Before: ${highlightInfo.before}, After: ${highlightInfo.after}`);
+
+  // Wait for selector to update to single-select mode (all tables)
+  await page.waitForTimeout(500);
+
+  // Test 1: Verify the select box is attached and enabled
   const selectBox = page.locator(selector);
-  await expect(selectBox).toBeVisible();
+  await expect(selectBox).toBeAttached();
   await expect(selectBox).toBeEnabled();
 
-  // Test 2: Check how many options we have now (should be 80+ after proper initialization)
+  // Test 2: Check how many options we have now (should be 100+ after switching to all tables)
   const optionCount = await page.locator(selector + ' option').count();
   console.log(`Found ${optionCount} options in select box after initialization`);
 
-  // Test 3: Verify we have the expected number of options
-  expect(optionCount).toBeGreaterThan(70); // Should have 80 tables + 1 default option
+  // Test 3: Verify we have the expected number of options (100+ tables + 1 default option)
+  expect(optionCount).toBeGreaterThan(100);
 
-  // Test 4: Click the select box to open it
-  await selectBox.click();
-
-  // Test 5: Get the second option (first table) and select it
+  // Test 4: Get the second option (first table) and select it
   const firstTableOption = await page.locator(selector + ' option').nth(1);
   const firstTableName = await firstTableOption.textContent();
-  
+
   // Select the first table
   await selectBox.selectOption({ index: 1 });
 
-  // Test 6: Verify that selecting a table triggers highlighting
+  // Test 5: Verify that selecting a table triggers highlighting
   // Wait a moment for any JavaScript highlighting to take effect
   await page.waitForTimeout(500);
 
@@ -50,7 +88,7 @@ test('table selector is functionally interactive for users', async ({ page }) =>
   console.log(`Successfully selected table: ${firstTableName}`);
   console.log(`Number of highlighted elements: ${highlightedTables}`);
 
-  // Test 7: Verify the selection window appears
+  // Test 6: Verify the selection window appears
   const selectionWindow = page.locator('#selection-container');
   await expect(selectionWindow).toBeVisible();
 

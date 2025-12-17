@@ -281,7 +281,7 @@ def generate_erd_with_graphviz(
         for column in cols['columns']:
             # Build column display with icons
             column_icons = ""
-            
+
             # Add primary key icon if this is a primary key
             if column.get('is_primary_key', False):
                 pk_key = "&#128273;"  # Unicode key 🔑
@@ -289,7 +289,7 @@ def generate_erd_with_graphviz(
                     f'<FONT COLOR="#FFD700" POINT-SIZE="16">'
                     f'{pk_key}</FONT> '
                 )
-            
+
             # Add foreign key icon if this is a foreign key
             if column.get('is_foreign_key', False):
                 fk_key = "&#128273;"  # Unicode key 🔑
@@ -298,11 +298,11 @@ def generate_erd_with_graphviz(
                     f'{fk_key}</FONT>'
                     f'<FONT COLOR="#4169E1" POINT-SIZE="10">FK</FONT> '
                 )
-            
+
             # Add column name and type
             column_info = f'{column["name"]} ({column["type"]})'
             column_display = column_icons + column_info
-            
+
             label += (
                 f'<TR><TD ALIGN="left" '
                 f'PORT="{sanitize_label(column["name"])}">'
@@ -310,7 +310,7 @@ def generate_erd_with_graphviz(
             )
         label += '</TABLE>>'
 
-        dot.node(safe_table_name, label=label, id=safe_table_name, 
+        dot.node(safe_table_name, label=label, id=safe_table_name,
                  shape=node_shape, style=node_style)
 
     # --- Update edge creation to use parallel splines with enhanced styling

@@ -4,9 +4,12 @@ const { test, expect } = require('@playwright/test');
 test('table selector uses all tables from graphData', async ({ page }) => {
   await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
-  // Wait for the selector to be visible
+  // Wait for the metadata container to be visible
+  await page.waitForSelector('#metadata-container', { state: 'visible', timeout: 10000 });
+
+  // Wait for the selector to be attached (it may not be visible if in multi-select mode)
   const selector = '#table-selector';
-  await page.locator(selector).waitFor({ timeout: 45000 });
+  await page.locator(selector).waitFor({ state: 'attached', timeout: 45000 });
 
   // Wait for the table selector to be properly populated with options
   await page.waitForFunction(() => {
