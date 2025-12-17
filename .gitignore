@@ -1,17 +1,15 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
 
-# Distribution / packaging
 build/
 dist/
 *.egg-info/
 eggs/
 .eggs/
 
-# Testing
+
 .pytest_cache/
 .coverage
 .coverage.*
@@ -19,17 +17,15 @@ htmlcov/
 coverage.xml
 test-results/
 
-# Virtual environments
 venv/
 .venv/
 env/
 ENV/
 
-# Node.js
 node_modules/
 package-lock.json
 
-# IDEs and editors
+
 .vscode/
 *.swp
 *.swo
@@ -37,9 +33,5 @@ package-lock.json
 .#*
 \#*\#
 
-# OS files
 .DS_Store
 Thumbs.db
-
-# Project-specific
-database.sql

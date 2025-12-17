@@ -18,6 +18,9 @@ test('I key toggles informational windows visibility', async ({ page }) => {
   // Press 'I' key to hide containers
   await page.keyboard.press('i');
 
+  // Wait a moment for the toggle to complete
+  await page.waitForTimeout(200);
+
   // Verify containers are now hidden
   await expect(metadataContainer).toBeHidden();
   await expect(miniatureContainer).toBeHidden();
@@ -43,15 +46,15 @@ test('URL parameter hide starts with informational windows hidden', async ({ pag
   await page.waitForSelector('#metadata-container', { state: 'visible', timeout: 10000 });
   await page.waitForSelector('#miniature-container', { state: 'visible', timeout: 10000 });
 
-  // Give a small delay for the URL parameter processing to complete
-  await page.waitForTimeout(500);
+  // Give a delay for the URL parameter processing and auto-selection to complete
+  await page.waitForTimeout(1000);
 
   // Now verify containers are hidden due to URL parameter
   const metadataContainer = page.locator('#metadata-container');
   const miniatureContainer = page.locator('#miniature-container');
-  
-  await expect(metadataContainer).toBeHidden();
-  await expect(miniatureContainer).toBeHidden();
+
+  await expect(metadataContainer).toBeHidden({ timeout: 2000 });
+  await expect(miniatureContainer).toBeHidden({ timeout: 2000 });
 
   // Press 'I' to show them
   await page.keyboard.press('i');
@@ -64,23 +67,23 @@ test('selection container is also toggled with I key', async ({ page }) => {
   // Navigate to the SVG
   await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
-  // Wait for containers to load
+  // Wait for containers to load and auto-selection to complete
   await page.waitForSelector('#metadata-container', { timeout: 10000 });
 
-  // Click on a table to show selection container
-  await page.click('g.node');
-  
-  // Wait for selection container to appear
+  // Selection container should be visible by default now (auto-select most connected table)
   const selectionContainer = page.locator('#selection-container');
-  await expect(selectionContainer).toBeVisible();
+  await expect(selectionContainer).toBeVisible({ timeout: 10000 });
 
   // Press 'I' to hide all info containers including selection
   await page.keyboard.press('i');
-  
+
+  // Wait a moment for the toggle to complete
+  await page.waitForTimeout(200);
+
   await expect(selectionContainer).toBeHidden();
 
   // Press 'I' again to show all containers
   await page.keyboard.press('i');
-  
+
   await expect(selectionContainer).toBeVisible();
 });
