@@ -595,24 +595,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- URL Parameter Handling ---
     function parseUrlParameters() {
         const queryString = window.location.search;
-        
+
         // Check if info windows should be hidden via URL parameter
         if (queryString.includes('hide')) {
             infoWindowsVisible = false;
-            
+
             // Apply the hiding immediately since containers now exist
             const metadataContainer = document.getElementById('metadata-container');
             const miniatureContainer = document.getElementById('miniature-container');
             const selectionContainer = document.getElementById('selection-container');
-            
+
             if (metadataContainer) {
-                metadataContainer.style.display = '';
+                metadataContainer.style.display = 'none';
             }
             if (miniatureContainer) {
-                miniatureContainer.style.display = '';
+                miniatureContainer.style.display = 'none';
             }
             if (selectionContainer) {
-                selectionContainer.style.display = '';
+                selectionContainer.style.display = 'none';
             }
         }
     }
@@ -620,13 +620,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Info Windows Toggle ---
     function toggleInfoWindows() {
         infoWindowsVisible = !infoWindowsVisible;
-        
+
         const metadataContainer = document.getElementById('metadata-container');
         const miniatureContainer = document.getElementById('miniature-container');
         const selectionContainer = document.getElementById('selection-container');
-        
-        const displayValue = infoWindowsVisible ? 'block' : 'block';
-        
+
+        const displayValue = infoWindowsVisible ? 'block' : 'none';
+
         if (metadataContainer) {
             metadataContainer.style.display = displayValue;
         }
@@ -1773,10 +1773,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const wasHidden = selectionContainer.style.display === 'none' ||
                          window.getComputedStyle(selectionContainer).display === 'none';
 
-        // Force visibility with strong inline styles
-        selectionContainer.style.display = 'block';
-        selectionContainer.style.position = 'fixed';
-        selectionContainer.style.zIndex = '10001';
+        // Only show the selection window if info windows are visible
+        // This respects the URL parameter hide and 'I' key toggle
+        if (infoWindowsVisible) {
+            // Force visibility with strong inline styles
+            selectionContainer.style.display = 'block';
+            selectionContainer.style.position = 'fixed';
+            selectionContainer.style.zIndex = '10001';
+        }
 
         // Reset manual positioning flag only if window was previously hidden
         // This allows auto-positioning on first show but preserves manual positioning during interactions
@@ -1817,8 +1821,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     margin-top: 8px;
                     pointer-events: auto;
                 ">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h4 style="margin: 0; font-size: 0.9rem; color: #2e7ddb;">⚙️ Graphviz Layout Settings</h4>
+                    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px; gap: 8px;">
+                        <button id="focused-erd-cancel" class="db-action-btn" style="
+                            padding: 6px 16px;
+                            background: rgba(108, 117, 125, 0.1);
+                            color: #6c757d;
+                            border: 1px solid #6c757d;
+                            border-radius: 4px;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        ">
+                            Cancel
+                        </button>
                         <button id="generate-focused-erd-confirm" class="db-action-btn" style="
                             padding: 6px 16px;
                             background: linear-gradient(135deg, #2e7ddb, #1e5bb8);
@@ -1911,8 +1927,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Primary table row with its SQL buttons (horizontal layout)
             const safePrimaryTable = escapeHtml(primaryTable);
             const safePrimaryDisplayName = escapeHtml(primaryTableDisplayName);
-            html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 0;">`;
-            html += `<span class="table-name" data-table-id="${safePrimaryTable}" style="font-size: 1.05rem; font-weight: 600; flex: 1;">${safePrimaryDisplayName}</span>`;
+            html += `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px; background: rgba(52, 152, 219, 0.08); border-radius: 6px;">`;
+            html += `<span class="table-name" data-table-id="${safePrimaryTable}" style="font-size: 1.05rem; font-weight: 600; flex: 1; background: transparent; border: none; padding: 0; margin: 0;">${safePrimaryDisplayName}</span>`;
             // Add View SQL and Copy SQL buttons for the primary table
             if (primaryTableData && primaryTableData.sql) {
                 html += `<button id="view-table-sql" class="db-action-btn" style="
@@ -2491,6 +2507,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Cancel button handler - collapse settings and revert button text
+        const focusedErdCancelBtn = document.getElementById('focused-erd-cancel');
+        if (focusedErdCancelBtn && focusedSettingsPanel && focusedErdBtn) {
+            focusedErdCancelBtn.addEventListener('click', () => {
+                // Collapse the settings panel
+                focusedSettingsPanel.style.maxHeight = '0';
+                // Revert the Generate button text back to original
+                focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+            });
+        }
+
         // Add collapsible section handlers
         const connectedTablesHeader = document.getElementById('connected-tables-header');
         const connectedTablesContent = document.getElementById('connected-tables-content');
@@ -2657,66 +2684,91 @@ document.addEventListener('DOMContentLoaded', () => {
                 generateBtn.textContent = '⏳ Generating...';
 
                 try {
-                    // Get selected table and edge IDs
-                    // selectedTables and selectedEdges are already arrays of string IDs (sanitized), not objects
-                    // Convert sanitized IDs back to original table names using graph data
-                    const selectedTableIds = selectedTables.map(sanitizedId => {
-                        const tableData = graphData.tables[sanitizedId];
-                        return tableData?.originalName || sanitizedId;  // Fallback to sanitized if originalName not found
-                    });
-                    const selectedEdgeIds = selectedEdges;
-
-                    // Get Graphviz settings from the UI
-                    const graphvizSettings = {
-                        packmode: document.getElementById('gv-packmode')?.value || 'array',
-                        rankdir: document.getElementById('gv-rankdir')?.value || 'TB',
-                        esep: document.getElementById('gv-esep')?.value || '8',
-                        node_sep: document.getElementById('gv-node-sep')?.value || '0.5',
-                        rank_sep: document.getElementById('gv-rank-sep')?.value || '1.2',
-                        fontname: document.getElementById('gv-fontname')?.value || 'Arial',
-                        fontsize: parseInt(document.getElementById('gv-fontsize')?.value) || 18,
-                        node_fontsize: parseInt(document.getElementById('gv-node-fontsize')?.value) || 14,
-                        edge_fontsize: parseInt(document.getElementById('gv-edge-fontsize')?.value) || 12,
-                        node_style: document.getElementById('gv-node-style')?.value || 'rounded,filled',
-                        node_shape: document.getElementById('gv-node-shape')?.value || 'rect'
-                    };
-
-                    // Send request to server
-                    const response = await fetch('/api/generate_selected_svg', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            table_ids: selectedTableIds,
-                            edge_ids: selectedEdgeIds,
-                            graphviz_settings: graphvizSettings
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    // Clone the current SVG document
+                    const svgRoot = document.querySelector('svg');
+                    if (!svgRoot) {
+                        throw new Error('SVG root element not found');
                     }
 
-                    // Get the SVG content
-                    const svgContent = await response.text();
+                    // Create a deep clone of the SVG
+                    const clonedSvg = svgRoot.cloneNode(true);
+
+                    // Remove all script elements
+                    const scripts = clonedSvg.querySelectorAll('script');
+                    scripts.forEach(script => script.remove());
+
+                    // Remove all style elements
+                    const styles = clonedSvg.querySelectorAll('style');
+                    styles.forEach(style => style.remove());
+
+                    // Remove interactive UI elements
+                    const uiElements = [
+                        'selection-container',
+                        'minimap-container',
+                        'table-selector-container',
+                        'help-overlay',
+                        'help-button-container'
+                    ];
+                    uiElements.forEach(id => {
+                        const element = clonedSvg.querySelector(`#${id}`);
+                        if (element) element.remove();
+                    });
+
+                    // Remove foreign objects that might contain interactive content
+                    const foreignObjects = clonedSvg.querySelectorAll('foreignObject');
+                    foreignObjects.forEach(fo => {
+                        // Keep foreign objects that are part of table content, remove UI ones
+                        const isUIElement = uiElements.some(id =>
+                            fo.id === id || fo.querySelector(`#${id}`)
+                        );
+                        if (isUIElement) {
+                            fo.remove();
+                        }
+                    });
+
+                    // Remove event handlers by removing attributes that start with 'on'
+                    const allElements = clonedSvg.querySelectorAll('*');
+                    allElements.forEach(element => {
+                        Array.from(element.attributes).forEach(attr => {
+                            if (attr.name.startsWith('on')) {
+                                element.removeAttribute(attr.name);
+                            }
+                        });
+                    });
+
+                    // Remove classes that are used for interactivity
+                    const interactiveClasses = ['highlighted', 'selected', 'draggable'];
+                    allElements.forEach(element => {
+                        interactiveClasses.forEach(className => {
+                            element.classList.remove(className);
+                        });
+                    });
+
+                    // Serialize the cleaned SVG
+                    const serializer = new XMLSerializer();
+                    let svgContent = serializer.serializeToString(clonedSvg);
+
+                    // Add XML declaration if not present
+                    if (!svgContent.startsWith('<?xml')) {
+                        svgContent = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + svgContent;
+                    }
 
                     // Create a blob and download it
                     const blob = new Blob([svgContent], { type: 'image/svg+xml' });
                     const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'selected_erd.svg';
 
-                    // In SVG context, document.body may be null, so use documentElement or svg root
-                    const parentElement = document.body || document.documentElement || document.querySelector('svg');
-                    if (parentElement) {
-                        parentElement.appendChild(a);
-                        a.click();
-                        parentElement.removeChild(a);
-                    } else {
-                        // Fallback: click without appending to DOM
-                        a.style.display = 'none';
-                        a.click();
-                    }
+                    // Use createElementNS to create an HTML anchor element (not SVG)
+                    const a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+                    a.href = url;
+                    a.download = 'standalone_erd.svg';
+                    a.style.display = 'none';
+
+                    // Append to document, click, and remove
+                    const parentElement = document.body || document.documentElement;
+                    parentElement.appendChild(a);
+                    a.click();
+                    parentElement.removeChild(a);
+
                     URL.revokeObjectURL(url);
 
                     generateBtn.textContent = '✅ Downloaded!';
@@ -2725,7 +2777,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         generateBtn.disabled = false;
                     }, 2000);
                 } catch (error) {
-                    console.error('Error generating SVG:', error);
+                    console.error('Error generating standalone SVG:', error);
                     generateBtn.textContent = '❌ Error';
                     setTimeout(() => {
                         generateBtn.textContent = '📥 Generate Standalone SVG';
@@ -4089,7 +4141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 refreshDbBtn.disabled = false;
-                refreshDbBtn.textContent = '🔄 Refresh Databases';
+                refreshDbBtn.textContent = '🔄 Other Databases';
             });
         }
         
