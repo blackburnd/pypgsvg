@@ -35,3 +35,9 @@ package-lock.json
 
 .DS_Store
 Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/lab/workspaces/*.jupyterlab-workspace
+!.jupyter/lab/workspaces/default.jupyterlab-workspace
