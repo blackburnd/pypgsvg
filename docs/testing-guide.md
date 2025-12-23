@@ -1,5 +1,9 @@
 # Testing Guide for pypgsvg
 
+Testing the python files was an interesting problem to solve, as the svg when viewed by pypgsvg with the --view interacts with services made available. 
+
+To include the client/server functionality in the tests we implemented a parallel playwright test suite.
+
 This guide outlines the standard procedures for running tests in the pypgsvg project. 
 
 And for those who choose to try AI agents, this file can also help as an instruction set.
@@ -151,6 +155,36 @@ npx playwright test tests/browser/metadata-container.spec.js
 # Run with visible browser (not headless)
 npx playwright test tests/browser/ --headed
 ```
+
+## Running Complete Test Suite with Full Python Coverage
+
+To get **complete Python code coverage** including server endpoints hit by Playwright tests:
+
+```bash
+# Run ALL tests (Python unit tests + Playwright browser tests hitting Python server)
+pytest tests/tests/ --cov=src --cov-report=html --cov-report=term -v
+
+# View the complete HTML coverage report
+open htmlcov/index.html  # macOS
+xdg-open htmlcov/index.html  # Linux
+```
+
+This runs:
+- **101 Python unit tests** - Testing Python logic directly
+- **2 Playwright integration tests** - Running `.spec.js` browser tests against live Python server
+  - These tests exercise Python server endpoints (`server.py`)
+  - Coverage is tracked for all Python code executed during browser tests
+
+**Expected coverage breakdown:**
+- `erd_generator.py`: 100%
+- `utils.py`: 100%
+- `colors.py`: 100%
+- `metadata_injector.py`: 96%
+- `db_parser.py`: 95%
+- `__init__.py`: 81%
+- `svg_utils.py`: 79%
+- `server.py`: ~40-60% (browser tests add server endpoint coverage)
+- **Overall**: ~64%
 
 ## Common Issues and Solutions
 

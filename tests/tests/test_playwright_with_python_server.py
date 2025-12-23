@@ -132,9 +132,21 @@ def test_run_js_playwright_tests_with_python_server(generated_svg_with_python_se
 
     project_root = Path(__file__).parent.parent.parent.resolve()
 
-    # Run JavaScript Playwright tests
+    # Set up coverage for the subprocess
+    # The server is already running in this Python process with coverage active
+    # Any requests from Playwright tests will be tracked automatically
+
+    # Run JavaScript Playwright tests with config location
+    cmd = ['npx', 'playwright', 'test', '--config=tests/playwright.config.js']
+    print(f"\nRunning command: {' '.join(cmd)}")
+    print(f"From directory: {project_root}")
+    print(f"With TEST_HTTP_PORT: {env.get('TEST_HTTP_PORT')}")
+
+    # Add COVERAGE_PROCESS_START to enable subprocess coverage if needed
+    env['COVERAGE_PROCESS_START'] = str(project_root / 'pyproject.toml')
+
     result = subprocess.run(
-        ['npx', 'playwright', 'test'],
+        cmd,
         cwd=str(project_root),
         env=env,
         capture_output=True,
@@ -146,6 +158,7 @@ def test_run_js_playwright_tests_with_python_server(generated_svg_with_python_se
     print("\n" + "="*70)
     print("JavaScript Playwright Tests Output:")
     print("="*70)
+    print(f"Return code: {result.returncode}")
     print(result.stdout)
     if result.stderr:
         print("\nSTDERR:")
