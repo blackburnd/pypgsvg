@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pypgsvg",
-    version="1.2.3",
+    version="1.2.4",
     description="Python ERD Generator from SQL dumps using Graphviz",
     author="blackburnd@gmail.com",
     packages=find_packages(),
