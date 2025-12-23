@@ -81,7 +81,7 @@ update_version() {
 # Run tests before releasing
 run_tests() {
     print_info "Running tests..."
-    if ./run-tests.sh; then
+    if ./bin/run-tests.sh; then
         print_success "All tests passed"
     else
         print_error "Tests failed. Please fix before releasing."
