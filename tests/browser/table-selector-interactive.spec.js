@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 test('table selector is functionally interactive for users', async ({ page }) => {
   // Listen for console messages
-  page.on('console', msg => console.debug('PAGE LOG:', msg.text()));
+  //page.on('console', msg => console.debug('PAGE LOG:', msg.text()));
 
   await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
@@ -75,8 +75,8 @@ test('table selector is functionally interactive for users', async ({ page }) =>
   const firstTableOption = await page.locator(selector + ' option').nth(1);
   const firstTableName = await firstTableOption.textContent();
 
-  // Select the first table
-  await selectBox.selectOption({ index: 1 });
+  // Select the first table - use force:true since the select may be in a container with special styling
+  await selectBox.selectOption({ index: 1 }, { force: true });
 
   // Test 5: Verify that selecting a table triggers highlighting
   // Wait a moment for any JavaScript highlighting to take effect

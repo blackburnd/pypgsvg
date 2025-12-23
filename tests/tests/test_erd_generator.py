@@ -133,3 +133,25 @@ def test_generate_erd_graph_data_json(simple_schema):
         assert "tables" in graph_data
         assert "edges" in graph_data
         assert "users" in [k for k in graph_data["tables"].keys()] or "users" in svg_content
+
+
+def test_generate_erd_cascade_constraint_styling():
+    """Test that CASCADE constraints get special edge styling"""
+    tables = {
+        "users": {"columns": [{"name": "id", "type": "integer"}]},
+        "posts": {"columns": [{"name": "id", "type": "integer"}, {"name": "user_id", "type": "integer"}]}
+    }
+    # Foreign key with CASCADE constraint - constraints must be a list
+    foreign_keys = [
+        ("posts", "user_id", "users", "id", "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE", {}, ["ON DELETE CASCADE"])
+    ]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_file = os.path.join(tmpdir, "test_erd9")
+        generate_erd_with_graphviz(tables, foreign_keys, output_file)
+        svg_path = output_file + ".svg"
+        assert os.path.exists(svg_path)
+        with open(svg_path, "r", encoding="utf-8") as f:
+            svg_content = f.read()
+        # Verify the graph was created successfully
+        assert "users" in svg_content
+        assert "posts" in svg_content

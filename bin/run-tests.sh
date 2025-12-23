@@ -64,7 +64,7 @@ elif [ "$TEST_TYPE" = "browser" ]; then
         echo -e "${YELLOW}Installing Playwright browsers...${NC}"
         npx playwright install
     fi
-    npx playwright test tests/browser/ $EXTRA_ARGS
+    npx playwright test --config=tests/playwright.config.js tests/browser/ $EXTRA_ARGS
     TEST_EXIT_CODE=$?
 else
     echo -e "${RED}Unknown test type: $TEST_TYPE${NC}"

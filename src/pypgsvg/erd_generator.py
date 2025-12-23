@@ -112,23 +112,17 @@ def generate_erd_with_graphviz(
         file_info['source_type'] = 'database'
         file_info['connection'] = input_file_path
         # Parse the connection string for display
-        try:
-            if '@' in input_file_path and '/' in input_file_path:
-                user_host = input_file_path.split('@')[0]
-                host_port_db = input_file_path.split('@')[1]
-                if ':' in host_port_db and '/' in host_port_db:
-                    host = host_port_db.split(':')[0]
-                    port_db = host_port_db.split(':')[1]
-                    port = port_db.split('/')[0]
-                    database = port_db.split('/')[1]
-                    file_info['host'] = f"{host}:{port}"
-                    file_info['database'] = database
-                    file_info['user'] = user_host
-        except:
-            # If parsing fails, just use the full connection string
-            file_info['host'] = input_file_path
-            file_info['database'] = ''
-            file_info['user'] = ''
+        if '@' in input_file_path and '/' in input_file_path:
+            user_host = input_file_path.split('@')[0]
+            host_port_db = input_file_path.split('@')[1]
+            if ':' in host_port_db and '/' in host_port_db:
+                host = host_port_db.split(':')[0]
+                port_db = host_port_db.split(':')[1]
+                port = port_db.split('/')[0]
+                database = port_db.split('/')[1]
+                file_info['host'] = f"{host}:{port}"
+                file_info['database'] = database
+                file_info['user'] = user_host
     elif input_file_path and os.path.exists(input_file_path):
         file_info['source_type'] = 'file'
         file_info['filename'] = os.path.basename(input_file_path)

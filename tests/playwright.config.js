@@ -2,11 +2,11 @@
 const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
-  testDir: './tests/browser',
+  testDir: './browser',
   timeout: 30000,
   retries: 0,
-  globalSetup: require.resolve('./tests/browser/global-setup.js'),
-  globalTeardown: require.resolve('./tests/browser/global-teardown.js'),
+  globalSetup: require.resolve('./browser/global-setup.js'),
+  globalTeardown: require.resolve('./browser/global-teardown.js'),
   use: {
     headless: true, // Default to headless, override with --headed
     viewport: { width: 1280, height: 800 },
