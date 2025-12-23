@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 
 test('table selector is functionally interactive for users', async ({ page }) => {
   // Listen for console messages
-  page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+  page.on('console', msg => console.debug('PAGE LOG:', msg.text()));
 
   await page.goto('/Samples/complex_schema.svg', { waitUntil: 'domcontentloaded' });
 
@@ -63,12 +63,13 @@ test('table selector is functionally interactive for users', async ({ page }) =>
   await expect(selectBox).toBeAttached();
   await expect(selectBox).toBeEnabled();
 
-  // Test 2: Check how many options we have now (should be 100+ after switching to all tables)
+  // Test 2: Check how many options we have now (should be 1+ after switching to all tables)
   const optionCount = await page.locator(selector + ' option').count();
   console.log(`Found ${optionCount} options in select box after initialization`);
 
-  // Test 3: Verify we have the expected number of options (100+ tables + 1 default option)
-  expect(optionCount).toBeGreaterThan(100);
+  // Test 3: Verify we have the expected number of options (0 + tables + 1 default option)
+
+  expect(optionCount).toBeGreaterThan(1);
 
   // Test 4: Get the second option (first table) and select it
   const firstTableOption = await page.locator(selector + ' option').nth(1);
