@@ -1,26 +1,32 @@
 # Python Postgres ERD Generator
 
-Generates Entity Relationship Diagrams (ERDs) using Graphviz from a posgres schema dump file.
+Generates Entity Relationship Diagrams (ERDs) using Graphviz from PostgreSQL schema dump files or live database connections.
 
 ## Features
 
-
-
-- Parse PostgreSQL schema dump file to extract table definitions and relationships
+**Core Functionality:**
+- Parse PostgreSQL schema dump files to extract table definitions and relationships
+- Connect directly to PostgreSQL databases for real-time schema visualization
 - Generate interactive SVG Entity Relationship Diagrams
 - Automatic color coding for tables with accessible color palette
 - Support for complex SQL structures including foreign keys, constraints, and various data types
 - Table filtering to exclude temporary/utility tables
-- MouseOver for extra information on paths, and entities.
-- Comprehensive test suite with >90% code coverage
-- Viewport minimized version generated with window view highlight.
-- 10% scaled minimized image.
-- Curent view area highlighted on minimized imagbe.
+- Comprehensive test suite with >95% code coverage
+
+**Interactive Features:**
+- **Smart Initial View** - Automatically selects and zooms to the table with the most connections
+- **Double-Click Navigation** - Double-click any table to center on it and all its connected relationships
+- **Real-Time Graphviz Settings** - Modify layout parameters and regenerate diagrams in-browser
+- **Database Server Integration** - Query, browse, and switch between databases with `--view` mode
+- **Focused ERD Generation** - Select specific tables to create simplified sub-diagrams
+- **Print-Friendly Export** - Generate clean diagrams for documentation
+- **Interactive Panels** - Movable, resizable metadata, miniature overview, and selection panels
+- **MouseOver Information** - Extra details on paths and entities
+- **Miniature Navigator** - Viewport indicator with 10% scaled overview showing current view area
 
 ## TODO:
-- reveal trigger information for each highlighted table
-- Fix resizing and dragging of viewport indicator.
-- Update tests to run remotely properly.
+- Create animated GIF demonstrations of interactive features
+- Update tests to run remotely properly
 
 
 ## Installation
@@ -43,12 +49,15 @@ pip install .
 Generate an ERD from your SQL dump file:
 
 ```bash
+# From a schema dump file
 pg_dump -h 192.168.1.xxx --format=plain -d universe_db -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
-
 pypgsvg schema.dump
+
+# Or connect directly to a live database
+pypgsvg --host localhost --port 5432 --database mydb --user postgres --view
 ```
 
-This will create an SVG file with the same name as your input file (e.g., `your_database_erd.svg`).
+This will create an SVG file with interactive features including smart zoom, double-click navigation, and real-time Graphviz settings modification.
 
 ### Example Output
 
@@ -79,16 +88,28 @@ The simple example demonstrates a typical blog schema where:
 Specify a custom output filename:
 
 ```bash
-pg_dump -h 192.168.1.xxx --format=plain -d universe_db -U postgres -s -O -F plain --disable-triggers --encoding=UTF8 -f schema.dump
+pypgsvg schema.dump --output custom_diagram
 
-pypgsvg schema.dump --output custom_diagram.svg
+# Or with database connection
+pypgsvg --host prod-db.company.com --port 5432 --database analytics --user readonly --output analytics_erd
 ```
 
-View the diagram immediately after generation:
+View the diagram immediately after generation with full interactive features:
 
 ```bash
 pypgsvg schema.dump --view
+
+# With database connection for browsing and switching databases
+pypgsvg --host localhost --database mydb --user postgres --view
 ```
+
+The `--view` mode enables:
+- Smart initial zoom to most connected table
+- Double-click navigation between tables
+- Real-time Graphviz settings modification
+- Database querying and switching
+- Focused ERD generation from selections
+- Print-friendly export
 
 ### Python API Usage
 
