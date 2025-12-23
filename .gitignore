@@ -13,7 +13,6 @@ eggs/
 .pytest_cache/
 .coverage
 .coverage.*
-htmlcov/
 coverage.xml
 test-results/
 
@@ -24,7 +23,6 @@ ENV/
 
 node_modules/
 package-lock.json
-
 
 .vscode/
 *.swp

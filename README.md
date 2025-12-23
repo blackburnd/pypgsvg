@@ -4,9 +4,8 @@
 
 
 
-## 📦 Installation
-
-**Lightweight setup - only 2 steps:**
+##  Installation
+**Can be found on pypi:**
 
 1. Install `pypgsvg`:
    ```bash
@@ -19,18 +18,18 @@
    - **CentOS/RHEL**: `sudo yum install graphviz`
    - **Windows**: Download from [Graphviz.org](https://graphviz.org/download/)
 
-**That's it!** Ready for  deployment.
+**That's it!** 
 
 ---
 
 
-### 🎬 Quick Demo
+###  Quick Demo
 
-[[🎯 View Interactive Example](https://www.blackburnsystems.com/demo-erd-complex)] 
+[[ View Interactive Example](https://www.blackburnsystems.com/demo-erd-complex)] 
 
 ![](https://live.staticflickr.com/65535/54725569515_1a265e1695.jpg)
 
-#### 🎥 Feature Demonstrations
+####  Feature Demonstrations
 
 **Smart Navigation & Initial View**
 <!-- TODO: Add animated GIF showing initial zoom to table with most connections -->
@@ -64,7 +63,7 @@ pypgsvg schema.dump --output demo_erd --view
 ```
 
 
-## 🛠️ Enterprise Usage
+## ️ Enterprise Usage
 
 ### Quick Start - Schema Analysis
 ```bash
