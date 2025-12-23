@@ -58,7 +58,19 @@ open htmlcov/index.html
 The pypgsvg project has two main test suites:
 
 1.  **Unit Tests** - Python tests using pytest, located in `tests/tests/`
+    - SQL parsing and schema extraction
+    - ERD generation logic
+    - Color palette and utility functions
+    - Error handling and validation
+
 2.  **Functional Tests** - Browser-based tests using Playwright, located in `tests/browser/`
+    - Interactive features (smart zoom, double-click navigation)
+    - Panel interactions (metadata, miniature, selection)
+    - Real-time Graphviz settings modification
+    - Database connection and querying
+    - Focused ERD generation
+    - Print-friendly export
+    - UI element visibility and positioning
 
 ### Manual Test Environment Setup
 Instead of running the run-tests.sh, you can manually install the requirements to properly test the software.
