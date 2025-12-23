@@ -253,9 +253,9 @@ class TestGenerateSelectedSVGEndpoint:
         sql_dump = "CREATE TABLE users (id SERIAL PRIMARY KEY);"
 
         with patch('builtins.open', mock_open(read_data=sql_dump)), \
-             patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
-             patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('pypgsvg.erd_service.parse_sql_dump') as mock_parse, \
+             patch('pypgsvg.erd_service.extract_constraint_info') as mock_extract, \
+             patch('pypgsvg.erd_service.generate_erd_with_graphviz') as mock_gen, \
              patch('os.path.exists', return_value=True):
 
             # Mock parse_sql_dump return value
@@ -339,9 +339,9 @@ class TestGenerateSelectedSVGEndpoint:
         """
 
         with patch('builtins.open', mock_open(read_data=sql_dump)), \
-             patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
-             patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('pypgsvg.erd_service.parse_sql_dump') as mock_parse, \
+             patch('pypgsvg.erd_service.extract_constraint_info') as mock_extract, \
+             patch('pypgsvg.erd_service.generate_erd_with_graphviz') as mock_gen, \
              patch('os.path.exists', return_value=True):
 
             # Mock parse_sql_dump with 3 tables
@@ -488,9 +488,9 @@ class TestSettingsPersistence:
         })
 
         with patch('builtins.open', mock_open(read_data='CREATE TABLE test (id INT);')), \
-             patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
-             patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('pypgsvg.erd_service.parse_sql_dump') as mock_parse, \
+             patch('pypgsvg.erd_service.extract_constraint_info') as mock_extract, \
+             patch('pypgsvg.erd_service.generate_erd_with_graphviz') as mock_gen, \
              patch('os.path.exists', return_value=True):
 
             mock_parse.return_value = ({'test': {}}, [], {}, [], {}, {}, {})
@@ -520,9 +520,9 @@ class TestIncludeTablesParameter:
         """
 
         with patch('builtins.open', mock_open(read_data=sql_dump)), \
-             patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
-             patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('pypgsvg.erd_service.parse_sql_dump') as mock_parse, \
+             patch('pypgsvg.erd_service.extract_constraint_info') as mock_extract, \
+             patch('pypgsvg.erd_service.generate_erd_with_graphviz') as mock_gen, \
              patch('os.path.exists', return_value=True):
 
             # Mock parse_sql_dump with 4 tables
@@ -591,9 +591,9 @@ class TestIncludeTablesParameter:
         """
 
         with patch('builtins.open', mock_open(read_data=sql_dump)), \
-             patch('pypgsvg.server.parse_sql_dump') as mock_parse, \
-             patch('pypgsvg.server.extract_constraint_info') as mock_extract, \
-             patch('pypgsvg.server.generate_erd_with_graphviz') as mock_gen, \
+             patch('pypgsvg.erd_service.parse_sql_dump') as mock_parse, \
+             patch('pypgsvg.erd_service.extract_constraint_info') as mock_extract, \
+             patch('pypgsvg.erd_service.generate_erd_with_graphviz') as mock_gen, \
              patch('os.path.exists', return_value=True):
 
             # Mock parse_sql_dump with 3 tables

@@ -6,27 +6,26 @@ import http.server
 import socketserver
 import json
 import os
-import subprocess
 import threading
 import webbrowser
 import time
-import getpass
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 from typing import Optional, Dict, Any
 
+from .database_service import DatabaseService
+from .erd_service import ERDService
 from .db_parser import parse_sql_dump, extract_constraint_info
-from .erd_generator import generate_erd_with_graphviz
 from .layout_optimizer import optimize_layout
 
 
 class ERDServer:
     """Server to host ERD SVG files with reload capabilities."""
-    
-    def __init__(self, svg_file: str, source_type: str, source_params: Dict[str, Any], 
+
+    def __init__(self, svg_file: str, source_type: str, source_params: Dict[str, Any],
                  generation_params: Dict[str, Any]):
         """
         Initialize ERD server.
-        
+
         Args:
             svg_file: Path to the SVG file to serve
             source_type: 'database' or 'file'
@@ -39,48 +38,25 @@ class ERDServer:
         self.generation_params = generation_params
         self.port = 8765
         self.server = None
-        self.cached_password = None  # Cache password for database connections
-        
+
+        # Initialize service layer
+        self.database_service = DatabaseService()
+        self.erd_service = ERDService(self.database_service)
+
+    @property
+    def cached_password(self) -> str:
+        """Get cached password from database service."""
+        return self.database_service.cached_password
+
+    @cached_password.setter
+    def cached_password(self, value: str):
+        """Set cached password in database service."""
+        self.database_service.cached_password = value
+
     def fetch_schema_from_database(self, host: str, port: str, database: str,
                                    user: str, password: str = None) -> str:
         """Fetch schema from PostgreSQL database using pg_dump."""
-        if password is None and self.cached_password is not None:
-            password = self.cached_password
-
-        if password is None:
-            password = ''  # Allow empty password for passwordless connections
-
-        # Cache password for future use
-        self.cached_password = password
-
-        env = os.environ.copy()
-        if password:  # Only set PGPASSWORD if password is not empty
-            env['PGPASSWORD'] = password
-
-        cmd = [
-            'pg_dump',
-            '-h', host,
-            '-p', str(port),
-            '-U', user,
-            '-d', database,
-            '-s',  # Schema only
-            '--no-owner',
-            '--no-privileges'
-        ]
-
-        try:
-            result = subprocess.run(
-                cmd,
-                env=env,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return result.stdout
-        except subprocess.CalledProcessError as e:
-            raise Exception(f"Database connection failed: {e.stderr}")
-        except FileNotFoundError:
-            raise Exception("pg_dump command not found. Please install PostgreSQL client tools.")
+        return self.database_service.fetch_schema(host, port, database, user, password)
 
     def fetch_view_columns(self, host: str, port: str, database: str,
                           user: str, password: str) -> Dict[str, Any]:
@@ -90,144 +66,27 @@ class ERDServer:
         Returns:
             Dict mapping view names to their column lists
         """
-        env = os.environ.copy()
-        if password:  # Only set PGPASSWORD if password is not empty
-            env['PGPASSWORD'] = password
-
-        # Query to get view columns
-        query = """
-        SELECT
-            c.table_name as view_name,
-            c.column_name,
-            c.data_type,
-            c.ordinal_position
-        FROM information_schema.columns c
-        JOIN information_schema.views v ON c.table_name = v.table_name
-        WHERE c.table_schema = 'public'
-        ORDER BY c.table_name, c.ordinal_position;
-        """
-
-        cmd = [
-            'psql',
-            '-h', host,
-            '-p', str(port),
-            '-U', user,
-            '-d', database,
-            '-t',  # Tuples only
-            '-A',  # Unaligned output
-            '-F', '|',  # Field separator
-            '-c', query
-        ]
-
-        try:
-            result = subprocess.run(
-                cmd,
-                env=env,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-
-            # Parse the output
-            view_columns = {}
-            for line in result.stdout.strip().split('\n'):
-                if line.strip():
-                    parts = line.split('|')
-                    if len(parts) >= 4:
-                        view_name = parts[0].strip()
-                        column_name = parts[1].strip()
-                        data_type = parts[2].strip()
-
-                        if view_name not in view_columns:
-                            view_columns[view_name] = []
-
-                        view_columns[view_name].append({
-                            'name': column_name,
-                            'type': data_type,
-                            'is_primary_key': False,
-                            'is_foreign_key': False
-                        })
-
-            return view_columns
-        except subprocess.CalledProcessError as e:
-            print(f"Warning: Could not fetch view columns: {e.stderr}")
-            return {}
-        except Exception as e:
-            print(f"Warning: Error parsing view columns: {e}")
-            return {}
+        return self.database_service.fetch_view_columns(host, port, database, user, password)
     
-    def test_database_connection(self, host: str, port: str, database: str, 
+    def test_database_connection(self, host: str, port: str, database: str,
                                 user: str, password: str) -> Dict[str, Any]:
         """Test database connection."""
-        try:
-            # Try to fetch schema (will fail if connection is bad)
-            self.fetch_schema_from_database(host, port, database, user, password)
-            return {
-                "success": True,
-                "message": "Connection successful"
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "message": str(e)
-            }
+        return self.database_service.test_connection(host, port, database, user, password)
     
     def reload_from_database(self, host: str, port: str, database: str,
                            user: str, password: str) -> Dict[str, Any]:
         """Reload ERD from database connection."""
         try:
-            print(f"Reloading schema from {database}@{host}:{port}...")
-            sql_dump = self.fetch_schema_from_database(host, port, database, user, password)
-
-            # Also fetch view column information
-            view_columns_from_db = self.fetch_view_columns(host, port, database, user, password)
-
-            # Parse and generate new ERD
-            tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
-
-            # Enhance views with column information from database (if available)
-            for view_name, columns in view_columns_from_db.items():
-                if view_name in views:
-                    views[view_name]['columns'] = columns
-                if view_name in tables:
-                    tables[view_name]['columns'] = columns
-
-            constraints = extract_constraint_info(foreign_keys)
-
-            if errors:
-                print("Parsing errors encountered:")
-                for error in errors:
-                    print(f"  - {error}")
-            
             # Generate new filename with database name
             svg_dir = os.path.dirname(os.path.abspath(self.svg_file))
             new_filename = f"{database}_erd"
             output_file = os.path.join(svg_dir, new_filename)
-            new_svg_file = output_file + ".svg"
-            input_source = f"{user}@{host}:{port}/{database}"
 
-            generate_erd_with_graphviz(
-                tables, foreign_keys, output_file,
-                input_file_path=input_source,
-                show_standalone=self.generation_params.get('show_standalone', True),
-                exclude_patterns=self.generation_params.get('exclude_patterns'),
-                include_tables=self.generation_params.get('include_tables'),
-                packmode=self.generation_params.get('packmode', 'array'),
-                rankdir=self.generation_params.get('rankdir', 'TB'),
-                esep=self.generation_params.get('esep', '8'),
-                fontname=self.generation_params.get('fontname', 'Arial'),
-                fontsize=self.generation_params.get('fontsize', 18),
-                node_fontsize=self.generation_params.get('node_fontsize', 14),
-                edge_fontsize=self.generation_params.get('edge_fontsize', 12),
-                node_style=self.generation_params.get('node_style', 'rounded,filled'),
-                node_shape=self.generation_params.get('node_shape', 'rect'),
-                node_sep=self.generation_params.get('node_sep', '0.5'),
-                rank_sep=self.generation_params.get('rank_sep', '1.2'),
-                constraints=constraints,
-                triggers=triggers,
-                views=views,
-                functions=functions,
-                settings=settings,
+            # Delegate to ERD service
+            new_svg_file, success = self.erd_service.generate_from_database(
+                host, port, database, user, password,
+                output_file,
+                self.generation_params
             )
 
             # Update the server's SVG file reference and source params
@@ -251,53 +110,19 @@ class ERDServer:
     def reload_from_file(self, filepath: str) -> Dict[str, Any]:
         """Reload ERD from dump file."""
         try:
-            print(f"Reloading schema from file: {filepath}...")
-            
-            if not os.path.exists(filepath):
-                raise FileNotFoundError(f"File not found: {filepath}")
-            
-            with open(filepath, 'r', encoding='utf-8') as f:
-                sql_dump = f.read()
-            
-            # Parse and generate new ERD
-            tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
-            constraints = extract_constraint_info(foreign_keys)
-            
-            if errors:
-                print("Parsing errors encountered:")
-                for error in errors:
-                    print(f"  - {error}")
-            
             # Extract base filename without extension
             output_file = os.path.splitext(self.svg_file)[0]
-            
-            generate_erd_with_graphviz(
-                tables, foreign_keys, output_file,
-                input_file_path=filepath,
-                show_standalone=self.generation_params.get('show_standalone', True),
-                exclude_patterns=self.generation_params.get('exclude_patterns'),
-                include_tables=self.generation_params.get('include_tables'),
-                packmode=self.generation_params.get('packmode', 'array'),
-                rankdir=self.generation_params.get('rankdir', 'TB'),
-                esep=self.generation_params.get('esep', '8'),
-                fontname=self.generation_params.get('fontname', 'Arial'),
-                fontsize=self.generation_params.get('fontsize', 18),
-                node_fontsize=self.generation_params.get('node_fontsize', 14),
-                edge_fontsize=self.generation_params.get('edge_fontsize', 12),
-                node_style=self.generation_params.get('node_style', 'rounded,filled'),
-                node_shape=self.generation_params.get('node_shape', 'rect'),
-                node_sep=self.generation_params.get('node_sep', '0.5'),
-                rank_sep=self.generation_params.get('rank_sep', '1.2'),
-                constraints=constraints,
-                triggers=triggers,
-                views=views,
-                functions=functions,
-                settings=settings,
+
+            # Delegate to ERD service
+            new_svg_file, success = self.erd_service.generate_from_file(
+                filepath,
+                output_file,
+                self.generation_params
             )
-            
+
             # Update source params with new filepath
             self.source_params['filepath'] = filepath
-            
+
             print("ERD reloaded successfully!")
             return {
                 "success": True,
@@ -448,94 +273,22 @@ class ERDServer:
                 port = data.get('port')
                 user = data.get('user')
                 password = data.get('password', '')
-                
+
                 if not all([host, port, user]):
                     self.send_json_response({
                         "success": False,
                         "message": "Missing required parameters: host, port, user"
                     }, 400)
                     return
-                
+
                 try:
-                    # Query databases with table counts using psql command
-                    env = os.environ.copy()
-                    if password:
-                        env['PGPASSWORD'] = password
-
-                    # First get list of databases
-                    cmd = [
-                        'psql',
-                        '-h', host,
-                        '-p', str(port),
-                        '-U', user,
-                        '-d', 'postgres',  # Connect to default postgres database
-                        '-t',  # Tuples only
-                        '-A',  # Unaligned output
-                        '-c', "SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname;"
-                    ]
-
-                    result = subprocess.run(
-                        cmd,
-                        env=env,
-                        capture_output=True,
-                        text=True,
-                        check=True
+                    databases = server_instance.database_service.list_databases(
+                        host, port, user, password
                     )
-
-                    # Parse database list
-                    database_names = [db.strip() for db in result.stdout.strip().split('\n') if db.strip()]
-
-                    # Get table count for each database
-                    databases = []
-                    for db_name in database_names:
-                        try:
-                            # Query table count for this database
-                            count_cmd = [
-                                'psql',
-                                '-h', host,
-                                '-p', str(port),
-                                '-U', user,
-                                '-d', db_name,
-                                '-t',
-                                '-A',
-                                '-c', "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema');"
-                            ]
-
-                            count_result = subprocess.run(
-                                count_cmd,
-                                env=env,
-                                capture_output=True,
-                                text=True,
-                                check=True,
-                                timeout=5  # Timeout after 5 seconds per database
-                            )
-
-                            table_count = int(count_result.stdout.strip() or 0)
-                            databases.append({
-                                "name": db_name,
-                                "table_count": table_count
-                            })
-                        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
-                            # If we can't get table count, include database with unknown count
-                            databases.append({
-                                "name": db_name,
-                                "table_count": -1  # -1 indicates unknown
-                            })
-
                     self.send_json_response({
                         "success": True,
                         "databases": databases
                     })
-                except subprocess.CalledProcessError as e:
-                    self.send_json_response({
-                        "success": False,
-                        "message": f"Failed to query databases: {e.stderr}"
-                    }, 500)
-                except FileNotFoundError:
-                    self.send_json_response({
-                        "success": False,
-                        "message": "psql command not found. Please install PostgreSQL client tools."
-                    }, 500)
                 except Exception as e:
                     self.send_json_response({
                         "success": False,
@@ -645,56 +398,18 @@ class ERDServer:
                         }, 400)
                         return
 
-                    # Parse the schema
-                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
-
-                    # Enhance views with column information from database (if available)
-                    for view_name, columns in view_columns_from_db.items():
-                        if view_name in views:
-                            views[view_name]['columns'] = columns
-                        if view_name in tables:
-                            tables[view_name]['columns'] = columns
-
-                    constraints = extract_constraint_info(foreign_keys)
-
-                    # Generate output filename
+                    # Delegate to ERD service
                     svg_dir = os.path.dirname(os.path.abspath(server_instance.svg_file))
-                    focused_filename = 'focused_erd'
-                    output_file = os.path.join(svg_dir, focused_filename)
-
-                    # Apply graphviz settings from request
-                    settings = graphviz_settings.copy()
-
-                    # Generate interactive ERD (with JavaScript/interactivity)
-                    # Use include_tables to filter to only the provided tables
-                    generate_erd_with_graphviz(
-                        tables,
-                        foreign_keys,
-                        output_file,
-                        input_file_path=input_source,
-                        show_standalone=False,  # Don't show standalone tables
-                        exclude_patterns=None,
-                        include_tables=table_ids,  # WHITELIST: Only include provided tables
-                        packmode=settings.get('packmode', 'array'),
-                        rankdir=settings.get('rankdir', 'TB'),
-                        esep=settings.get('esep', '8'),
-                        fontname=settings.get('fontname', 'Arial'),
-                        fontsize=settings.get('fontsize', 18),
-                        node_fontsize=settings.get('node_fontsize', 14),
-                        edge_fontsize=settings.get('edge_fontsize', 12),
-                        node_style=settings.get('node_style', 'rounded,filled'),
-                        node_shape=settings.get('node_shape', 'rect'),
-                        node_sep=settings.get('node_sep', '0.5'),
-                        rank_sep=settings.get('rank_sep', '1.2'),
-                        constraints=constraints,
-                        triggers=triggers,
-                        views=views,
-                functions=functions,
-                settings=settings,
+                    new_svg_file = server_instance.erd_service.generate_focused_erd(
+                        sql_dump,
+                        table_ids,
+                        svg_dir,
+                        input_source,
+                        graphviz_settings,
+                        view_columns_from_db
                     )
 
                     # Update server instance to use the new focused ERD
-                    new_svg_file = output_file + '.svg'
                     server_instance.svg_file = new_svg_file
 
                     # Return success with filename
@@ -733,7 +448,7 @@ class ERDServer:
                         port = server_instance.source_params.get('port')
                         database = server_instance.source_params.get('database')
                         user = server_instance.source_params.get('user')
-                        password = server_instance.cached_password or ''  # Allow empty password
+                        password = server_instance.cached_password or ''
 
                         if not all([host, port, database, user]):
                             self.send_json_response({
@@ -766,81 +481,27 @@ class ERDServer:
                         }, 400)
                         return
 
-                    # Parse the schema
-                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
-
-                    # Enhance views with column information from database (if available)
-                    for view_name, columns in view_columns_from_db.items():
-                        if view_name in views:
-                            views[view_name]['columns'] = columns
-                        if view_name in tables:
-                            tables[view_name]['columns'] = columns
-
-                    constraints = extract_constraint_info(foreign_keys)
-
-                    # Generate temporary SVG file with selected elements only
-                    import tempfile
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='_selected', delete=False, dir=os.path.dirname(server_instance.svg_file)) as tmp_file:
-                        output_file = tmp_file.name
-
-                    # Remove the .svg extension if generate_erd_with_graphviz adds it
-                    output_file_base = output_file.replace('.svg', '')
-
-                    # Apply graphviz settings from request, with fallbacks to server defaults
+                    # Merge settings
                     settings = server_instance.generation_params.copy()
                     settings.update(graphviz_settings)
 
-                    # Generate standalone SVG (without JavaScript/interactivity)
-                    # Use include_tables to filter to only selected tables
-                    generate_erd_with_graphviz(
-                        tables,
-                        foreign_keys,
-                        output_file_base,
-                        input_file_path=input_source,
-                        show_standalone=True,  # Show all selected tables (standalone or not)
-                        exclude_patterns=None,
-                        include_tables=table_ids,  # WHITELIST: Only include selected tables
-                        packmode=settings.get('packmode', 'array'),
-                        rankdir=settings.get('rankdir', 'TB'),
-                        esep=settings.get('esep', '8'),
-                        fontname=settings.get('fontname', 'Arial'),
-                        fontsize=settings.get('fontsize', 18),
-                        node_fontsize=settings.get('node_fontsize', 14),
-                        edge_fontsize=settings.get('edge_fontsize', 12),
-                        node_style=settings.get('node_style', 'rounded,filled'),
-                        node_shape=settings.get('node_shape', 'rect'),
-                        node_sep=settings.get('node_sep', '0.5'),
-                        rank_sep=settings.get('rank_sep', '1.2'),
-                        constraints=constraints,
-                        triggers=triggers,
-                        views=views,
-                functions=functions,
-                settings=settings,
+                    # Delegate to ERD service
+                    svg_dir = os.path.dirname(server_instance.svg_file)
+                    svg_content = server_instance.erd_service.generate_selected_svg(
+                        sql_dump,
+                        table_ids,
+                        svg_dir,
+                        input_source,
+                        settings,
+                        view_columns_from_db
                     )
 
-                    # Read the generated SVG file
-                    svg_file_path = output_file_base + '.svg'
-                    if os.path.exists(svg_file_path):
-                        with open(svg_file_path, 'r', encoding='utf-8') as f:
-                            svg_content = f.read()
-
-                        # Clean up the temporary file
-                        try:
-                            os.remove(svg_file_path)
-                        except:
-                            pass
-
-                        # Send SVG content as response
-                        self.send_response(200)
-                        self.send_header('Content-Type', 'image/svg+xml')
-                        self.send_header('Content-Disposition', 'attachment; filename="selected_erd.svg"')
-                        self.end_headers()
-                        self.wfile.write(svg_content.encode('utf-8'))
-                    else:
-                        self.send_json_response({
-                            "success": False,
-                            "message": "Failed to generate SVG file"
-                        }, 500)
+                    # Send SVG content as response
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'image/svg+xml')
+                    self.send_header('Content-Disposition', 'attachment; filename="selected_erd.svg"')
+                    self.end_headers()
+                    self.wfile.write(svg_content.encode('utf-8'))
 
                 except Exception as e:
                     print(f"Generate selected SVG failed: {e}")
@@ -904,56 +565,18 @@ class ERDServer:
                         }, 400)
                         return
 
-                    # Parse the schema
-                    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_dump)
-
-                    # Enhance views with column information from database (if available)
-                    for view_name, columns in view_columns_from_db.items():
-                        if view_name in views:
-                            views[view_name]['columns'] = columns
-                        if view_name in tables:
-                            tables[view_name]['columns'] = columns
-
-                    constraints = extract_constraint_info(foreign_keys)
-
-                    # Generate output filename
+                    # Delegate to ERD service
                     svg_dir = os.path.dirname(os.path.abspath(server_instance.svg_file))
-                    focused_filename = 'focused_erd'
-                    output_file = os.path.join(svg_dir, focused_filename)
-
-                    # Apply graphviz settings from request
-                    settings = graphviz_settings.copy()
-
-                    # Generate interactive ERD (with JavaScript/interactivity)
-                    # Use include_tables to filter to only selected tables
-                    generate_erd_with_graphviz(
-                        tables,
-                        foreign_keys,
-                        output_file,
-                        input_file_path=input_source,
-                        show_standalone=False,  # Don't show standalone tables
-                        exclude_patterns=None,
-                        include_tables=table_ids,  # WHITELIST: Only include selected tables
-                        packmode=settings.get('packmode', 'array'),
-                        rankdir=settings.get('rankdir', 'TB'),
-                        esep=settings.get('esep', '8'),
-                        fontname=settings.get('fontname', 'Arial'),
-                        fontsize=settings.get('fontsize', 18),
-                        node_fontsize=settings.get('node_fontsize', 14),
-                        edge_fontsize=settings.get('edge_fontsize', 12),
-                        node_style=settings.get('node_style', 'rounded,filled'),
-                        node_shape=settings.get('node_shape', 'rect'),
-                        node_sep=settings.get('node_sep', '0.5'),
-                        rank_sep=settings.get('rank_sep', '1.2'),
-                        constraints=constraints,
-                        triggers=triggers,
-                        views=views,
-                functions=functions,
-                settings=settings,
+                    new_svg_file = server_instance.erd_service.generate_focused_erd(
+                        sql_dump,
+                        table_ids,
+                        svg_dir,
+                        input_source,
+                        graphviz_settings,
+                        view_columns_from_db
                     )
 
                     # Update server instance to use the new focused ERD
-                    new_svg_file = output_file + '.svg'
                     server_instance.svg_file = new_svg_file
 
                     # Return success with filename
