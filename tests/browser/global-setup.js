@@ -15,7 +15,7 @@ function checkPrerequisite(command, installInstructions) {
     execSync(`command -v ${command}`, { stdio: 'ignore' });
     return true;
   } catch (error) {
-    console.error(`\n❌ ERROR: Required prerequisite '${command}' is not installed.\n`);
+    console.error(`\n[ERROR] Required prerequisite '${command}' is not installed.\n`);
     console.error('Installation instructions:');
     console.error(installInstructions);
     console.error('\nPlease install the missing prerequisite and try again.\n');
@@ -59,7 +59,7 @@ module.exports = async () => {
     }
   }
 
-  console.log('✓ All prerequisites installed\n');
+  console.log('[OK] All prerequisites installed\n');
 
 
   // Try to use npx http-server if available, else fallback to Python
