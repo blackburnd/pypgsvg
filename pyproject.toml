@@ -114,6 +114,7 @@ pythonpath = [
 ]
 markers = [
     "unit: marks tests as unit tests",
+    "browser: marks tests that require browser/Playwright setup (skipped in CI)",
     "playwright_js: marks tests that use playwright with JavaScript",
     "playwright_js_with_server: marks tests that use playwright with JavaScript and require a server",
 ]

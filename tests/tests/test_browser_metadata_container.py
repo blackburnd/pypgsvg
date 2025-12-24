@@ -2,6 +2,8 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.browser
+
 
 def test_metadata_container_exists_in_svg(page: Page):
     """Test that metadata container exists in SVG."""
