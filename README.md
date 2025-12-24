@@ -63,7 +63,7 @@ pypgsvg schema.dump --output demo_erd --view
 ```
 
 
-## ️ Enterprise Usage
+## Enterprise Usage
 
 ### Quick Start - Schema Analysis
 ```bash
@@ -151,10 +151,10 @@ pypgsvg --host prod-db.company.com --port 5432 \
 ```
 
 **Benefits of database connection mode:**
-- 🗄️ **Query available databases** - Browse all databases you have access to
-- 🔄 **Switch databases dynamically** - No need to regenerate or restart
-- 📊 **View table counts** - See database size before loading
-- ⚡ **Real-time schema** - Always see the current database structure
+- **Query available databases** - Browse all databases you have access to
+- **Switch databases dynamically** - No need to regenerate or restart
+- **View table counts** - See database size before loading
+- **Real-time schema** - Always see the current database structure
 
 **Interactive features in `--view` mode:**
 - Browse and switch between databases on the server
@@ -164,16 +164,16 @@ pypgsvg --host prod-db.company.com --port 5432 \
 - Double-click navigation and smart initial zoom
 
 **The generated SVG includes:**
-- 🎯 **Smart initial zoom** - Automatically selects and focuses on the table with most connections
-- 🖱️ **Double-click navigation** - Double-click any table to zoom to all connected relationships
-- 📊 **Real-time diagram regeneration** - Modify Graphviz settings and regenerate instantly
-- 🔍 **Focused ERD creation** - Select specific tables to generate simplified sub-diagrams
-- 🗄️ **Database querying** - Browse and switch between databases on your PostgreSQL server
-- 📱 **Miniature navigator** - Interactive overview panel for large schemas
-- 🖨️ **Print-friendly export** - Clean diagram output for documentation
-- 📋 **Copy/download tools** - Export SQL definitions and selected elements
-- 🎨 **Resizable panels** - Fully customizable workspace layout
-- ⌨️ **Keyboard shortcuts** - ESC/R to reset view, pan and zoom controls
+- **Smart initial zoom** - Automatically selects and focuses on the table with most connections
+- **Double-click navigation** - Double-click any table to zoom to all connected relationships
+- **Real-time diagram regeneration** - Modify Graphviz settings and regenerate instantly
+- **Focused ERD creation** - Select specific tables to generate simplified sub-diagrams
+- **Database querying** - Browse and switch between databases on your PostgreSQL server
+- **Miniature navigator** - Interactive overview panel for large schemas
+- **Print-friendly export** - Clean diagram output for documentation
+- **Copy/download tools** - Export SQL definitions and selected elements
+- **Resizable panels** - Fully customizable workspace layout
+- **Keyboard shortcuts** - ESC/R to reset view, pan and zoom controls
 
 > **Note:** For full interactivity, open the SVG file locally in your browser. GitHub restricts JavaScript for security.
 
@@ -201,14 +201,14 @@ if not errors:
         rankdir='TB',
         packmode='graph'
     )
-    print("✅ Enterprise ERD generated successfully!")
+    print("Enterprise ERD generated successfully!")
 else:
-    print("⚠️ Parsing errors:", errors)
+    print("Warning - Parsing errors:", errors)
 ```
 
 ---
 
-## ⚙️ Complete Command-Line Reference
+## Complete Command-Line Reference
 
 ### Core Arguments
 
@@ -299,11 +299,11 @@ Use `--show-standalone false` to hide tables with no foreign key relationships.
 
 ---
 
-## 🎯 Interactive Features
+## Interactive Features
 
 The generated SVG provides a rich interactive experience with powerful navigation and analysis capabilities:
 
-### 🎬 Smart Initial View
+### Smart Initial View
 On load, the diagram automatically:
 - **Identifies the table with the most connections** and selects it
 - **Zooms to show all related tables** for immediate context
@@ -311,7 +311,7 @@ On load, the diagram automatically:
 
 This intelligent starting point helps you quickly understand the core of your database architecture.
 
-### 🖱️ Interactive Navigation
+### Interactive Navigation
 
 **Double-Click Navigation:**
 - **Double-click any table** to instantly zoom and center the view on that table and all its connected relationships
@@ -324,23 +324,23 @@ This intelligent starting point helps you quickly understand the core of your da
 - **Press ESC or R** to reset the view to initial zoom level
 - **Click tables/edges** to view detailed SQL information
 
-### 📊 Interactive Panels
+### Interactive Panels
 
 All panels can be moved, resized, minimized, and positioned to suit your workflow:
 
 #### Metadata Panel
 Comprehensive database schema information and controls:
 - **Schema statistics** (table count, columns, relationships)
-- **⚙️ Graphviz Settings** - Modify and regenerate the diagram layout in real-time
+- **Graphviz Settings** - Modify and regenerate the diagram layout in real-time
   - Change rank direction (TB, LR, BT, RL)
   - Adjust node and rank separation
   - Modify packmode settings
   - Apply changes instantly to see different visualizations
-- **🗄️ Database Connection** - Query live databases (when using `--view` mode)
+- **Database Connection** - Query live databases (when using `--view` mode)
   - Connect to PostgreSQL servers
   - Browse available databases with table counts
   - Switch between databases seamlessly
-- **🖨️ Print-Friendly View** - Generate clean diagrams for documentation
+- **Print-Friendly View** - Generate clean diagrams for documentation
 - **Generation parameters** and file information
 
 [![Metadata Panel](https://live.staticflickr.com/65535/54725445018_efd3631f59.jpg)](https://flic.kr/s/aHBqjCpNX1)
@@ -359,35 +359,35 @@ View, analyze, and export SQL definitions:
 - **Table definitions** with complete column details and constraints
 - **Foreign key relationships** with full SQL syntax
 - **Trigger information** including execution details
-- **🔍 Generate Focused ERD** - Create a new diagram with only selected tables
+- **Generate Focused ERD** - Create a new diagram with only selected tables
   - Select multiple tables and edges
   - Customize Graphviz settings for the focused view
   - Generate a clean, simplified diagram of just the relevant parts
-- **📋 Copy button** for instant clipboard access
-- **💾 Download button** for formatted text export
+- **Copy button** for instant clipboard access
+- **Download button** for formatted text export
 - **Enterprise-friendly** output options
 
 [![Selection Panel](https://live.staticflickr.com/65535/54725469434_1300a2e147.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
 **Example selection output:**
 ```
-📊 Selected Tables
+Selected Tables
 ==================
 public_franchises
 public_association_map
 public_ecommerce
 ...
 
-🔗 Foreign Key Relationships  
+Foreign Key Relationships  
 ============================
-🔑 franchise_id → id
+[Key] franchise_id -&gt; id
 ALTER TABLE ONLY public.association_map
     ADD CONSTRAINT association_map_franchise_id_fkey 
     FOREIGN KEY (franchise_id) REFERENCES public.franchises(id) 
     ON DELETE CASCADE;
 ```
 
-### 🔄 Dynamic Diagram Generation
+### Dynamic Diagram Generation
 
 **Graphviz Settings Modification:**
 - Access settings through the Metadata Panel
@@ -406,7 +406,7 @@ ALTER TABLE ONLY public.association_map
 - Creates a new, simplified diagram with only selected elements
 - Perfect for documentation, presentations, or analyzing specific subsystems
 
-### 🗄️ Database Server Integration
+### Database Server Integration
 
 When using `--view` mode with database connection parameters:
 - **Query available databases** on the PostgreSQL server
@@ -415,7 +415,7 @@ When using `--view` mode with database connection parameters:
 - **Test connections** before loading schemas
 - **Real-time schema loading** directly from the database
 
-### 🖨️ Print-Friendly Export
+### Print-Friendly Export
 
 Generate clean, professional diagrams for documentation:
 - **Print button** in the Metadata Panel
@@ -433,22 +433,22 @@ Generate clean, professional diagrams for documentation:
 For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md).
 
 **Quality metrics:**
-- ✅ **95%+ code coverage** 
-- ✅ **70+ comprehensive tests**
-- ✅ **Cross-platform compatibility**
+- **95%+ code coverage** 
+- **70+ comprehensive tests**
+- **Cross-platform compatibility**
 
 ---
 
-## 🏗️ Architecture & Performance
+## Architecture & Performance
 
 ### Lightweight Design
 ```text
-📦 pypgsvg/
-├── 🐍 Pure Python core (~450 lines)
-├── 🎨 CSS styling (~200 lines)  
-├── ⚡ JavaScript interactivity (~2000 lines)
-├── 🧪 Comprehensive tests (~1000+ lines)
-└── 📚 Zero runtime dependencies (except Graphviz)
+pypgsvg/
+├── Pure Python core (~450 lines)
+├── CSS styling (~200 lines)  
+├── JavaScript interactivity (~2000 lines)
+├── Comprehensive tests (~1000+ lines)
+└── Zero runtime dependencies (except Graphviz)
 ```
 
 **Performance characteristics:**
@@ -458,15 +458,15 @@ For detailed testing instructions, see the [Testing Guide](docs/testing-guide.md
 - **Quick startup** - No database connections or heavy frameworks
 
 ### Enterprise-Ready Features
-- **🔒 Security-focused** - No network requirements, processes local files only
-- **📋 Audit-friendly** - Deterministic output for version control
-- **🚀 Container-ready** - Minimal Docker image size
-- **⚙️ Configurable** - Extensive customization options
-- **📊 Monitoring** - Built-in error reporting and validation
+- **Security-focused** - No network requirements, processes local files only
+- **Audit-friendly** - Deterministic output for version control
+- **Container-ready** - Minimal Docker image size
+- **Configurable** - Extensive customization options
+- **Monitoring** - Built-in error reporting and validation
 
 ---
 
-## ⚙️ Configuration & Customization
+## Configuration & Customization
 
 ### Advanced Layout Options
 ```bash
@@ -500,7 +500,7 @@ Enterprise-focused exclusions for cleaner diagrams:
 
 ---
 
-## 🚨 Error Handling & Reliability
+## Error Handling & Reliability
 
 **Error management:**
 - **Graceful degradation** - Continues processing despite individual parsing errors
@@ -522,7 +522,7 @@ if errors:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 Welcome users and contributors:
 
 1. **Code quality** - Follow PEP 8 and maintain >95% test coverage

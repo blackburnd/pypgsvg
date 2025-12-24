@@ -58,11 +58,11 @@ def test_coverage_summary_info():
     This informational test documents the current pytest + Playwright setup.
     """
     info = """
-    ═══════════════════════════════════════════════════════════════════
-    📊 Playwright Test Coverage Summary
-    ═══════════════════════════════════════════════════════════════════
+    ===================================================================
+    Playwright Test Coverage Summary
+    ===================================================================
 
-    ✅ Python Pytest-Playwright Tests (in tests/tests/):
+    [Python Pytest-Playwright Tests] (in tests/tests/):
        Files: test_browser_*.py
        What they do:
        - Test Python server API endpoints via browser
@@ -70,7 +70,7 @@ def test_coverage_summary_info():
        - Start Python ERD server
        - Make HTTP requests to Python endpoints
 
-       Python coverage: ✅ YES - Tracks all executed Python code
+       Python coverage: YES - Tracks all executed Python code
        Coverage includes:
        - server.py (25-40%)
        - erd_generator.py (58%)
@@ -78,20 +78,20 @@ def test_coverage_summary_info():
        - metadata_injector.py (51%)
        - And more...
 
-    📝 JavaScript Playwright Tests (in tests/browser/*.spec.js):
+    [JavaScript Playwright Tests] (in tests/browser/*.spec.js):
        Files: *.spec.js
        What they do:
        - Test JavaScript interactivity in SVG files
        - Test DOM manipulation
        - Test browser-side features
 
-       Python coverage: ❌ NO (by design)
+       Python coverage: NO (by design)
        Why: These test JavaScript code, not Python code
 
-    ═══════════════════════════════════════════════════════════════════
-    💡 To maximize Python coverage, focus on Python pytest tests that
-       interact with Python server endpoints and generation code.
-    ═══════════════════════════════════════════════════════════════════
+    ===================================================================
+    Note: To maximize Python coverage, focus on Python pytest tests that
+          interact with Python server endpoints and generation code.
+    ===================================================================
 
     Current combined coverage: ~63% (97 tests)
 

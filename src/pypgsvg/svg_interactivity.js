@@ -67,10 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const successful = document.execCommand('copy');
             if (successful) {
-                button.innerHTML = '✓';
+                button.innerHTML = '[OK]';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.innerHTML = '📋';
+                    button.innerHTML = '[Copy]';
                     button.title = 'Copy to clipboard';
                 }, 2000);
             } else {
@@ -87,10 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent || button.innerHTML;
-                button.textContent = '✓';
+                button.textContent = '[OK]';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.textContent = originalText.includes('Copy') ? originalText : '📋';
+                    button.textContent = originalText.includes('Copy') ? originalText : '[Copy]';
                     button.title = 'Copy to clipboard';
                 }, 2000);
             }).catch(err => {
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Toggle off - remove expansion and reset button
             existingExpansion.remove();
             if (triggeringButton) {
-                triggeringButton.textContent = '👁️';
+                triggeringButton.textContent = '[View]';
                 triggeringButton.removeAttribute('data-expansion-id');
             }
             return;
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allExpansions.forEach(exp => {
             const relatedBtn = document.querySelector(`[data-expansion-id="${exp.id}"]`);
             if (relatedBtn) {
-                relatedBtn.textContent = '👁️';
+                relatedBtn.textContent = '[View]';
                 relatedBtn.removeAttribute('data-expansion-id');
             }
             exp.remove();
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const expansionId = 'sql-expansion-' + Date.now();
 
         // Determine eye direction based on where content will appear
-        let eyeEmoji = '👀'; // Default open eyes looking forward
+        let eyeEmoji = '[Eyes]'; // Default open eyes looking forward
 
         if (triggeringButton) {
             triggeringButton.setAttribute('data-expansion-id', expansionId);
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Copy button
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
         copyBtn.className = 'expansion-copy-btn';
-        copyBtn.textContent = '📋';
+        copyBtn.textContent = '[Copy]';
         copyBtn.title = 'Copy to clipboard';
         copyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -226,33 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Log everything to debug the offset issue
-            console.log('=== CLICK EVENT DEBUG ===');
-            console.log('clickEvent.clientX:', clickEvent.clientX);
-            console.log('clickEvent.clientY:', clickEvent.clientY);
-            console.log('clickEvent.pageX:', clickEvent.pageX);
-            console.log('clickEvent.pageY:', clickEvent.pageY);
-            console.log('clickEvent.screenX:', clickEvent.screenX);
-            console.log('clickEvent.screenY:', clickEvent.screenY);
-            console.log('clickEvent.offsetX:', clickEvent.offsetX);
-            console.log('clickEvent.offsetY:', clickEvent.offsetY);
-            console.log('buttonRect:', {
-                left: buttonRect.left,
-                top: buttonRect.top,
-                right: buttonRect.right,
-                bottom: buttonRect.bottom,
-                width: buttonRect.width,
-                height: buttonRect.height
-            });
-            console.log('window.scrollX:', window.scrollX);
-            console.log('window.scrollY:', window.scrollY);
-            console.log('=========================');
-
             // Get the SVG element and its current transform
             const svgElement = document.querySelector('svg');
             const svgTransform = svgElement ? svgElement.getCTM() : null;
-
-            console.log('SVG Transform Matrix:', svgTransform);
 
             // Get selection-container position to convert viewport coords to relative coords
             const selectionContainer = document.querySelector('.selection-container');
@@ -263,15 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectionContainer.style.overflow = 'visible';
             }
 
-            console.log('Container rect:', containerRect);
-            console.log('Button rect:', buttonRect);
 
             // Use button position relative to container for Y (so top aligns with button)
             // Use click X position relative to container
             let clickX = clickEvent.clientX - (containerRect ? containerRect.left : 0);
             let clickY = buttonRect.top - (containerRect ? containerRect.top : 0);
 
-            console.log('Positioning at:', { clickX, clickY, note: 'Y aligned with button top' });
 
             // Append to the selection-container so it appears inside it
             if (!selectionContainer) {
@@ -284,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else {
-                console.log('Appending to selection-container');
                 selectionContainer.appendChild(expansion);
             }
 
@@ -315,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (placeOnRight) {
                 // Place starting right at the click X position
                 left = clickX;
-                eyeEmoji = '👉'; // Eyes looking right
+                eyeEmoji = '&gt;'; // Eyes looking right
 
                 // Ensure it doesn't go off right edge
                 if (left + expansionWidth > window.innerWidth - 10) {
@@ -324,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Place ending right at the click X position
                 left = clickX - expansionWidth;
-                eyeEmoji = '👈'; // Eyes looking left
+                eyeEmoji = '&lt;'; // Eyes looking left
 
                 // Ensure it doesn't go off left edge
                 if (left < 10) {
@@ -368,7 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
             expansion.style.setProperty('display', 'block', 'important');
             expansion.style.setProperty('box-sizing', 'border-box', 'important');
 
-            console.log('Expansion positioned:', {
                 clickX, clickY,
                 placeOnRight,
                 left, top,
@@ -450,12 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Header title
         const headerTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'span');
-        headerTitle.textContent = `🔧 ${functionName}`;
+        headerTitle.textContent = `[Settings] ${functionName}`;
         header.appendChild(headerTitle);
 
         // Close button (styled via CSS)
         const closeBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
-        closeBtn.textContent = '✕';
+        closeBtn.textContent = 'X';
         closeBtn.addEventListener('click', () => {
             functionWindow.remove();
         });
@@ -471,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
             usageSection.className = 'function-usage-section';
 
             const usageTitle = document.createElementNS('http://www.w3.org/1999/xhtml', 'h4');
-            usageTitle.textContent = `⚡ Used by ${triggersUsingFunction.length} Trigger(s)`;
+            usageTitle.textContent = `[Trigger] Used by ${triggersUsingFunction.length} Trigger(s)`;
             usageSection.appendChild(usageTitle);
 
             const usageList = document.createElementNS('http://www.w3.org/1999/xhtml', 'ul');
@@ -487,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             const noUsageSection = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
             noUsageSection.className = 'function-no-usage';
-            noUsageSection.textContent = 'ℹ️ This function is not currently used by any triggers.';
+            noUsageSection.textContent = '[Info] This function is not currently used by any triggers.';
             content.appendChild(noUsageSection);
         }
 
@@ -504,7 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Copy button - overlayed on top right of textarea (styled via CSS)
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
         copyBtn.className = 'copy-btn';
-        copyBtn.textContent = '📋';
+        copyBtn.textContent = '[Copy]';
         copyBtn.addEventListener('click', () => {
             copyToClipboard(functionText, copyBtn);
         });
@@ -645,7 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function removeEmojis(text) {
             // Remove common emojis used in the interface
             return text
-                .replace(/📊|⚡|🔗|🔑|→|•/g, '')  // Remove specific emojis
+                .replace(/|[Trigger]|[Link]|[Key]|-&gt;|-/g, '')  // Remove specific emojis
                 .replace(/\s+/g, ' ')  // Normalize whitespace
                 .trim();
         }
@@ -673,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 copyBtn = document.createElement('button');
                 copyBtn.className = 'copy-btn';
                 copyBtn.title = 'Copy to clipboard';
-                copyBtn.innerHTML = '📋';
+                copyBtn.innerHTML = '[Copy]';
                 controls.appendChild(copyBtn);
             }
             allControls.copyBtn = copyBtn;
@@ -686,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadBtn = document.createElement('button');
                 downloadBtn.className = 'download-btn';
                 downloadBtn.title = 'Download as file';
-                downloadBtn.innerHTML = '💾';
+                downloadBtn.innerHTML = '[Download]';
                 controls.appendChild(downloadBtn);
             }
             allControls.downloadBtn = downloadBtn;
@@ -698,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minBtn = document.createElement('button');
             minBtn.className = 'minimize-btn';
             minBtn.title = 'Minimize';
-            minBtn.innerHTML = '–';
+            minBtn.innerHTML = '-';
             controls.appendChild(minBtn);
         }
 
@@ -729,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     element.removeAttribute('data-original-display');
                 });
-                minBtn.innerHTML = '–';
+                minBtn.innerHTML = '-';
                 minBtn.title = 'Minimize';
             }
             if (options.onMinimize) options.onMinimize(container.classList.contains('minimized'));
@@ -750,7 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn = document.createElement('button');
             closeBtn.className = 'close-btn';
             closeBtn.title = 'Close';
-            closeBtn.innerHTML = '×';
+            closeBtn.innerHTML = 'X';
             controls.appendChild(closeBtn);
         }
 
@@ -901,10 +872,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(copyText).then(() => {
                         // Visual feedback
-                        allControls.copyBtn.innerHTML = '✓';
+                        allControls.copyBtn.innerHTML = '[OK]';
                         allControls.copyBtn.title = 'Copied!';
                         setTimeout(() => {
-                            allControls.copyBtn.innerHTML = '📋';
+                            allControls.copyBtn.innerHTML = '[Copy]';
                             allControls.copyBtn.title = 'Copy to clipboard';
                         }, 2000);
                     }).catch(err => {
@@ -1033,10 +1004,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadTextAsFile(downloadText, filename);
 
                 // Visual feedback
-                allControls.downloadBtn.innerHTML = '✓';
+                allControls.downloadBtn.innerHTML = '[OK]';
                 allControls.downloadBtn.title = 'Downloaded!';
                 setTimeout(() => {
-                    allControls.downloadBtn.innerHTML = '💾';
+                    allControls.downloadBtn.innerHTML = '[Download]';
                     allControls.downloadBtn.title = 'Download as file';
                 }, 2000);
             });
@@ -1801,7 +1772,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let primaryTable = selectedTables[0];
             const primaryTableData = graphData.tables[primaryTable];
             const primaryTableDisplayName = primaryTableData && primaryTableData.originalName ? primaryTableData.originalName : primaryTable;
-            selection_header.textContent = `📋 ${primaryTableDisplayName}`;
+            selection_header.textContent = `[Copy] ${primaryTableDisplayName}`;
 
             html += '<div class="selection-section">';
 
@@ -1942,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 " title="View table SQL">
-                    👁️ SQL
+                    [View] SQL
                 </button>`;
                 html += `<button id="copy-table-sql" class="db-action-btn" style="
                     padding: 5px 10px;
@@ -1955,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 " title="Copy SQL to clipboard">
-                    📋
+                    [Copy]
                 </button>`;
             }
             html += `</div>`;
@@ -1967,8 +1938,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Header with collapse icon and Generate Focused ERD button
                 html += `<div id="connected-tables-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; margin-bottom: 10px;">`;
                 html += `<div style="display: flex; align-items: center; gap: 8px;">`;
-                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
-                html += `<h3 style="margin: 0; font-size: 0.9rem;">🔗 Connected Tables (${selectedTables.length - 1})</h3>`;
+                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">[Link] Connected Tables (${selectedTables.length - 1})</h3>`;
                 html += `</div>`;
 
                 // Only show "Generate Focused ERD" button if we're NOT already in a focused ERD
@@ -1986,7 +1957,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         white-space: nowrap;
                         flex-shrink: 0;
                     " onclick="event.stopPropagation();">
-                        🔍 Generate Focused ERD
+                        [Generate] Generate Focused ERD
                     </button>`;
                 }
                 html += `</div>`;
@@ -2007,7 +1978,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     transition: all 0.2s ease;
                     flex-shrink: 0;
                 " title="Copy all table names to clipboard">
-                    📋
+                    [Copy]
                 </button>`;
 
                 // Additional table names
@@ -2030,8 +2001,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (primaryTableData && primaryTableData.triggers && primaryTableData.triggers.length > 0) {
                 html += '<div style="margin: 12px 0 8px 0;">';
                 html += `<div id="triggers-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(241, 196, 15, 0.05); border-radius: 4px; border: 1px solid rgba(241, 196, 15, 0.15);">`;
-                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
-                html += `<h3 style="margin: 0; font-size: 0.9rem;">⚡ Triggers (${primaryTableData.triggers.length})</h3>`;
+                html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">[Trigger] Triggers (${primaryTableData.triggers.length})</h3>`;
                 html += `</div>`;
                 html += `<div id="triggers-content" style="display: none; margin-top: 8px;">`;
                 primaryTableData.triggers.forEach((trigger, triggerIndex) => {
@@ -2051,7 +2022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             cursor: pointer;
                             transition: all 0.2s ease;
                         " title="View trigger function">
-                            👁️
+                            [View]
                         </button>`;
                         html += `<button class="copy-trigger-function" data-trigger-index="${triggerIndex}" style="
                             padding: 2px 6px;
@@ -2064,7 +2035,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             cursor: pointer;
                             transition: all 0.2s ease;
                         " title="Copy trigger function">
-                            📋
+                            [Copy]
                         </button>`;
                     }
                     html += `</div>`;
@@ -2074,7 +2045,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const functionData = graphData.functions && graphData.functions[safeFunctionName];
 
                         html += `<div style="font-size: 0.75rem; color: #7f8c8d; display: flex; align-items: center; gap: 8px; margin-top: 4px;">`;
-                        html += `<span>→ ${escapeHtml(functionName)}${trigger.function_args ? '(' + escapeHtml(trigger.function_args) + ')' : '()'}</span>`;
+                        html += `<span>-&gt; ${escapeHtml(functionName)}${trigger.function_args ? '(' + escapeHtml(trigger.function_args) + ')' : '()'}</span>`;
 
                         if (functionData && functionData.full_definition) {
                             html += `<button class="view-function-definition" data-function-name="${escapeHtml(safeFunctionName)}" style="
@@ -2088,7 +2059,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 cursor: pointer;
                                 transition: all 0.2s ease;
                             " title="View function definition">
-                                👁️
+                                [View]
                             </button>`;
                             html += `<button class="copy-function-definition" data-function-name="${escapeHtml(safeFunctionName)}" style="
                                 padding: 2px 6px;
@@ -2101,7 +2072,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 cursor: pointer;
                                 transition: all 0.2s ease;
                             " title="Copy function definition">
-                                📋
+                                [Copy]
                             </button>`;
                         }
                         html += `</div>`;
@@ -2117,8 +2088,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedEdges.length) {
             html += '<div style="margin: 12px 0 8px 0;">';
             html += `<div id="foreign-keys-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(231, 76, 60, 0.05); border-radius: 4px; border: 1px solid rgba(231, 76, 60, 0.15);">`;
-            html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">▶</span>`;
-            html += `<h3 style="margin: 0; font-size: 0.9rem;">🔗 Foreign Key Relationships (${selectedEdges.length})</h3>`;
+            html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
+            html += `<h3 style="margin: 0; font-size: 0.9rem;">[Link] Foreign Key Relationships (${selectedEdges.length})</h3>`;
             html += `</div>`;
             html += `<div id="foreign-keys-content" style="display: none; margin-top: 8px;">`;
             for (const edgeId of selectedEdges) {
@@ -2142,23 +2113,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (action === 'CASCADE') {
                             color = '#c0392b';
                             bgColor = 'rgba(192, 57, 43, 0.15)';
-                            icon = '⚠️';
+                            icon = '[Warning]';
                         } else if (action === 'SET NULL') {
                             color = '#f39c12';
                             bgColor = 'rgba(243, 156, 18, 0.15)';
-                            icon = '∅';
+                            icon = '[None]';
                         } else if (action === 'SET DEFAULT') {
                             color = '#3498db';
                             bgColor = 'rgba(52, 152, 219, 0.15)';
-                            icon = '⟲';
+                            icon = '[Cycle]';
                         } else if (action === 'RESTRICT') {
                             color = '#8e44ad';
                             bgColor = 'rgba(142, 68, 173, 0.15)';
-                            icon = '🚫';
+                            icon = '[Restrict]';
                         } else { // NO ACTION
                             color = '#95a5a6';
                             bgColor = 'rgba(149, 165, 166, 0.15)';
-                            icon = '—';
+                            icon = '-';
                         }
 
                         return `<span style="
@@ -2199,7 +2170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ">`;
                     html += `<div style="flex: 1; min-width: 0;">`;
                     html += `<div style="font-weight: 600; color: #c0392b; font-size: 0.85rem; margin-bottom: 4px; line-height: 1.3;">`;
-                    html += `🔑 ${escapeHtml(fromTable)}.${escapeHtml(edge.fromColumn)} → ${escapeHtml(toTable)}.${escapeHtml(edge.toColumn)}`;
+                    html += `[Key] ${escapeHtml(fromTable)}.${escapeHtml(edge.fromColumn)} -&gt; ${escapeHtml(toTable)}.${escapeHtml(edge.toColumn)}`;
                     html += `</div>`;
 
                     // Add cascade action badges
@@ -2228,7 +2199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cursor: pointer;
                         transition: all 0.2s ease;
                     " title="View foreign key SQL">
-                        👁️
+                        [View]
                     </button>`;
                     html += `<button class="copy-fk-sql" data-edge-id="${escapeHtml(edgeId)}" style="
                         padding: 4px 8px;
@@ -2241,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cursor: pointer;
                         transition: all 0.2s ease;
                     " title="Copy foreign key SQL">
-                        📋
+                        [Copy]
                     </button>`;
                     html += `</div>`;
                     html += '</div>';
@@ -2274,7 +2245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 ">
-                    📥 Generate Standalone SVG
+                    [Generate] Generate Standalone SVG
                 </button>
                 <div id="focused-erd-status" style="
                     margin-top: 8px;
@@ -2468,7 +2439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const edgeId = btn.getAttribute('data-edge-id');
                 const edge = graphData.edges[edgeId];
                 if (edge && edge.fkText) {
-                    const fkLabel = `${edge.fromColumn} → ${edge.toColumn}`;
+                    const fkLabel = `${edge.fromColumn} -&gt; ${edge.toColumn}`;
                     showSqlWindow(fkLabel, edge.fkText, btn, e);
                 }
             });
@@ -2498,11 +2469,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isOpen) {
                     // Collapse
                     focusedSettingsPanel.style.maxHeight = '0';
-                    focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+                    focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
                 } else {
                     // Expand - increased to accommodate all settings
                     focusedSettingsPanel.style.maxHeight = '800px';
-                    focusedErdBtn.textContent = '🔼 Hide Settings';
+                    focusedErdBtn.textContent = '^ Hide Settings';
                 }
             });
         }
@@ -2514,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Collapse the settings panel
                 focusedSettingsPanel.style.maxHeight = '0';
                 // Revert the Generate button text back to original
-                focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+                focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
             });
         }
 
@@ -2576,7 +2547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (focusedErdConfirmBtn) {
             focusedErdConfirmBtn.addEventListener('click', async () => {
                 focusedErdConfirmBtn.disabled = true;
-                focusedErdConfirmBtn.textContent = '⏳ Generating...';
+                focusedErdConfirmBtn.textContent = '[Loading] Generating...';
 
                 if (focusedStatusDiv) {
                     focusedStatusDiv.style.display = 'block';
@@ -2644,7 +2615,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 'focusedERD',
                                 `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes,toolbar=no,menubar=no,location=no`
                             );
-                            focusedErdConfirmBtn.textContent = '✓ Generate ERD';
+                            focusedErdConfirmBtn.textContent = '[OK] Generate ERD';
                             focusedErdConfirmBtn.disabled = false;
                             if (focusedStatusDiv) {
                                 setTimeout(() => {
@@ -2656,7 +2627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 focusedSettingsPanel.style.maxHeight = '0';
                             }
                             if (focusedErdBtn) {
-                                focusedErdBtn.textContent = '🔍 Generate Focused ERD';
+                                focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
                             }
                         }, 500);
                     } else {
@@ -2670,7 +2641,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         focusedStatusDiv.style.border = '1px solid rgba(244, 67, 54, 0.3)';
                         focusedStatusDiv.style.color = '#c62828';
                     }
-                    focusedErdConfirmBtn.textContent = '✓ Generate ERD';
+                    focusedErdConfirmBtn.textContent = '[OK] Generate ERD';
                     focusedErdConfirmBtn.disabled = false;
                 }
             });
@@ -2681,7 +2652,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (generateBtn) {
             generateBtn.addEventListener('click', async () => {
                 generateBtn.disabled = true;
-                generateBtn.textContent = '⏳ Generating...';
+                generateBtn.textContent = '[Loading] Generating...';
 
                 try {
                     // Clone the current SVG document
@@ -2771,16 +2742,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     URL.revokeObjectURL(url);
 
-                    generateBtn.textContent = '✅ Downloaded!';
+                    generateBtn.textContent = '[Success] Downloaded!';
                     setTimeout(() => {
-                        generateBtn.textContent = '📥 Generate Standalone SVG';
+                        generateBtn.textContent = '[Generate] Generate Standalone SVG';
                         generateBtn.disabled = false;
                     }, 2000);
                 } catch (error) {
                     console.error('Error generating standalone SVG:', error);
-                    generateBtn.textContent = '❌ Error';
+                    generateBtn.textContent = '[Error] Error';
                     setTimeout(() => {
-                        generateBtn.textContent = '📥 Generate Standalone SVG';
+                        generateBtn.textContent = '[Generate] Generate Standalone SVG';
                         generateBtn.disabled = false;
                     }, 2000);
                 }
@@ -3652,7 +3623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isHidden) {
                     // Expand
                     content.style.display = 'block';
-                    if (icon) icon.textContent = '▼';
+                    if (icon) icon.textContent = 'v';
 
                     // If expanding graphviz settings, show the regenerate buttons
                     if (contentId === 'graphviz-settings-content') {
@@ -3667,7 +3638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Collapse
                     content.style.display = 'none';
-                    if (icon) icon.textContent = '▶';
+                    if (icon) icon.textContent = '&gt;';
 
                     // If collapsing graphviz settings, hide the regenerate buttons
                     if (contentId === 'graphviz-settings-content') {
@@ -3739,7 +3710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (optimizeBtn) {
             optimizeBtn.addEventListener('click', async () => {
                 optimizeBtn.disabled = true;
-                optimizeBtn.textContent = '🤖 Analyzing...';
+                optimizeBtn.textContent = '[AI] Analyzing...';
                 showStatus('AI is analyzing your schema for optimal layout...', 'info', optimizeStatusDiv);
 
                 try {
@@ -3785,21 +3756,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (settings.node_shape) document.getElementById('gv-node-shape').value = settings.node_shape;
 
                         const explanation = result.explanation || 'Optimized settings applied!';
-                        showStatus(`✨ ${explanation} Click "Apply Settings" to regenerate.`, 'success', optimizeStatusDiv);
-                        optimizeBtn.textContent = '🤖 AI-Optimize Layout';
+                        showStatus(` ${explanation} Click "Apply Settings" to regenerate.`, 'success', optimizeStatusDiv);
+                        optimizeBtn.textContent = '[AI] AI-Optimize Layout';
                         optimizeBtn.disabled = false;
 
                         // Highlight the Apply button to indicate user should click it
                         applyBtn.style.animation = 'pulse 1.5s ease-in-out 3';
                     } else {
                         showStatus(`Error: ${result.message || 'Failed to optimize layout'}`, 'error', optimizeStatusDiv);
-                        optimizeBtn.textContent = '🤖 AI-Optimize Layout';
+                        optimizeBtn.textContent = '[AI] AI-Optimize Layout';
                         optimizeBtn.disabled = false;
                     }
                 } catch (error) {
                     console.error('Error optimizing layout:', error);
                     showStatus(`Error: ${error.message}`, 'error', optimizeStatusDiv);
-                    optimizeBtn.textContent = '🤖 AI-Optimize Layout';
+                    optimizeBtn.textContent = '[AI] AI-Optimize Layout';
                     optimizeBtn.disabled = false;
                 }
             });
@@ -3820,7 +3791,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (applyFocusedBtn) {
             applyFocusedBtn.addEventListener('click', async () => {
                 applyFocusedBtn.disabled = true;
-                applyFocusedBtn.textContent = '⏳ Applying Settings...';
+                applyFocusedBtn.textContent = '[Loading] Applying Settings...';
                 showStatus('Regenerating focused ERD with new settings...', 'info');
 
                 try {
@@ -3860,13 +3831,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 500);
                     } else {
                         showStatus(`Error: ${result.message || 'Failed to apply settings'}`, 'error');
-                        applyFocusedBtn.textContent = '🔍 Apply Settings & Regenerate Focused ERD';
+                        applyFocusedBtn.textContent = '[Generate] Apply Settings & Regenerate Focused ERD';
                         applyFocusedBtn.disabled = false;
                     }
                 } catch (error) {
                     console.error('Error applying focused settings:', error);
                     showStatus(`Error: ${error.message}`, 'error');
-                    applyFocusedBtn.textContent = '🔍 Apply Settings & Regenerate Focused ERD';
+                    applyFocusedBtn.textContent = '[Generate] Apply Settings & Regenerate Focused ERD';
                     applyFocusedBtn.disabled = false;
                 }
             });
@@ -3875,7 +3846,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply Settings button handler (full ERD regeneration)
         applyBtn.addEventListener('click', async () => {
             applyBtn.disabled = true;
-            applyBtn.textContent = '⏳ Applying Settings...';
+            applyBtn.textContent = '[Loading] Applying Settings...';
             showStatus('Regenerating ERD with new settings...', 'info');
 
             try {
@@ -3969,19 +3940,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.ok) {
                         const result = await response.json();
                         if (result.success && result.reload) {
-                            showFileStatus('✅ ERD reloaded! Refreshing page...', 'success');
+                            showFileStatus('[Success] ERD reloaded! Refreshing page...', 'success');
                             // Reload the page after a brief delay
                             setTimeout(() => {
                                 window.location.reload();
                             }, 1000);
                         } else if (result.success) {
-                            showFileStatus('✅ ERD reloaded successfully!', 'success');
+                            showFileStatus('[Success] ERD reloaded successfully!', 'success');
                         } else {
-                            showFileStatus(`❌ Reload failed: ${result.message}`, 'error');
+                            showFileStatus(`[Error] Reload failed: ${result.message}`, 'error');
                         }
                     } else {
                         const error = await response.json();
-                        showFileStatus(`❌ Reload failed: ${error.message || 'Unknown error'}`, 'error');
+                        showFileStatus(`[Error] Reload failed: ${error.message || 'Unknown error'}`, 'error');
                     }
                     
                     reloadFileBtn.disabled = false;
@@ -3989,7 +3960,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     // Server not available - provide instructions
                     showFileStatus(
-                        `ℹ️ Server not available. To reload interactively, run:\n\n` +
+                        `[Info] Server not available. To reload interactively, run:\n\n` +
                         `pypgsvg ${filepath} --view`,
                         'info'
                     );
@@ -4057,9 +4028,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Save current selection BEFORE any operations
                 const currentDb = dbSelect.value || '';
-                console.log('Saving current database before refresh:', currentDb);
-                console.log('dbSelect element:', dbSelect);
-                console.log('dbSelect options before clear:', dbSelect.options.length);
                 
                 if (!host || !port || !user) {
                     showConnectionStatus('Please fill in host, port, and user fields first', 'error');
@@ -4079,17 +4047,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (response.ok) {
                         const result = await response.json();
-                        console.log('Database query result:', result);
                         if (result.success && result.databases && Array.isArray(result.databases)) {
-                            console.log('Current database to restore:', currentDb);
-                            console.log('Available databases:', result.databases);
-                            console.log('Number of databases returned:', result.databases.length);
 
                             // Clear and populate dropdown (avoid innerHTML in SVG context)
                             while (dbSelect.firstChild) {
                                 dbSelect.removeChild(dbSelect.firstChild);
                             }
-                            console.log('Cleared dropdown, options count:', dbSelect.options.length);
 
                             result.databases.forEach((db, index) => {
                                 const option = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
@@ -4111,31 +4074,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 if (dbName === currentDb) {
                                     option.selected = true;
-                                    console.log('Marking database as selected:', dbName);
                                 }
                                 dbSelect.appendChild(option);
-                                console.log(`Added option ${index + 1}: ${dbName} (${tableCount} tables)`);
                             });
 
-                            console.log('Dropdown populated with', dbSelect.options.length, 'databases');
-                            console.log('Selected index:', dbSelect.selectedIndex);
-                            console.log('Selected value:', dbSelect.value);
 
                             // Update the shared last selected database state
                             lastSelectedDatabase = dbSelect.value;
-                            console.log('Updated lastSelectedDatabase to:', lastSelectedDatabase);
 
-                            showConnectionStatus(`✅ Found ${result.databases.length} databases`, 'success');
+                            showConnectionStatus(`[Success] Found ${result.databases.length} databases`, 'success');
                         } else {
-                            showConnectionStatus(`❌ Failed to query databases: ${result.message}`, 'error');
+                            showConnectionStatus(`[Error] Failed to query databases: ${result.message}`, 'error');
                         }
                     } else {
                         const error = await response.json();
-                        showConnectionStatus(`❌ Failed to query databases: ${error.message}`, 'error');
+                        showConnectionStatus(`[Error] Failed to query databases: ${error.message}`, 'error');
                     }
                 } catch (error) {
                     showConnectionStatus(
-                        `ℹ️ Server not available. To query databases, open with --view mode`,
+                        `[Info] Server not available. To query databases, open with --view mode`,
                         'info'
                     );
                 }
@@ -4177,26 +4134,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success) {
-                        showConnectionStatus('✅ Connection successful!', 'success');
+                        showConnectionStatus('[Success] Connection successful!', 'success');
                     } else {
-                        showConnectionStatus(`❌ Connection failed: ${result.message}`, 'error');
+                        showConnectionStatus(`[Error] Connection failed: ${result.message}`, 'error');
                     }
                 } else {
                     const error = await response.json();
-                    showConnectionStatus(`❌ Connection failed: ${error.message || 'Unknown error'}`, 'error');
+                    showConnectionStatus(`[Error] Connection failed: ${error.message || 'Unknown error'}`, 'error');
                 }
                 
                 testBtn.disabled = false;
-                testBtn.textContent = '🔍 Test Connection';
+                testBtn.textContent = '[Generate] Test Connection';
             } catch (error) {
                 // Server not available - provide instructions
                 showConnectionStatus(
-                    `ℹ️ Server not available. To test connections interactively, open the ERD with:\n\n` +
+                    `[Info] Server not available. To test connections interactively, open the ERD with:\n\n` +
                     `pypgsvg -H ${host} -p ${port} -d ${database} -u ${user} --view`,
                     'info'
                 );
                 testBtn.disabled = false;
-                testBtn.textContent = '🔍 Test Connection';
+                testBtn.textContent = '[Generate] Test Connection';
             }
         });
 
@@ -4229,25 +4186,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success && result.reload) {
-                        showConnectionStatus('✅ ERD regenerated! Opening new view...', 'success');
+                        showConnectionStatus('[Success] ERD regenerated! Opening new view...', 'success');
                         // Open the regenerated ERD in a new window and close current one
                         setTimeout(() => {
                             // Use new filename if provided, otherwise use current URL
                             const newUrl = result.new_file
                                 ? window.location.origin + '/' + result.new_file
                                 : window.location.href;
-                            console.log('Opening new ERD at:', newUrl);
                             window.open(newUrl, '_blank');
                             setTimeout(() => window.close(), 500);
                         }, 1000);
                     } else if (result.success) {
-                        showConnectionStatus('✅ ERD reloaded successfully!', 'success');
+                        showConnectionStatus('[Success] ERD reloaded successfully!', 'success');
                     } else {
-                        showConnectionStatus(`❌ Reload failed: ${result.message}`, 'error');
+                        showConnectionStatus(`[Error] Reload failed: ${result.message}`, 'error');
                     }
                 } else {
                     const error = await response.json();
-                    showConnectionStatus(`❌ Reload failed: ${error.message || 'Unknown error'}`, 'error');
+                    showConnectionStatus(`[Error] Reload failed: ${error.message || 'Unknown error'}`, 'error');
                 }
                 
                 reloadBtn.disabled = false;
@@ -4258,7 +4214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const command = `pypgsvg -H ${host} -p ${port} -d ${database} -u ${user} --view`;
                 
                 showConnectionStatus(
-                    `ℹ️ Server not available. To reload interactively, run:\n\n${command}\n\n` +
+                    `[Info] Server not available. To reload interactively, run:\n\n${command}\n\n` +
                     `Or to just generate without opening: pypgsvg -H ${host} -p ${port} -d ${database} -u ${user} -o ${outputFile}`,
                     'info'
                 );
@@ -4350,7 +4306,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log('Initializing table selector with', Object.keys(tables).length, 'tables');
 
         // Function to populate the selector with tables
         function populateTableSelector(tablesToShow = null) {
@@ -4373,7 +4328,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionText = `Selected Tables (${tablesToDisplay.length})`;
             }
             
-            console.log('About to populate selector with options:', optionText);
             
             // Enable multiple selection mode when showing selected tables
             if (isSelectionMode) {
@@ -4390,7 +4344,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 defaultOption.value = '';
                 defaultOption.textContent = optionText;
                 tableSelector.appendChild(defaultOption);
-                console.log('Added default option, current option count:', tableSelector.options.length);
             }
             
             // Add table options
@@ -4410,12 +4363,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Log progress for first few and last few
                 if (index < 3 || index >= tablesToDisplay.length - 3) {
-                    console.log(`Added option ${index + 1}: ${tableId}, total options now: ${tableSelector.options.length}`);
                 }
             });
 
-            console.log('Populated table selector with', tablesToDisplay.length, 'tables, final option count:', tableSelector.options.length);
-            console.log('Multi-select mode:', isSelectionMode);
         }
 
         // Function to update selector based on current highlights
@@ -4510,7 +4460,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Make sure we have access to the views data
         if (!views || Object.keys(views).length === 0) {
-            console.log('No views data available for view selector');
             // Still populate with empty selector
             const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
             defaultOption.value = '';
@@ -4519,7 +4468,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log('Initializing view selector with', Object.keys(views).length, 'views');
 
         // Function to populate the selector with views
         function populateViewSelector(viewsToShow = null) {
@@ -4542,7 +4490,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 optionText = `Selected Views (${viewsToDisplay.length})`;
             }
             
-            console.log('About to populate view selector with options:', optionText);
             
             // Enable multiple selection mode when showing selected views
             if (isSelectionMode) {
@@ -4559,7 +4506,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 defaultOption.value = '';
                 defaultOption.textContent = optionText;
                 viewSelector.appendChild(defaultOption);
-                console.log('Added default option, current option count:', viewSelector.options.length);
             }
             
             // Add view options
@@ -4579,12 +4525,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Log progress for first few and last few
                 if (index < 3 || index >= viewsToDisplay.length - 3) {
-                    console.log(`Added view option ${index + 1}: ${viewId}, total options now: ${viewSelector.options.length}`);
                 }
             });
 
-            console.log('Populated view selector with', viewsToDisplay.length, 'views, final option count:', viewSelector.options.length);
-            console.log('Multi-select mode:', isSelectionMode);
         }
 
         // Function to update selector based on current highlights
@@ -4695,7 +4638,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Make sure we have access to the functions data
         const functions = graphData.functions || {};
         if (!functions || Object.keys(functions).length === 0) {
-            console.log('No functions data available for function selector');
             // Still populate with empty selector
             const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
             defaultOption.value = '';
@@ -4704,7 +4646,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log('Initializing function selector with', Object.keys(functions).length, 'functions');
 
         // Function to populate the selector with functions
         function populateFunctionSelector() {
@@ -4716,7 +4657,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const functionsToDisplay = Object.keys(functions);
             const optionText = `All Functions (${functionsToDisplay.length})`;
 
-            console.log('About to populate function selector with options:', optionText);
 
             // Add the default option
             const defaultOption = document.createElementNS('http://www.w3.org/1999/xhtml', 'option');
@@ -4733,11 +4673,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Log progress for first few and last few
                 if (index < 3 || index >= functionsToDisplay.length - 3) {
-                    console.log(`Added function option ${index + 1}: ${functionId}, total options now: ${functionSelector.options.length}`);
                 }
             });
 
-            console.log('Populated function selector with', functionsToDisplay.length, 'functions, final option count:', functionSelector.options.length);
         }
 
         // Handle selector change
@@ -4979,7 +4917,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         graphvizContent.style.display = 'block';
                         const collapseIcon = graphvizHeader.querySelector('.collapse-icon');
                         if (collapseIcon) {
-                            collapseIcon.textContent = '▼';
+                            collapseIcon.textContent = 'v';
                         }
                     }
 
@@ -4988,7 +4926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const focusedErdBtn = document.getElementById('generate-focused-erd-btn');
                     if (focusedSettingsPanel && focusedErdBtn) {
                         focusedSettingsPanel.style.maxHeight = '800px';
-                        focusedErdBtn.textContent = '🔼 Hide Settings';
+                        focusedErdBtn.textContent = '^ Hide Settings';
                     }
 
                     // Zoom to fit the entire ERD in the viewable area
