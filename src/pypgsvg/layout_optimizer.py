@@ -247,7 +247,7 @@ Respond with ONLY a JSON object in this exact format:
 
         explanation = ai_result.get('explanation', 'AI-enhanced optimization applied')
 
-        return enhanced_settings, f"🤖 AI-Enhanced: {explanation}"
+        return enhanced_settings, f"AI-Enhanced: {explanation}"
 
     except Exception as e:
         print(f"AI optimization failed: {e}")

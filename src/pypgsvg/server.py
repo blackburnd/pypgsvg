@@ -677,7 +677,7 @@ class ERDServer:
 
             def handle_shutdown(self):
                 """Handle server shutdown request."""
-                print("\n🔌 Browser closed, shutting down server...")
+                print("\nBrowser closed, shutting down server...")
                 self.send_json_response({"success": True, "message": "Server shutting down"})
                 
                 # Schedule shutdown in a separate thread to allow response to be sent
@@ -717,15 +717,15 @@ class ERDServer:
         url = f"http://localhost:{self.port}/{svg_filename}"
         
         print(f"\n{'='*60}")
-        print(f"🚀 ERD Server started!")
+        print(f"ERD Server started!")
         print(f"{'='*60}")
-        print(f"📊 Viewing: {svg_filename}")
-        print(f"🌐 URL: {url}")
-        print(f"⚙️  Source: {self.source_type}")
+        print(f"Viewing: {svg_filename}")
+        print(f"URL: {url}")
+        print(f"Source: {self.source_type}")
         if self.source_type == 'database':
-            print(f"🔌 Connection: {self.source_params.get('user')}@{self.source_params.get('host')}:{self.source_params.get('port')}/{self.source_params.get('database')}")
+            print(f"Connection: {self.source_params.get('user')}@{self.source_params.get('host')}:{self.source_params.get('port')}/{self.source_params.get('database')}")
         else:
-            print(f"📁 File: {self.source_params.get('filepath')}")
+            print(f"File: {self.source_params.get('filepath')}")
         print(f"{'='*60}")
         print(f"Press Ctrl+C to stop the server")
         print(f"{'='*60}\n")
@@ -737,7 +737,7 @@ class ERDServer:
         try:
             self.server.serve_forever()
         except KeyboardInterrupt:
-            print("\n\n🛑 Server stopped.")
+            print("\n\nServer stopped.")
             self.server.shutdown()
             self.server.server_close()
 

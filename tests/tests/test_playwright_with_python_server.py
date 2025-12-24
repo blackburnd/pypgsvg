@@ -182,7 +182,7 @@ def test_python_coverage_info():
     JavaScript Playwright tests through this pytest wrapper.
     """
     coverage_info = """
-    ✅ Python Coverage Captured from JavaScript Playwright Tests:
+    [OK] Python Coverage Captured from JavaScript Playwright Tests:
 
     1. SVG Generation Pipeline:
        - db_parser.py: Parsing SQL dumps
