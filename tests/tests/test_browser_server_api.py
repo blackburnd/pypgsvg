@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from playwright.sync_api import Page, expect
 
+pytestmark = pytest.mark.browser
+
 
 @pytest.fixture(scope="module")
 def sample_svg_file(tmp_path_factory):
