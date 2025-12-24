@@ -90,22 +90,22 @@ def test_examine_container_functionality():
                 
                 # Look for specific mousedown handlers
                 if 'selectionContainer.addEventListener(\'mousedown\'' in js_section:
-                    print("✓ Selection container has isolated mousedown handler")
+                    print("[OK] Selection container has isolated mousedown handler")
                 else:
-                    print("✗ Selection container missing isolated mousedown handler")
-                
+                    print("[MISSING] Selection container missing isolated mousedown handler")
+
                 if 'miniatureHeader.addEventListener(\'mousedown\'' in js_section:
-                    print("✓ Miniature header has isolated mousedown handler")
+                    print("[OK] Miniature header has isolated mousedown handler")
                 else:
-                    print("✗ Miniature header missing isolated mousedown handler")
-                
+                    print("[MISSING] Miniature header missing isolated mousedown handler")
+
                 # Check for document event listeners instead of global mousemove
                 if 'window.addEventListener(\'mousemove\'' in js_section:
-                    print("✓ Window mousemove handlers present (isolated approach)")
+                    print("[OK] Window mousemove handlers present (isolated approach)")
                 elif 'document.addEventListener(\'mousemove\'' in js_section:
-                    print("✓ Global mousemove handler present")
+                    print("[OK] Global mousemove handler present")
                 else:
-                    print("✗ No mousemove handlers found")
+                    print("[MISSING] No mousemove handlers found")
                 
                 print("\n" + "-"*50)
                 print("CSS ANALYSIS")
@@ -120,17 +120,17 @@ def test_examine_container_functionality():
                     
                     # Check for cursor syntax errors
                     if 'cursor;' in css_section:
-                        print("✗ Found CSS cursor syntax errors (semicolon instead of colon)")
+                        print("[ERROR] Found CSS cursor syntax errors (semicolon instead of colon)")
                     else:
-                        print("✓ No CSS cursor syntax errors found")
-                    
+                        print("[OK] No CSS cursor syntax errors found")
+
                     # Check for proper cursor styles
                     cursor_styles = ['cursor:nw-resize', 'cursor:ne-resize', 'cursor:sw-resize', 'cursor:se-resize']
                     for style in cursor_styles:
                         if style in css_section:
-                            print(f"✓ Found {style}")
+                            print(f"[OK] Found {style}")
                         else:
-                            print(f"✗ Missing {style}")
+                            print(f"[MISSING] Missing {style}")
                 
                 # Print a sample of the JavaScript for manual inspection
                 print("\n" + "-"*50)

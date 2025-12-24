@@ -208,7 +208,7 @@ def inject_metadata_into_svg(
         source_section = f"""
             <div class="db-connection-section">
                 <div class="connection-header">
-                    <h4 class="section-header">🔌 Current Connection</h4>
+                    <h4 class="section-header">Current Connection</h4>
                     <div class="original-connection">
                         <strong>Original:</strong> {file_info.get('connection', 'Unknown')}
                     </div>
@@ -227,7 +227,7 @@ def inject_metadata_into_svg(
                         <option value="{file_info.get('database', 'Unknown')}">{file_info.get('database', 'Unknown')}</option>
                     </select>
                     <button id="refresh-databases-btn" class="db-action-btn">
-                        🔄 Refresh Databases
+                        Refresh Databases
                     </button>
                 </div>
                 <div class="metadata-single editable-field">
@@ -240,10 +240,10 @@ def inject_metadata_into_svg(
                 </div>
                 <div class="db-connection-buttons">
                     <button id="test-connection-btn" class="db-action-btn">
-                        🔍 Test Connection
+                        Test Connection
                     </button>
                     <button id="reload-from-db-btn" class="db-action-btn">
-                        🔄 Reload ERD
+                        Reload ERD
                     </button>
                 </div>
                 <div id="connection-status"></div>
@@ -253,7 +253,7 @@ def inject_metadata_into_svg(
         source_section = f"""
             <div class="file-source-section">
                 <div class="connection-header">
-                    <h4 class="section-header">📁 Source File</h4>
+                    <h4 class="section-header">Source File</h4>
                     <div class="original-file-info">
                         <strong>Current:</strong> {file_info.get('filename', 'Unknown')}<br/>
                         <strong>Size:</strong> {file_info.get('filesize', 'Unknown')}
@@ -265,7 +265,7 @@ def inject_metadata_into_svg(
                 </div>
                 <div class="file-reload-buttons">
                     <button id="reload-from-file-btn" class="db-action-btn">
-                        🔄 Reload from File
+                        Reload from File
                     </button>
                 </div>
                 <div id="file-status"></div>
@@ -275,9 +275,9 @@ def inject_metadata_into_svg(
     metadata_html = f"""
 <div class='metadata-container container' id='metadata-container'>
     <div class='header header-flex'>
-        <span>📊 Database Metadata</span>
+        <span>Database Metadata</span>
         <button id="print-erd-btn" class="db-action-btn">
-            🖨️ Print
+            Print
         </button>
     </div>
     <div class="window-controls window-controls-top-right"></div>
@@ -285,7 +285,7 @@ def inject_metadata_into_svg(
 
         <div class="metadata-section">
             <h3 class="collapsible-header" id="source-info-header">
-                <span class="collapse-icon">▶</span> 📁 Source Information
+                <span class="collapse-icon">&#9658;</span> Source Information
             </h3>
             <div id="source-info-content" class="collapsible-content">
                 {source_section}
@@ -298,7 +298,7 @@ def inject_metadata_into_svg(
 
         <div class="metadata-section">
             <h3 class="collapsible-header" id="schema-stats-header">
-                <span class="collapse-icon">▶</span> 🗃️ Schema Statistics
+                <span class="collapse-icon">&#9658;</span> Schema Statistics
             </h3>
             <div id="schema-stats-content" class="collapsible-content">
             <div class="metadata-grid">
@@ -352,7 +352,7 @@ def inject_metadata_into_svg(
 
         <div class="metadata-section">
             <h3 class="collapsible-header" id="graphviz-settings-header">
-                <span class="collapse-icon">▶</span> ⚙️ Graphviz Settings
+                <span class="collapse-icon">&#9658;</span> Graphviz Settings
                     <button id="apply-focused-settings-btn" class="db-action-btn" style="display:none">
                         Regenerate ERD
                     </button>
@@ -419,7 +419,7 @@ def inject_metadata_into_svg(
                 </div>
                 <div class="settings-divider">
                     <button id="apply-graphviz-settings-btn" class="db-action-btn">
-                        🔄 Apply Settings &amp; Regenerate ERD
+                        Apply Settings &amp; Regenerate ERD
                     </button>
                     <div id="apply-settings-status"></div>
                 </div>
@@ -428,7 +428,7 @@ def inject_metadata_into_svg(
 
         <div class="metadata-section">
             <h3 class="collapsible-header" id="db-config-header">
-                <span class="collapse-icon">▶</span> ⚙️ Database Configuration
+                <span class="collapse-icon">&#9658;</span> Database Configuration
             </h3>
             <div id="db-config-content" class="collapsible-content">
                 <div class="scrollable-config">
@@ -457,9 +457,9 @@ def inject_metadata_into_svg(
 '''
     instructions_html = (
         '<div class="instructions">'
-        '💡 Drag to pan • Scroll to zoom • Click map to navigate • '
+        'Drag to pan - Scroll to zoom - Click map to navigate - '
         'Click tables/edges to highlight<br/>'
-        'ESC/R to reset • I to toggle info windows'
+        'ESC/R to reset - I to toggle info windows'
         '</div>'
     )
     selection_html = f'''
