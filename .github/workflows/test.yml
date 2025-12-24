@@ -31,14 +31,13 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
 
-    - name: Install Playwright browsers (for browser tests)
+    # Browser tests are skipped in CI because they require:
+    # - Playwright browsers (chromium) with system dependencies
+    # - X11/display server for headless mode
+    # These tests run locally with: pytest -m browser
+    - name: Run tests with pytest (excluding browser tests)
       run: |
-        python -m playwright install chromium
-      continue-on-error: true
-
-    - name: Run tests with pytest
-      run: |
-        PYTHONPATH=src python -m pytest tests/tests/* --cov=src --cov-report=xml
+        PYTHONPATH=src python -m pytest tests/tests/* --cov=src --cov-report=xml -m "not browser"
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
