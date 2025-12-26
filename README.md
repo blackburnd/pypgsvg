@@ -63,7 +63,7 @@ pypgsvg schema.dump --output demo_erd --view
 ```
 
 
-## Enterprise Usage
+## Example Interactive Usage.
 
 ### Quick Start - Schema Analysis
 ```bash
@@ -73,11 +73,8 @@ pypgsvg schema.dump --output database_erd --view
 # Connect directly to PostgreSQL database with interactive features
 pypgsvg --host localhost --port 5432 --database mydb --user postgres --output live_erd --view
 
-# Enterprise automation (CI/CD ready)
-pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
-```
 
-### Advanced Enterprise Options
+### Advanced Options
 ```bash
 # Large schema optimization
 pypgsvg Samples/complex_schema.dump --output Samples/complex_schema --rankdir LR --node-sep 4
@@ -156,20 +153,20 @@ pypgsvg --host prod-db.company.com --port 5432 \
 - **View table counts** - See database size before loading
 - **Real-time schema** - Always see the current database structure
 
-**Interactive features in `--view` mode:**
-- Browse and switch between databases on the server
-- Modify Graphviz settings and regenerate layouts in real-time
-- Select tables to create focused sub-diagrams
-- Generate print-friendly exports for documentation
-- Double-click navigation and smart initial zoom
+**Reasoning for --view` mode:**
+- Browse and switch between databases on the server without reload. 
+- Modify Graphviz settings and regenerate layouts, still needs a little work.
+- Selected can tables to create focused sub-diagrams
+- Generate print-friendly exports without interactive JS for documentation
+- Drag to move , and double-click navigation and initial zoom. 
 
 **The generated SVG includes:**
-- **Smart initial zoom** - Automatically selects and focuses on the table with most connections
+- **Initial zoom** - Automatically selects and focuses on the table with most connections
 - **Double-click navigation** - Double-click any table to zoom to all connected relationships
 - **Real-time diagram regeneration** - Modify Graphviz settings and regenerate instantly
 - **Focused ERD creation** - Select specific tables to generate simplified sub-diagrams
-- **Database querying** - Browse and switch between databases on your PostgreSQL server
-- **Miniature navigator** - Interactive overview panel for large schemas
+- **Database querying** - Query available databases and switch between databases on your PostgreSQL server
+- **Miniature navigator** - Exactly relative interactive overview panel for large schemas.
 - **Print-friendly export** - Clean diagram output for documentation
 - **Copy/download tools** - Export SQL definitions and selected elements
 - **Resizable panels** - Fully customizable workspace layout
@@ -180,7 +177,7 @@ pypgsvg --host prod-db.company.com --port 5432 \
 
 ### Scriptable API
 
-Perfect for automation and enterprise workflows:
+Automation and github workflows:
 
 ```python
 from pypgsvg import parse_sql_dump, generate_erd_with_graphviz
@@ -365,7 +362,7 @@ View, analyze, and export SQL definitions:
   - Generate a clean, simplified diagram of just the relevant parts
 - **Copy button** for instant clipboard access
 - **Download button** for formatted text export
-- **Enterprise-friendly** output options
+- **Console-friendly** output options
 
 [![Selection Panel](https://live.staticflickr.com/65535/54725469434_1300a2e147.jpg)](https://flic.kr/s/aHBqjCpNX1)
 
@@ -451,19 +448,6 @@ pypgsvg/
 └── Zero runtime dependencies (except Graphviz)
 ```
 
-**Performance characteristics:**
-- **Fast parsing** - Processes large schemas in seconds
-- **Memory efficient** - Minimal footprint for enterprise deployment
-- **Scalable output** - Handles schemas with hundreds of tables
-- **Quick startup** - No database connections or heavy frameworks
-
-### Enterprise-Ready Features
-- **Security-focused** - No network requirements, processes local files only
-- **Audit-friendly** - Deterministic output for version control
-- **Container-ready** - Minimal Docker image size
-- **Configurable** - Extensive customization options
-- **Monitoring** - Built-in error reporting and validation
-
 ---
 
 ## Configuration & Customization
@@ -481,7 +465,6 @@ pypgsvg schema.dump --hide-standalone --esep 8 --rank-sep 4
 ```
 
 ### Table Filtering (Automatic)
-Enterprise-focused exclusions for cleaner diagrams:
 - **Views** (`vw_*`) - Database views  
 - **Backup tables** (`*_bk`, `*_backup`) - Temporary backup data
 - **Utility tables** (`*_temp`, `*_tmp`) - Temporary processing tables
@@ -526,15 +509,15 @@ if errors:
 Welcome users and contributors:
 
 1. **Code quality** - Follow PEP 8 and maintain >95% test coverage
-2. **Enterprise focus** - Consider automation and deployment scenarios  
+2. **Scaled focus** - Always consider automation and deployment scenarios  
 3. **Performance** - Optimize for large schemas and CI/CD usage
-4. **Documentation** - Update examples for enterprise use cases
+4. **Documentation** - Update examples use cases
 5. **Testing** - Add tests for new SQL patterns and edge cases
 
 ---
 
 ### Required
-- **Python 3.8+** (standard in most enterprise environments)
+- **Python 3.8+** 
 - **Graphviz** (system package, widely available)
 
 ### Development/Testing Only
