@@ -615,13 +615,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let controls = windowElem.querySelector('.window-controls');
         if (!controls) {
             controls = document.createElement('div');
-            controls.className = 'window-controls';
-            controls.style.position = 'absolute';
-            controls.style.left = 'auto';
-            controls.style.top = '2px';
-            controls.style.right = '2px';
-            controls.style.zIndex = '10001';
-            windowElem.appendChild(controls);
+            controls.className = 'window-controls window-controls-top-right';
+            // Find the header element and append controls to it
+            const header = windowElem.querySelector('.header');
+            if (header) {
+                header.appendChild(controls);
+            } else {
+                windowElem.appendChild(controls);
+            }
         }
 
         const btnConfig = options.buttons || {};

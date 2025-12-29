@@ -1221,9 +1221,7 @@
 
 /* Window controls positioning */
 .window-controls-top-right {
-    position: absolute;
-    right: 2px;
-    top: 2px;
+    margin-left: auto;
     z-index: 10010;
 }
 
