@@ -279,8 +279,8 @@ def inject_metadata_into_svg(
         <button id="print-erd-btn" class="db-action-btn">
             Print
         </button>
+        <div class="window-controls window-controls-top-right"></div>
     </div>
-    <div class="window-controls window-controls-top-right"></div>
     <div class='metadata-inner-container container-content'>
 
         <div class="metadata-section">
@@ -444,7 +444,7 @@ def inject_metadata_into_svg(
         minimap_html = f'''
 <div id="miniature-container" class="miniature-container container">
   <div class="header" id="miniature-header">
-    Directed Graph Overview
+    <span>Directed Graph Overview</span>
     <div class="window-controls window-controls-top-right"></div>
   </div>
   <div class="miniature-inner-container container-content" id="miniature-inner-container">
@@ -464,8 +464,9 @@ def inject_metadata_into_svg(
     )
     selection_html = f'''
 <div id="selection-container" class="selection-container container">
-  <div class="header" id="selection-header"></div>
-      <div class="window-controls window-controls-top-right"></div>
+  <div class="header" id="selection-header">
+    <div class="window-controls window-controls-top-right"></div>
+  </div>
   <div class="selection-container container-content" id="selection-inner-container">
     <div id="viewport-indicator" class="viewport-indicator"></div>
   </div>
