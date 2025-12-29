@@ -46,9 +46,10 @@
 }
 
 .metadata-container .header {
+    position: relative;
     background: linear-gradient(135deg, #27ae60, #229954);
     color: white;
-    padding: 12px 15px;
+    padding: 8px 100px 8px 12px;
     font-size: 1.1rem;
     font-weight: 600;
     border-radius: 6px 6px 0 0;
@@ -98,9 +99,10 @@
 }
 
 .miniature-container .header {
+    position: relative;
     background: linear-gradient(135deg, #8e44ad, #7d3c98);
     color: white;
-    padding: 10px 12px;
+    padding: 8px 60px 8px 12px;
     font-size: 1rem;
     font-weight: 600;
     border-radius: 6px 6px 0 0;
@@ -262,9 +264,10 @@
 }
 
 .selection-container .header {
+    position: relative;
     background: linear-gradient(135deg, #3498db, #2980b9);
     color: white;
-    padding: 12px 15px;
+    padding: 8px 100px 8px 12px;
     font-size: 1.2rem;
     font-weight: 600;
     border-radius: 6px 6px 0 0;
@@ -364,22 +367,34 @@
 /* Window Controls */
 .window-controls {
     display: flex;
-    gap: 2px;
-    margin-left: auto; /* Pushes the buttons to the far right */
+    gap: 3px;
+    margin-left: auto;
 }
 
 .window-controls button {
-    background: #eee;
-    border: 1px solid #aaa;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 2px;
-    width: 18px;
-    height: 18px;
-    font-size: 14px;
+    width: 20px;
+    height: 20px;
+    font-size: 13px;
     cursor: pointer;
     padding: 0;
-    line-height: 1;
+    line-height: 20px;
+    text-align: center;
     pointer-events: auto;
     z-index: 10099;
+    color: #222;
+    font-weight: 400;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.window-controls button:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .trigger-icon {

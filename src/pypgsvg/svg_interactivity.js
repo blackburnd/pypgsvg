@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.innerHTML = '[OK]';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.innerHTML = '[Copy]';
+                    button.innerHTML = '&#128203;';
                     button.title = 'Copy to clipboard';
                 }, 2000);
             } else {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.textContent = '[OK]';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.textContent = originalText.includes('Copy') ? originalText : '[Copy]';
+                    button.textContent = originalText.includes('Copy') ? originalText : '&#128203;';
                     button.title = 'Copy to clipboard';
                 }, 2000);
             }).catch(err => {
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Toggle off - remove expansion and reset button
             existingExpansion.remove();
             if (triggeringButton) {
-                triggeringButton.textContent = '[View]';
+                triggeringButton.innerHTML = '&#128065;';
                 triggeringButton.removeAttribute('data-expansion-id');
             }
             return;
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allExpansions.forEach(exp => {
             const relatedBtn = document.querySelector(`[data-expansion-id="${exp.id}"]`);
             if (relatedBtn) {
-                relatedBtn.textContent = '[View]';
+                relatedBtn.innerHTML = '&#128065;';
                 relatedBtn.removeAttribute('data-expansion-id');
             }
             exp.remove();
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Copy button
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
         copyBtn.className = 'expansion-copy-btn';
-        copyBtn.textContent = '[Copy]';
+        copyBtn.innerHTML = '&#128203;';
         copyBtn.title = 'Copy to clipboard';
         copyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (placeOnRight) {
                 // Place starting right at the click X position
                 left = clickX;
-                eyeEmoji = '&gt;'; // Eyes looking right
+                eyeEmoji = '>'; // Eyes looking right
 
                 // Ensure it doesn't go off right edge
                 if (left + expansionWidth > window.innerWidth - 10) {
@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Place ending right at the click X position
                 left = clickX - expansionWidth;
-                eyeEmoji = '&lt;'; // Eyes looking left
+                eyeEmoji = '<'; // Eyes looking left
 
                 // Ensure it doesn't go off left edge
                 if (left < 10) {
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Copy button - overlayed on top right of textarea (styled via CSS)
         const copyBtn = document.createElementNS('http://www.w3.org/1999/xhtml', 'button');
         copyBtn.className = 'copy-btn';
-        copyBtn.textContent = '[Copy]';
+        copyBtn.innerHTML = '&#128203;';
         copyBtn.addEventListener('click', () => {
             copyToClipboard(functionText, copyBtn);
         });
@@ -635,7 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 copyBtn = document.createElement('button');
                 copyBtn.className = 'copy-btn';
                 copyBtn.title = 'Copy to clipboard';
-                copyBtn.innerHTML = '[Copy]';
+                copyBtn.innerHTML = '&#128203;'; // 📋 clipboard
                 controls.appendChild(copyBtn);
             }
             allControls.copyBtn = copyBtn;
@@ -648,7 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadBtn = document.createElement('button');
                 downloadBtn.className = 'download-btn';
                 downloadBtn.title = 'Download as file';
-                downloadBtn.innerHTML = '[Download]';
+                downloadBtn.innerHTML = '&#128190;'; // 💾 floppy disk
                 controls.appendChild(downloadBtn);
             }
             allControls.downloadBtn = downloadBtn;
@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
             minBtn = document.createElement('button');
             minBtn.className = 'minimize-btn';
             minBtn.title = 'Minimize';
-            minBtn.innerHTML = '-';
+            minBtn.innerHTML = '&#8722;'; // − minus sign
             controls.appendChild(minBtn);
         }
 
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     element.setAttribute('data-original-display', currentDisplay);
                     element.style.display = 'none';
                 });
-                minBtn.innerHTML = '+';
+                minBtn.innerHTML = '&#43;'; // + plus sign
                 minBtn.title = 'Restore';
             } else {
                 elementsToToggle.forEach(element => {
@@ -691,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     element.removeAttribute('data-original-display');
                 });
-                minBtn.innerHTML = '-';
+                minBtn.innerHTML = '&#8722;'; // − minus sign
                 minBtn.title = 'Minimize';
             }
             if (options.onMinimize) options.onMinimize(container.classList.contains('minimized'));
@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn = document.createElement('button');
             closeBtn.className = 'close-btn';
             closeBtn.title = 'Close';
-            closeBtn.innerHTML = 'X';
+            closeBtn.innerHTML = '&#215;'; // × multiplication sign (close X)
             controls.appendChild(closeBtn);
         }
 
@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         allControls.copyBtn.innerHTML = '[OK]';
                         allControls.copyBtn.title = 'Copied!';
                         setTimeout(() => {
-                            allControls.copyBtn.innerHTML = '[Copy]';
+                            allControls.copyBtn.innerHTML = '&#128203;';
                             allControls.copyBtn.title = 'Copy to clipboard';
                         }, 2000);
                     }).catch(err => {
@@ -998,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allControls.downloadBtn.innerHTML = '[OK]';
                 allControls.downloadBtn.title = 'Downloaded!';
                 setTimeout(() => {
-                    allControls.downloadBtn.innerHTML = '[Download]';
+                    allControls.downloadBtn.innerHTML = '&#8595;#128190;';
                     allControls.downloadBtn.title = 'Download as file';
                 }, 2000);
             });
@@ -1763,7 +1763,23 @@ document.addEventListener('DOMContentLoaded', () => {
             let primaryTable = selectedTables[0];
             const primaryTableData = graphData.tables[primaryTable];
             const primaryTableDisplayName = primaryTableData && primaryTableData.originalName ? primaryTableData.originalName : primaryTable;
-            selection_header.textContent = `[Copy] ${primaryTableDisplayName}`;
+            // Update header text while preserving window-controls div
+            const titleText = `\u{1F4CB} ${primaryTableDisplayName}`; // 📋
+            // Find existing text node or create span for title
+            let titleNode = selection_header.querySelector('.header-title');
+            if (!titleNode) {
+                // Create title span if it doesn't exist
+                titleNode = document.createElement('span');
+                titleNode.className = 'header-title';
+                // Insert before window-controls div (which should be last)
+                const windowControls = selection_header.querySelector('.window-controls');
+                if (windowControls) {
+                    selection_header.insertBefore(titleNode, windowControls);
+                } else {
+                    selection_header.appendChild(titleNode);
+                }
+            }
+            titleNode.textContent = titleText;
 
             html += '<div class="selection-section">';
 
@@ -1904,7 +1920,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 " title="View table SQL">
-                    [View] SQL
+                    &#128065; SQL
                 </button>`;
                 html += `<button id="copy-table-sql" class="db-action-btn" style="
                     padding: 5px 10px;
@@ -1917,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 " title="Copy SQL to clipboard">
-                    [Copy]
+                    &#128203;
                 </button>`;
             }
             html += `</div>`;
@@ -1930,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += `<div id="connected-tables-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; margin-bottom: 10px;">`;
                 html += `<div style="display: flex; align-items: center; gap: 8px;">`;
                 html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
-                html += `<h3 style="margin: 0; font-size: 0.9rem;">[Link] Connected Tables (${selectedTables.length - 1})</h3>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">&#128279; Connected Tables (${selectedTables.length - 1})</h3>`;
                 html += `</div>`;
 
                 // Only show "Generate Focused ERD" button if we're NOT already in a focused ERD
@@ -1948,7 +1964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         white-space: nowrap;
                         flex-shrink: 0;
                     " onclick="event.stopPropagation();">
-                        [Generate] Generate Focused ERD
+                        Generate Focused ERD
                     </button>`;
                 }
                 html += `</div>`;
@@ -1969,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     transition: all 0.2s ease;
                     flex-shrink: 0;
                 " title="Copy all table names to clipboard">
-                    [Copy]
+                    &#128203;
                 </button>`;
 
                 // Additional table names
@@ -1993,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += '<div style="margin: 12px 0 8px 0;">';
                 html += `<div id="triggers-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(241, 196, 15, 0.05); border-radius: 4px; border: 1px solid rgba(241, 196, 15, 0.15);">`;
                 html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
-                html += `<h3 style="margin: 0; font-size: 0.9rem;">[Trigger] Triggers (${primaryTableData.triggers.length})</h3>`;
+                html += `<h3 style="margin: 0; font-size: 0.9rem;">&#9889; Triggers (${primaryTableData.triggers.length})</h3>`;
                 html += `</div>`;
                 html += `<div id="triggers-content" style="display: none; margin-top: 8px;">`;
                 primaryTableData.triggers.forEach((trigger, triggerIndex) => {
@@ -2013,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             cursor: pointer;
                             transition: all 0.2s ease;
                         " title="View trigger function">
-                            [View]
+                            &#128065;
                         </button>`;
                         html += `<button class="copy-trigger-function" data-trigger-index="${triggerIndex}" style="
                             padding: 2px 6px;
@@ -2026,7 +2042,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             cursor: pointer;
                             transition: all 0.2s ease;
                         " title="Copy trigger function">
-                            [Copy]
+                            &#128203;
                         </button>`;
                     }
                     html += `</div>`;
@@ -2050,7 +2066,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 cursor: pointer;
                                 transition: all 0.2s ease;
                             " title="View function definition">
-                                [View]
+                                &#128065;
                             </button>`;
                             html += `<button class="copy-function-definition" data-function-name="${escapeHtml(safeFunctionName)}" style="
                                 padding: 2px 6px;
@@ -2063,7 +2079,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 cursor: pointer;
                                 transition: all 0.2s ease;
                             " title="Copy function definition">
-                                [Copy]
+                                &#128203;
                             </button>`;
                         }
                         html += `</div>`;
@@ -2080,7 +2096,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '<div style="margin: 12px 0 8px 0;">';
             html += `<div id="foreign-keys-header" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: rgba(231, 76, 60, 0.05); border-radius: 4px; border: 1px solid rgba(231, 76, 60, 0.15);">`;
             html += `<span class="collapse-icon" style="font-size: 0.7rem; transition: transform 0.2s;">&gt;</span>`;
-            html += `<h3 style="margin: 0; font-size: 0.9rem;">[Link] Foreign Key Relationships (${selectedEdges.length})</h3>`;
+            html += `<h3 style="margin: 0; font-size: 0.9rem;">&#128279; Foreign Key Relationships (${selectedEdges.length})</h3>`;
             html += `</div>`;
             html += `<div id="foreign-keys-content" style="display: none; margin-top: 8px;">`;
             for (const edgeId of selectedEdges) {
@@ -2104,7 +2120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (action === 'CASCADE') {
                             color = '#c0392b';
                             bgColor = 'rgba(192, 57, 43, 0.15)';
-                            icon = '[Warning]';
+                            icon = '&#9888;'; // ⚠ warning sign
                         } else if (action === 'SET NULL') {
                             color = '#f39c12';
                             bgColor = 'rgba(243, 156, 18, 0.15)';
@@ -2161,7 +2177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ">`;
                     html += `<div style="flex: 1; min-width: 0;">`;
                     html += `<div style="font-weight: 600; color: #c0392b; font-size: 0.85rem; margin-bottom: 4px; line-height: 1.3;">`;
-                    html += `[Key] ${escapeHtml(fromTable)}.${escapeHtml(edge.fromColumn)} -&gt; ${escapeHtml(toTable)}.${escapeHtml(edge.toColumn)}`;
+                    html += `&#128273; ${escapeHtml(fromTable)}.${escapeHtml(edge.fromColumn)} &rarr; ${escapeHtml(toTable)}.${escapeHtml(edge.toColumn)}`;
                     html += `</div>`;
 
                     // Add cascade action badges
@@ -2190,7 +2206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cursor: pointer;
                         transition: all 0.2s ease;
                     " title="View foreign key SQL">
-                        [View]
+                        &#128065;
                     </button>`;
                     html += `<button class="copy-fk-sql" data-edge-id="${escapeHtml(edgeId)}" style="
                         padding: 4px 8px;
@@ -2203,7 +2219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cursor: pointer;
                         transition: all 0.2s ease;
                     " title="Copy foreign key SQL">
-                        [Copy]
+                        &#128203;
                     </button>`;
                     html += `</div>`;
                     html += '</div>';
@@ -2236,7 +2252,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 ">
-                    [Generate] Generate Standalone SVG
+                    Generate Standalone SVG
                 </button>
                 <div id="focused-erd-status" style="
                     margin-top: 8px;
@@ -2460,7 +2476,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isOpen) {
                     // Collapse
                     focusedSettingsPanel.style.maxHeight = '0';
-                    focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
+                    focusedErdBtn.textContent = 'Generate Focused ERD';
                 } else {
                     // Expand - increased to accommodate all settings
                     focusedSettingsPanel.style.maxHeight = '800px';
@@ -2476,7 +2492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Collapse the settings panel
                 focusedSettingsPanel.style.maxHeight = '0';
                 // Revert the Generate button text back to original
-                focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
+                focusedErdBtn.textContent = 'Generate Focused ERD';
             });
         }
 
@@ -2618,7 +2634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 focusedSettingsPanel.style.maxHeight = '0';
                             }
                             if (focusedErdBtn) {
-                                focusedErdBtn.textContent = '[Generate] Generate Focused ERD';
+                                focusedErdBtn.textContent = 'Generate Focused ERD';
                             }
                         }, 500);
                     } else {
@@ -2735,14 +2751,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     generateBtn.textContent = '[Success] Downloaded!';
                     setTimeout(() => {
-                        generateBtn.textContent = '[Generate] Generate Standalone SVG';
+                        generateBtn.textContent = 'Generate Standalone SVG';
                         generateBtn.disabled = false;
                     }, 2000);
                 } catch (error) {
                     console.error('Error generating standalone SVG:', error);
                     generateBtn.textContent = '[Error] Error';
                     setTimeout(() => {
-                        generateBtn.textContent = '[Generate] Generate Standalone SVG';
+                        generateBtn.textContent = 'Generate Standalone SVG';
                         generateBtn.disabled = false;
                     }, 2000);
                 }
@@ -3822,13 +3838,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 500);
                     } else {
                         showStatus(`Error: ${result.message || 'Failed to apply settings'}`, 'error');
-                        applyFocusedBtn.textContent = '[Generate] Apply Settings & Regenerate Focused ERD';
+                        applyFocusedBtn.textContent = 'Apply Settings & Regenerate Focused ERD';
                         applyFocusedBtn.disabled = false;
                     }
                 } catch (error) {
                     console.error('Error applying focused settings:', error);
                     showStatus(`Error: ${error.message}`, 'error');
-                    applyFocusedBtn.textContent = '[Generate] Apply Settings & Regenerate Focused ERD';
+                    applyFocusedBtn.textContent = 'Apply Settings & Regenerate Focused ERD';
                     applyFocusedBtn.disabled = false;
                 }
             });
@@ -4135,7 +4151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 testBtn.disabled = false;
-                testBtn.textContent = '[Generate] Test Connection';
+                testBtn.textContent = 'Test Connection';
             } catch (error) {
                 // Server not available - provide instructions
                 showConnectionStatus(
@@ -4144,7 +4160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'info'
                 );
                 testBtn.disabled = false;
-                testBtn.textContent = '[Generate] Test Connection';
+                testBtn.textContent = 'Test Connection';
             }
         });
 
@@ -4772,6 +4788,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('resize', addBrowserZoomToMetadata);
 
             // Initialize window controls for all containers
+            const metadataContainer = document.getElementById('metadata-container');
+            const selectionContainer = document.getElementById('selection-container');
             if (metadataContainer) {
                 addWindowControls(metadataContainer, {
                     buttons: { copy: true, download: true, edit: false }
