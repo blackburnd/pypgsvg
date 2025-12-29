@@ -339,16 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
             expansion.style.setProperty('pointer-events', 'auto', 'important');
             expansion.style.setProperty('display', 'block', 'important');
             expansion.style.setProperty('box-sizing', 'border-box', 'important');
-
-                clickX, clickY,
-                placeOnRight,
-                left, top,
-                width: expansionWidth,
-                height: expansionHeight,
-                maxLineLength,
-                lineCount,
-                eyeEmoji
-            });
         }
 
         // Prevent event propagation
@@ -750,11 +740,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const miniEdgeElement = document.getElementById('mini-' + id);
                     if (edgeElement) {
                         edgeElement.classList.remove('highlighted');
-                        setEdgeColor(edgeElement, edges[id].defaultColor, false);
+                        setElementColor(edgeElement, edges[id].defaultColor, false);
                     }
                     if (miniEdgeElement) {
                         miniEdgeElement.classList.remove('highlighted');
-                        setEdgeColor(miniEdgeElement, edges[id].defaultColor, false);
+                        setElementColor(miniEdgeElement, edges[id].defaultColor, false);
                     }
                 });
             }
@@ -3623,7 +3613,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isHidden) {
                     // Expand
                     content.style.display = 'block';
-                    if (icon) icon.textContent = 'v';
+                    if (icon) icon.textContent = '\u25BC'; // ▼ down arrow
 
                     // If expanding graphviz settings, show the regenerate buttons
                     if (contentId === 'graphviz-settings-content') {
@@ -3638,7 +3628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     // Collapse
                     content.style.display = 'none';
-                    if (icon) icon.textContent = '&gt;';
+                    if (icon) icon.textContent = '\u25B6'; // ▶ right arrow
 
                     // If collapsing graphviz settings, hide the regenerate buttons
                     if (contentId === 'graphviz-settings-content') {
