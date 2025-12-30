@@ -32,7 +32,9 @@
 ####  Feature Demonstrations
 
 **Smart Navigation & Initial View**
+![Demo of pypgsvg open](./docs/demo.gif)
 <!-- TODO: Add animated GIF showing initial zoom to table with most connections -->
+
 *On load, the diagram automatically identifies and focuses on your schema's most connected table, providing immediate insight into the database architecture.*
 
 **Double-Click to Explore Relationships**

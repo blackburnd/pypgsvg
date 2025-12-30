@@ -87,10 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = button.textContent || button.innerHTML;
-                button.textContent = '[OK]';
+                button.innerHTML = 'Copied';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.textContent = originalText.includes('Copy') ? originalText : '&#128203;';
+                    button.innerHTML = originalText.includes('Copy') ? originalText : '&#128203;';
                     button.title = 'Copy to clipboard';
                 }, 2000);
             }).catch(err => {
@@ -1933,7 +1933,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     cursor: pointer;
                     transition: all 0.2s ease;
                 " title="Copy SQL to clipboard">
-                    &#128203;
+                    📋
                 </button>`;
             }
             html += `</div>`;
@@ -1985,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     transition: all 0.2s ease;
                     flex-shrink: 0;
                 " title="Copy all table names to clipboard">
-                    &#128203;
+                    📋
                 </button>`;
 
                 // Additional table names
@@ -2042,7 +2042,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             cursor: pointer;
                             transition: all 0.2s ease;
                         " title="Copy trigger function">
-                            &#128203;
+                            📋
                         </button>`;
                     }
                     html += `</div>`;
@@ -2079,7 +2079,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 cursor: pointer;
                                 transition: all 0.2s ease;
                             " title="Copy function definition">
-                                &#128203;
+                                📋
                             </button>`;
                         }
                         html += `</div>`;
@@ -2219,7 +2219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         cursor: pointer;
                         transition: all 0.2s ease;
                     " title="Copy foreign key SQL">
-                        &#128203;
+                        📋
                     </button>`;
                     html += `</div>`;
                     html += '</div>';
