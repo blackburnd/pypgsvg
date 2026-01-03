@@ -86,11 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function copyToClipboard(text, button) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(text).then(() => {
-                const originalText = button.textContent || button.innerHTML;
+                const originalText = button.textContent;
                 button.innerHTML = 'Copied';
                 button.title = 'Copied!';
                 setTimeout(() => {
-                    button.innerHTML = originalText.includes('Copy') ? originalText : '&#128203;';
+                    if (originalText && originalText.includes('Copy')) {
+                        button.textContent = originalText;
+                    } else {
+                        button.innerHTML = '&#128203;';
+                    }
                     button.title = 'Copy to clipboard';
                 }, 2000);
             }).catch(err => {
