@@ -28,14 +28,14 @@ def sample_sql():
 
 @pytest.fixture
 def parsed_schema(sample_sql):
-    tables, foreign_keys, triggers,  errors = parse_sql_dump(sample_sql)
+    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sample_sql)
     assert not errors
     return tables, foreign_keys
 
 
 def test_parse_sql_dump(sample_sql):
 
-    tables, foreign_keys, triggers, errors = parse_sql_dump(sample_sql)
+    tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sample_sql)
     assert 'users' in tables
     def test_generate_erd_creates_svg_file(parsed_schema):
         """
@@ -126,7 +126,8 @@ def test_parse_sql_dump(sample_sql):
         tables["vw_hidden"] = {"columns": [{"name": "id", "type": "integer"}]}
         with tempfile.TemporaryDirectory() as tmpdir:
             output_file = os.path.join(tmpdir, "erd_exclude")
-            generate_erd_with_graphviz(tables, foreign_keys, output_file)
+            # Pass exclusion patterns
+            generate_erd_with_graphviz(tables, foreign_keys, output_file, exclude_patterns=['vw_'])
             svg_path = output_file + ".svg"
             with open(svg_path, "r", encoding="utf-8") as f:
                 svg_content = f.read()
@@ -179,7 +180,7 @@ def test_parse_sql_dump(sample_sql):
         from pypgsvg.db_parser import parse_sql_dump
         from pypgsvg.erd_generator import generate_erd_with_graphviz
     
-        tables, foreign_keys, triggers, errors = parse_sql_dump(sql_content)
+        tables, foreign_keys, triggers, errors, views, functions, settings = parse_sql_dump(sql_content)
         # Should parse some tables and not fail
         assert isinstance(tables, dict)
         assert len(tables) > 10  # Should find many tables

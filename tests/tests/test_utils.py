@@ -74,35 +74,61 @@ class TestSanitizeLabel:
 @pytest.mark.unit
 class TestShouldExcludeTable:
     """Test table exclusion logic."""
-    
-    @pytest.mark.parametrize("table_name,should_exclude", [
-        ("users", False),
-        ("posts", False),
-        ("vw_users", True),
-        ("posts_bk", True),
-        ("fix_data", True),
-        ("dups_table", True),
-        ("duplicates_old", True),
-        ("matches_temp", True),
-        ("versionlog_2023", True),
-        ("old_posts", True),
-        ("ifma_data", True),
-        ("memberdata_archive", True),
-        ("VW_UPPERCASE", True),  # Test case sensitivity
-        ("normal_table", False),
-    ])
-    def test_should_exclude_table(self, table_name, should_exclude):
-        """Test table exclusion patterns."""
-        result = should_exclude_table(table_name)
-        assert result == should_exclude
-    
-    def test_exclude_table_empty_string(self):
-        """Test exclude logic with empty string."""
-        result = should_exclude_table("")
-        assert result == False
-    
-    def test_exclude_table_case_insensitive(self):
-        """Test that exclusion patterns are case insensitive."""
-        assert should_exclude_table("VW_TEST") == True
-        assert should_exclude_table("vw_test") == True
-        assert should_exclude_table("Vw_Test") == True
+
+    def test_no_exclusion_patterns(self):
+        """Test that no tables are excluded when no patterns are provided."""
+        assert should_exclude_table("users") == False
+        assert should_exclude_table("vw_users") == False
+        assert should_exclude_table("tmp_table") == False
+
+    def test_with_custom_patterns(self):
+        """Test exclusion with custom patterns."""
+        patterns = ['vw_', 'tmp_']
+        assert should_exclude_table("users", patterns) == False
+        assert should_exclude_table("vw_users", patterns) == True
+        assert should_exclude_table("tmp_table", patterns) == True
+        assert should_exclude_table("posts", patterns) == False
+
+    def test_multiple_patterns(self):
+        """Test exclusion with multiple patterns."""
+        patterns = ['vw_', 'tmp_', 'bk', 'old']
+        assert should_exclude_table("vw_report", patterns) == True
+        assert should_exclude_table("tmp_data", patterns) == True
+        assert should_exclude_table("posts_bk", patterns) == True
+        assert should_exclude_table("old_users", patterns) == True
+        assert should_exclude_table("normal_table", patterns) == False
+
+    def test_case_insensitive_matching(self):
+        """Test that pattern matching is case insensitive."""
+        patterns = ['VW_', 'TMP_']
+        assert should_exclude_table("vw_users", patterns) == True
+        assert should_exclude_table("VW_USERS", patterns) == True
+        assert should_exclude_table("Vw_Users", patterns) == True
+        assert should_exclude_table("tmp_data", patterns) == True
+        assert should_exclude_table("TMP_DATA", patterns) == True
+
+    def test_empty_pattern_list(self):
+        """Test with empty pattern list."""
+        assert should_exclude_table("vw_users", []) == False
+        assert should_exclude_table("tmp_table", []) == False
+
+    def test_empty_string_in_patterns(self):
+        """Test that empty strings in patterns are ignored."""
+        patterns = ['vw_', '', 'tmp_']
+        assert should_exclude_table("normal_table", patterns) == False
+        assert should_exclude_table("vw_users", patterns) == True
+
+    def test_none_patterns(self):
+        """Test with None as patterns (default behavior)."""
+        assert should_exclude_table("users", None) == False
+        assert should_exclude_table("vw_users", None) == False
+        assert should_exclude_table("tmp_table", None) == False
+
+    def test_partial_matching(self):
+        """Test that patterns match partial strings."""
+        patterns = ['audit', 'log']
+        assert should_exclude_table("audit_table", patterns) == True
+        assert should_exclude_table("table_audit", patterns) == True
+        assert should_exclude_table("log_entries", patterns) == True
+        assert should_exclude_table("changelog", patterns) == True
+        assert should_exclude_table("users", patterns) == False

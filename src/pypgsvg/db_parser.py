@@ -3,17 +3,26 @@ from typing import List, Tuple, Dict
 
 def parse_sql_dump(sql_dump):
     """
-    Parse an SQL dump to extract tables, foreign key relationships, and triggers.
+    Parse an SQL dump to extract tables, views, foreign key relationships, triggers, functions, and settings.
     """
     tables = {}
+    views = {}
     foreign_keys = []
     triggers = {}
+    functions = {}  # Store function definitions
+    settings = {}  # Store configuration settings (SET statements)
     primary_keys = {}  # Track primary key columns per table
     parsing_errors = []
 
     # Table creation pattern
     table_pattern = re.compile(
         r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(["\w.]+)\s*\((.*?)\);',
+        re.S | re.I
+    )
+
+    # View creation pattern
+    view_pattern = re.compile(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(["\w.]+)\s+AS\s+(.*?)(?=CREATE|ALTER|$)',
         re.S | re.I
     )
 
@@ -32,6 +41,20 @@ def parse_sql_dump(sql_dump):
     # Inline REFERENCES pattern
     inline_fk_pattern = re.compile(
         r'REFERENCES\s+([\w.]+)\s*\(([\w.]+)\)', re.I
+    )
+
+    # Function pattern - matches CREATE FUNCTION with various delimiters ($$, $tag$, ')
+    function_pattern = re.compile(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+([\w."]+)\s*\((.*?)\)\s+RETURNS\s+(.*?)(?:LANGUAGE\s+([\w]+))?\s+(?:AS\s+)?(\$\$|\$[^$]*\$|\')'
+        r'(.*?)'
+        r'(\$\$|\$[^$]*\$|\')\s*;',
+        re.I | re.S
+    )
+
+    # Settings pattern - matches SET statements
+    set_pattern = re.compile(
+        r'^SET\s+(\w+)\s*=\s*(.+?);',
+        re.M | re.I
     )
 
     # Trigger pattern
@@ -53,6 +76,12 @@ def parse_sql_dump(sql_dump):
     )
 
     try:
+        # Extract settings (SET statements)
+        for match in set_pattern.finditer(sql_dump):
+            setting_name = match.group(1).strip()
+            setting_value = match.group(2).strip()
+            settings[setting_name] = setting_value
+
         # Extract tables and their columns
         for match in table_pattern.finditer(sql_dump):
             table_name = match.group(1).strip('"')
@@ -97,6 +126,51 @@ def parse_sql_dump(sql_dump):
             tables[table_name] = {}
             tables[table_name]['lines'] = "\n".join(_lines)
             tables[table_name]['columns'] = columns
+            tables[table_name]['type'] = 'table'
+
+        # Extract functions
+        for match in function_pattern.finditer(sql_dump):
+            function_name = match.group(1).strip('"')
+            parameters = match.group(2).strip()
+            return_type = match.group(3).strip()
+            language = match.group(4).strip() if match.group(4) else 'sql'
+            # delimiter = match.group(5)  # Opening delimiter
+            function_body = match.group(6).strip()
+            # closing_delimiter = match.group(7)  # Closing delimiter
+
+            full_definition = match.string[match.start():match.end()]
+
+            functions[function_name] = {
+                'name': function_name,
+                'parameters': parameters,
+                'return_type': return_type,
+                'language': language,
+                'body': function_body,
+                'full_definition': full_definition
+            }
+
+        # Extract views
+        for match in view_pattern.finditer(sql_dump):
+            view_name = match.group(1).strip('"')
+            view_definition = match.group(2).strip()
+
+            # Truncate long view definitions for display
+            if len(view_definition) > 500:
+                view_definition = view_definition[:500] + '...'
+
+            views[view_name] = {
+                'definition': view_definition,
+                'type': 'view',
+                'columns': []  # Will be populated from database if available
+            }
+
+            # Also add to tables dict for backward compatibility, but mark as view
+            tables[view_name] = {
+                'lines': view_name,
+                'columns': [],  # Will be populated from database if available
+                'type': 'view',
+                'definition': view_definition
+            }
 
         # Extract foreign keys from ALTER TABLE
         triggers = {}
@@ -193,7 +267,7 @@ def parse_sql_dump(sql_dump):
         for error in parsing_errors:
             print(error)
 
-    return tables, foreign_keys, triggers, parsing_errors
+    return tables, foreign_keys, triggers, parsing_errors, views, functions, settings
 
 
 def extract_constraint_info(foreign_keys):

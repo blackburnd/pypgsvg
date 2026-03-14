@@ -26,12 +26,13 @@ def run_main_with_args(args, mock_file_content=None, raise_file_error=None, pars
         with open_mock as mfile, \
              patch("pypgsvg.__init__.parse_sql_dump") as mparse, \
              patch("pypgsvg.__init__.generate_erd_with_graphviz") as mgen, \
+             patch("pypgsvg.server.start_server") as mserver, \
              patch("webbrowser.open") as mweb:
-            # parse_sql_dump returns (tables, fks, errors)
-            mparse.return_value = ({"users": {"columns": []}}, [], [], parse_errors or [])
+            # parse_sql_dump returns (tables, fks, triggers, errors, views, functions, settings)
+            mparse.return_value = ({"users": {"columns": []}}, [], {}, parse_errors or [], {}, {}, {})
             if gen_exception:
                 mgen.side_effect = gen_exception
-            yield mfile, mparse, mgen, mweb
+            yield mfile, mparse, mgen, mserver
 
 def test_main_success(tmp_path, fake_sql):
     # Normal run, all options, --view, --show-standalone
@@ -39,13 +40,13 @@ def test_main_success(tmp_path, fake_sql):
     with patch("sys.stdout", out):
         for extra in ([], ["--view"], ["--show-standalone", "true"], ["--view", "--show-standalone", "true"]):
             args = [str(tmp_path/"schema.sql"), "-o", str(tmp_path/"out")] + extra
-            with run_main_with_args(args, mock_file_content=fake_sql) as (mfile, mparse, mgen, mweb):
+            with run_main_with_args(args, mock_file_content=fake_sql) as (mfile, mparse, mgen, mserver):
                 mainmod.main()
                 assert mgen.called
                 if "--view" in args:
-                    assert mweb.called
+                    assert mserver.called
                 else:
-                    assert not mweb.called
+                    assert not mserver.called
                 assert "Successfully generated ERD" in out.getvalue()
                 out.truncate(0)
                 out.seek(0)
@@ -123,16 +124,18 @@ def test_main_full_functionality_with_real_schema_dump(tmp_path):
     # Path to the real schema.dump file
     schema_dump_path = os.path.abspath(os.path.join(
         os.path.dirname(__file__), "../../Samples/complex_schema.dump"))
-    
+
     # Ensure the file exists
     assert os.path.exists(schema_dump_path), \
         f"Schema dump file not found at {schema_dump_path}"
-    
+
     # Prepare output and arguments
     out = io.StringIO()
     args = [schema_dump_path, "-o", str(tmp_path / "out")]
 
     # Run the test as if it were executed from the terminal
-    with patch("sys.stdout", out):
+    # Mock getpass to prevent prompting for database password
+    with patch("sys.stdout", out), \
+         patch("getpass.getpass", return_value=""):
         with patch.object(sys, "argv", ["prog"] + args):
             mainmod.main()  # Run the actual main function

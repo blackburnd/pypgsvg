@@ -26,6 +26,8 @@ def generate_erd_with_graphviz(
     output_file,
     input_file_path=None,
     show_standalone=True,
+    exclude_patterns=None,
+    include_tables=None,
     packmode='array',
     rankdir='TB',
     esep='6',
@@ -38,7 +40,10 @@ def generate_erd_with_graphviz(
     node_style='filled',
     node_shape='rect',
     constraints={},
-    triggers={}
+    triggers={},
+    views={},
+    functions={},
+    settings={}
 ):
     """
     Generate an ERD using Graphviz with explicit side connections.
@@ -49,6 +54,8 @@ def generate_erd_with_graphviz(
         output_file: Output file name (without extension)
         input_file_path: Path to input SQL file for metadata
         show_standalone: (tables with no FK relationships)
+        exclude_patterns: List of patterns to exclude tables/views (e.g., ['vw_', 'tmp_'])
+        include_tables: List of specific table names to include (whitelist mode, e.g., ['users', 'posts'])
         packmode: Graphviz 'packmode' (e.g., 'array', 'cluster', 'graph')
         rankdir: Graphviz 'rankdir' (e.g., 'TB', 'LR', 'BT', 'RL')
         esep: Graphviz 'esep' value
@@ -62,13 +69,21 @@ def generate_erd_with_graphviz(
         rank_sep: Rank separation distance
         constraints: Optional list of constraints discovered during parsing
         triggers: Optional list of triggers discovered during parsing
+        views: Dictionary of view definitions extracted during parsing
+        functions: Dictionary of function definitions extracted during parsing
+        settings: Dictionary of configuration settings (SET statements) extracted during parsing
 
     """
-    # Filter tables based on exclusion patterns and standalone option
+    # Filter tables based on include/exclude patterns and standalone option
     filtered_tables = {}
     for table_name, columns in tables.items():
-        # Skip if matches exclusion patterns
-        if should_exclude_table(table_name):
+        # If include_tables is specified (whitelist mode), only include those tables
+        if include_tables is not None and len(include_tables) > 0:
+            if table_name not in include_tables:
+                continue
+
+        # Skip if matches exclusion patterns (only applies when not in whitelist mode)
+        if should_exclude_table(table_name, exclude_patterns):
             continue
 
         # Skip standalone tables if option is disabled
@@ -88,12 +103,32 @@ def generate_erd_with_graphviz(
     total_foreign_keys = len(filtered_foreign_keys)
     total_edges = len(filtered_foreign_keys)
 
-    # File information
+    # Source information (file or database connection)
     file_info = {}
-    if input_file_path and os.path.exists(input_file_path):
+    is_database_source = input_file_path and '@' in input_file_path and ':' in input_file_path
+    
+    if is_database_source:
+        # Database connection format: user@host:port/database
+        file_info['source_type'] = 'database'
+        file_info['connection'] = input_file_path
+        # Parse the connection string for display
+        if '@' in input_file_path and '/' in input_file_path:
+            user_host = input_file_path.split('@')[0]
+            host_port_db = input_file_path.split('@')[1]
+            if ':' in host_port_db and '/' in host_port_db:
+                host = host_port_db.split(':')[0]
+                port_db = host_port_db.split(':')[1]
+                port = port_db.split('/')[0]
+                database = port_db.split('/')[1]
+                file_info['host'] = f"{host}:{port}"
+                file_info['database'] = database
+                file_info['user'] = user_host
+    elif input_file_path and os.path.exists(input_file_path):
+        file_info['source_type'] = 'file'
         file_info['filename'] = os.path.basename(input_file_path)
         file_info['filesize'] = f"{os.path.getsize(input_file_path):,} bytes"
     else:
+        file_info['source_type'] = 'unknown'
         file_info['filename'] = "Unknown"
         file_info['filesize'] = "Unknown"
 
@@ -140,20 +175,31 @@ def generate_erd_with_graphviz(
     graph_data = {
         "tables": {},
         "edges": {},
+        "views": {},
+        "functions": {},
+        "settings": settings,  # Configuration settings from the database dump
         "defaultColor": "#cccccc",
         "highlightColor": "#ff0000",
+        "includedTables": list(filtered_tables.keys()) if include_tables else None,  # Store which tables were included (for focused ERD)
     }
 
     # Populate table data
     for table_name in filtered_tables:
         safe_name = sanitize_label(table_name)
+        table_data = filtered_tables[table_name]
+        column_count = len(table_data.get('columns', [])) if isinstance(table_data, dict) else 0
+
         graph_data["tables"][safe_name] = {
+            "originalName": table_name,  # Store original name for reverse lookup
             "defaultColor": table_colors[table_name],
             "highlightColor": saturate_color(table_colors[table_name], saturation_factor=4.0),
             "desaturatedColor": desaturate_color(table_colors[table_name], desaturation_factor=0.1),
-            "triggers": triggers.get(table_name, []),  # <-- Add this line
+            "triggers": triggers.get(table_name, []),
             "constraints": [],
-            "edges": []
+            "edges": [],
+            "columnCount": column_count,
+            "sql": table_data.get('lines', ''),  # Include the CREATE TABLE SQL
+            "type": table_data.get('type', 'table')  # Include the type (table or view)
         }
 
     # Populate edge data and update table data with connected edges
@@ -175,6 +221,27 @@ def generate_erd_with_graphviz(
             graph_data["tables"][safe_ltbl]["edges"].append(edge_id)
         if safe_rtbl in graph_data["tables"]:
             graph_data["tables"][safe_rtbl]["edges"].append(edge_id)
+
+    # Populate views data
+    for view_name, view_data in views.items():
+        safe_name = sanitize_label(view_name)
+        graph_data["views"][safe_name] = {
+            "name": view_name,
+            "definition": view_data.get('definition', ''),
+            "type": "view"
+        }
+
+    # Populate functions data
+    for function_name, function_data in functions.items():
+        safe_name = sanitize_label(function_name)
+        graph_data["functions"][safe_name] = {
+            "name": function_name,
+            "parameters": function_data.get('parameters', ''),
+            "return_type": function_data.get('return_type', ''),
+            "language": function_data.get('language', ''),
+            "body": function_data.get('body', ''),
+            "full_definition": function_data.get('full_definition', '')
+        }
 
     for table_name, cols in filtered_tables.items():
         safe_table_name = sanitize_label(table_name)
@@ -208,7 +275,7 @@ def generate_erd_with_graphviz(
         for column in cols['columns']:
             # Build column display with icons
             column_icons = ""
-            
+
             # Add primary key icon if this is a primary key
             if column.get('is_primary_key', False):
                 pk_key = "&#128273;"  # Unicode key 🔑
@@ -216,7 +283,7 @@ def generate_erd_with_graphviz(
                     f'<FONT COLOR="#FFD700" POINT-SIZE="16">'
                     f'{pk_key}</FONT> '
                 )
-            
+
             # Add foreign key icon if this is a foreign key
             if column.get('is_foreign_key', False):
                 fk_key = "&#128273;"  # Unicode key 🔑
@@ -225,11 +292,11 @@ def generate_erd_with_graphviz(
                     f'{fk_key}</FONT>'
                     f'<FONT COLOR="#4169E1" POINT-SIZE="10">FK</FONT> '
                 )
-            
+
             # Add column name and type
             column_info = f'{column["name"]} ({column["type"]})'
             column_display = column_icons + column_info
-            
+
             label += (
                 f'<TR><TD ALIGN="left" '
                 f'PORT="{sanitize_label(column["name"])}">'
@@ -237,7 +304,7 @@ def generate_erd_with_graphviz(
             )
         label += '</TABLE>>'
 
-        dot.node(safe_table_name, label=label, id=safe_table_name, 
+        dot.node(safe_table_name, label=label, id=safe_table_name,
                  shape=node_shape, style=node_style)
 
     # --- Update edge creation to use parallel splines with enhanced styling
@@ -267,21 +334,22 @@ def generate_erd_with_graphviz(
             "id": f"edge-{i}",
             "color": f"{color1}:{color2}",
             "style": "solid",
-            "penwidth": "2.5"
+            "penwidth": "3"
         }
-        
+
         # Check for self-referencing relationships
         if ltbl == rtbl:
             edge_attrs["arrowhead"] = "dot"
             edge_attrs["style"] = "dashed"
         # Check for cascade constraints
-        elif any("CASCADE" in str(c) for c in constraints):
+        elif constraints and any("CASCADE" in str(c) for c in constraints):
             edge_attrs["arrowhead"] = "vee"
-            edge_attrs["penwidth"] = "3"
+            edge_attrs["penwidth"] = "4"
         # Check for triggers on the relationship
         elif triggers:
             edge_attrs["arrowhead"] = "diamond"
             edge_attrs["style"] = "bold"
+            edge_attrs["penwidth"] = "3.5"
         else:
             edge_attrs["arrowhead"] = "vee"
 
@@ -291,17 +359,18 @@ def generate_erd_with_graphviz(
             **edge_attrs
         )
 
-    actual_svg_path = output_file + ".svg"
+    # Render the graph and get SVG content directly
     try:
-        dot.render(filename=output_file, cleanup=True)
+        # Use pipe() to get the SVG content directly without file I/O issues
+        svg_bytes = dot.pipe(format='svg')
+        svg_content = svg_bytes.decode('utf-8') if isinstance(svg_bytes, bytes) else svg_bytes
+        actual_svg_path = output_file + ".svg"
         print(f"--- ERD generated successfully: {actual_svg_path} ---")
     except Exception as e:
         log.error(f"Error rendering graph with Graphviz: {e}")
         return
 
-    with open(actual_svg_path, 'r', encoding='utf-8') as f:
-        svg_content = f.read()
-
+    # Process the SVG content
     svg_content = re.sub(r'<svg([^>]*)>', r'<svg\1 style="overflow:hidden;">', svg_content, count=1)
     # Remove Graphviz background rects/paths (double border fix) for full-size SVG
     svg_content = re.sub(r'<rect[^>]*fill="white"[^>]*/>', '', svg_content)
@@ -340,6 +409,7 @@ def generate_erd_with_graphviz(
         node_fontsize=node_fontsize, edge_fontsize=edge_fontsize,
         node_style=node_style, node_shape=node_shape,
         node_sep=node_sep, rank_sep=rank_sep, triggers=triggers,
+        views=views, functions=functions, settings=settings,
     )
 
     with open(actual_svg_path, 'w', encoding='utf-8') as f:

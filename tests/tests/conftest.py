@@ -1,4 +1,24 @@
 import pytest
+from unittest.mock import patch
+import subprocess
+import os
+import time
+from pathlib import Path
+
+
+@pytest.fixture(autouse=True)
+def mock_database_interactions():
+    """Automatically mock database interactions for all tests."""
+    with patch('getpass.getpass', return_value=''), \
+         patch('subprocess.run') as mock_run:
+        # Mock successful subprocess runs
+        from unittest.mock import MagicMock
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout='-- Mock schema dump',
+            stderr=''
+        )
+        yield
 
 
 @pytest.fixture
@@ -129,3 +149,46 @@ def malformed_sql_dumps():
         # Only comments
         "-- This is just a comment\n/* Another comment */",
     ]
+
+
+# Pytest-playwright fixtures for browser testing
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args):
+    """Configure browser context for tests."""
+    return {
+        **browser_context_args,
+        "viewport": {"width": 1280, "height": 800},
+        "permissions": ["clipboard-read", "clipboard-write"],
+    }
+
+
+@pytest.fixture(scope="session")
+def http_server():
+    """Start HTTP server for browser tests."""
+    port = int(os.environ.get('TEST_HTTP_PORT', 8123))
+    doc_root = Path(__file__).parent.parent.parent.resolve()
+
+    # Start Python HTTP server
+    server_process = subprocess.Popen(
+        ['python3', '-m', 'http.server', str(port), '--directory', str(doc_root)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+
+    # Wait for server to start
+    time.sleep(1.5)
+
+    # Set environment variable for base URL
+    os.environ['TEST_HTTP_PORT'] = str(port)
+
+    yield f"http://localhost:{port}"
+
+    # Cleanup
+    server_process.terminate()
+    server_process.wait()
+
+
+@pytest.fixture(scope="session")
+def base_url(http_server):
+    """Provide base URL for pytest-playwright."""
+    return http_server

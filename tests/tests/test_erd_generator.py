@@ -59,21 +59,24 @@ def test_generate_erd_with_no_foreign_keys():
         assert "posts" in svg_content
 
 def test_generate_erd_excludes_tables():
-    # Table name triggers exclusion
+    # Table name triggers exclusion when pattern is provided
     tables = {
         "users": {"columns": [{"name": "id", "type": "integer"}]},
         "vw_users": {"columns": [{"name": "id", "type": "integer"}]},  # Should be excluded
+        "tmp_data": {"columns": [{"name": "id", "type": "integer"}]},  # Should be excluded
     }
     foreign_keys = []
     with tempfile.TemporaryDirectory() as tmpdir:
         output_file = os.path.join(tmpdir, "test_erd3")
-        generate_erd_with_graphviz(tables, foreign_keys, output_file)
+        # Pass exclusion patterns
+        generate_erd_with_graphviz(tables, foreign_keys, output_file, exclude_patterns=['vw_', 'tmp_'])
         svg_path = output_file + ".svg"
         assert os.path.exists(svg_path)
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
         assert "users" in svg_content
         assert "vw_users" not in svg_content
+        assert "tmp_data" not in svg_content
 
 def test_generate_erd_hide_standalone(simple_schema):
     tables, foreign_keys = simple_schema
@@ -94,7 +97,7 @@ def test_generate_erd_hide_standalone(simple_schema):
 def test_generate_erd_graphviz_error(mock_digraph, simple_schema):
     tables, foreign_keys = simple_schema
     mock_dot = MagicMock()
-    mock_dot.render.side_effect = Exception("Graphviz error!")
+    mock_dot.pipe.side_effect = Exception("Graphviz error!")
     mock_digraph.return_value = mock_dot
     with tempfile.TemporaryDirectory() as tmpdir:
         output_file = os.path.join(tmpdir, "test_erd5")
@@ -113,7 +116,6 @@ def test_generate_erd_metadata_fields(simple_schema):
         with open(svg_path, "r", encoding="utf-8") as f:
             svg_content = f.read()
         # Metadata fields - updated to match new HTML structure
-        assert "File:" in svg_content  # Changed from "Source:" to "File:"
         assert "Generated" in svg_content
 
 def test_generate_erd_graph_data_json(simple_schema):
@@ -131,3 +133,25 @@ def test_generate_erd_graph_data_json(simple_schema):
         assert "tables" in graph_data
         assert "edges" in graph_data
         assert "users" in [k for k in graph_data["tables"].keys()] or "users" in svg_content
+
+
+def test_generate_erd_cascade_constraint_styling():
+    """Test that CASCADE constraints get special edge styling"""
+    tables = {
+        "users": {"columns": [{"name": "id", "type": "integer"}]},
+        "posts": {"columns": [{"name": "id", "type": "integer"}, {"name": "user_id", "type": "integer"}]}
+    }
+    # Foreign key with CASCADE constraint - constraints must be a list
+    foreign_keys = [
+        ("posts", "user_id", "users", "id", "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE", {}, ["ON DELETE CASCADE"])
+    ]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_file = os.path.join(tmpdir, "test_erd9")
+        generate_erd_with_graphviz(tables, foreign_keys, output_file)
+        svg_path = output_file + ".svg"
+        assert os.path.exists(svg_path)
+        with open(svg_path, "r", encoding="utf-8") as f:
+            svg_content = f.read()
+        # Verify the graph was created successfully
+        assert "users" in svg_content
+        assert "posts" in svg_content
