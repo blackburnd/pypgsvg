@@ -113,6 +113,9 @@ pythonpath = [
 ]
 markers = [
     "unit: marks tests as unit tests",
+    "browser: marks tests requiring pytest-playwright browser fixtures",
+    "playwright_js: marks JS Playwright bridge tests",
+    "playwright_js_with_server: marks Playwright tests that start the Python ERD server",
 ]
 
 [tool.coverage.run]

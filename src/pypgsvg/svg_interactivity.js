@@ -8,10 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const graphData = JSON.parse(graphDataElement.textContent);
     const { tables, edges } = graphData;
 
+    // --- State variables ---
+    let infoWindowsVisible = true; // Flag to track if informational windows are visible
+
     // Parse URL parameters for initial state
     parseUrlParameters();
 
-    // --- State variables ---
     let initialTx = 0, initialTy = 0, initialS = 1;
     let userTx = 0, userTy = 0, userS = 1;
     let isPanning = false;
@@ -20,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let highlightedElementId = null;
     let dragState = { type: null, startX: 0, startY: 0, offsetX: 0, offsetY: 0, target: null, handle: null };
     let selectionContainerManuallyPositioned = false; // Flag to track if user has manually positioned selection container
-    let infoWindowsVisible = true; // Flag to track if informational windows are visible
 
     // --- Utility Functions ---
 
@@ -110,15 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Info Windows Toggle ---
-    function toggleInfoWindows() {
-        infoWindowsVisible = !infoWindowsVisible;
-        
+    function applyInfoWindowsVisibility() {
         const metadataContainer = document.getElementById('metadata-container');
         const miniatureContainer = document.getElementById('miniature-container');
         const selectionContainer = document.getElementById('selection-container');
-        
+
         const displayValue = infoWindowsVisible ? 'block' : 'none';
-        
+
         if (metadataContainer) {
             metadataContainer.style.display = displayValue;
         }
@@ -128,6 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectionContainer) {
             selectionContainer.style.display = displayValue;
         }
+    }
+
+    function toggleInfoWindows() {
+        infoWindowsVisible = !infoWindowsVisible;
+        applyInfoWindowsVisibility();
     }
 
     // --- Window Controls ---
@@ -1854,13 +1858,17 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTransform();
     }, { passive: false });
 
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key.toLowerCase() === 'r') {
+    const handleGlobalKeydown = (e) => {
+        const key = (e.key || '').toLowerCase();
+
+        if (key === 'escape' || key === 'r') {
             window.location.reload();
-        } else if (e.key.toLowerCase() === 'i') {
+        } else if (key === 'i') {
             toggleInfoWindows();
         }
-    });
+    };
+
+    window.addEventListener('keydown', handleGlobalKeydown, { capture: true });
 
     window.addEventListener('scroll', onViewportChange, { passive: true });
     window.addEventListener('resize', onViewportChange, { passive: true });
@@ -2248,9 +2256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Apply initial info windows visibility state based on URL parameters
-            if (!infoWindowsVisible) {
-                toggleInfoWindows();
-            }
+            applyInfoWindowsVisibility();
 
             // Initialize table selector
             initializeTableSelector();

@@ -105,7 +105,17 @@ def inject_metadata_into_svg(
     node_sep,
     rank_sep,
     triggers={},
+    views=None,
+    functions=None,
+    settings=None,
 ):
+    if views is None:
+        views = {}
+    if functions is None:
+        functions = {}
+    if settings is None:
+        settings = {}
+
     # Remove XML declaration and DOCTYPE robustly
     svg_content = re.sub(r'<\?xml[^>]*\?>\s*', '', svg_content)
     svg_content = re.sub(r'<!DOCTYPE[^>]*>\s*', '', svg_content)
@@ -132,6 +142,8 @@ def inject_metadata_into_svg(
         f"node_sep: {node_sep}",
         f"rank_sep: {rank_sep}",
         f"triggers: {len(triggers)}",
+        f"views: {len(views)}",
+        f"functions: {len(functions)}",
     ]
 
     # Generate miniature ERD if requested
