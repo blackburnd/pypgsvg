@@ -145,6 +145,28 @@ class TestRegexPatterns:
         assert len(foreign_keys) >= 1
         assert any('child' in fk and 'parent' in fk for fk in foreign_keys)
 
+    def test_foreign_key_pattern_matching_with_quoted_reserved_table(self):
+        """Issue #22: quoted reserved table names in REFERENCES should parse."""
+        sql = """
+        CREATE TABLE public."user" (id integer);
+        CREATE TABLE public.notes (id integer, user_id integer);
+        ALTER TABLE ONLY public.notes
+            ADD CONSTRAINT fk_note_user FOREIGN KEY (user_id) REFERENCES public."user"(id);
+        """
+
+        tables, foreign_keys, _, errors, _, _, _ = parse_sql_dump(sql)
+
+        assert errors == []
+        assert 'public.notes' in tables
+        assert 'public.user' in tables
+        assert any(
+            fk[0] == 'public.notes'
+            and fk[1] == 'user_id'
+            and fk[2] == 'public.user'
+            and fk[3] == 'id'
+            for fk in foreign_keys
+        )
+
 
 @pytest.mark.unit
 class TestCLIValidation:

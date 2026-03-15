@@ -1,6 +1,7 @@
 import re
 from typing import List, Tuple, Dict
 
+
 def parse_sql_dump(sql_dump):
     """
     Parse an SQL dump to extract tables, views, foreign key relationships, triggers, functions, and settings.
@@ -14,33 +15,49 @@ def parse_sql_dump(sql_dump):
     primary_keys = {}  # Track primary key columns per table
     parsing_errors = []
 
+    # Support quoted identifiers such as public."user" as well as unquoted names.
+    identifier = r'(?:"[^"]+"|[\w$]+)'
+    qualified_identifier = rf'{identifier}(?:\.{identifier})*'
+
+    def normalize_identifier(raw_identifier):
+        """Normalize SQL identifiers by stripping quoting per path segment."""
+        if not raw_identifier:
+            return raw_identifier
+        parts = [part.strip() for part in raw_identifier.strip().split('.')]
+        normalized_parts = []
+        for part in parts:
+            if part.startswith('"') and part.endswith('"') and len(part) >= 2:
+                part = part[1:-1].replace('""', '"')
+            normalized_parts.append(part)
+        return '.'.join(normalized_parts)
+
     # Table creation pattern
     table_pattern = re.compile(
-        r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(["\w.]+)\s*\((.*?)\);',
+        rf'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?({qualified_identifier})\s*\((.*?)\);',
         re.S | re.I
     )
 
     # View creation pattern
     view_pattern = re.compile(
-        r'CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(["\w.]+)\s+AS\s+(.*?)(?=CREATE|ALTER|$)',
+        rf'CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+({qualified_identifier})\s+AS\s+(.*?)(?=CREATE|ALTER|$)',
         re.S | re.I
     )
 
     # Foreign key definition in ALTER TABLE
     alter_fk_pattern = re.compile(
-        r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+([\w.]+)\s*\((.*?)\)(?:\s+NOT VALID)?(?:\s+ON DELETE ([\w\s]+))?(?:\s+ON UPDATE ([\w\s]+))?;",
+        rf"ALTER TABLE (?:ONLY )?({qualified_identifier})\s+ADD CONSTRAINT (?:\"[^\"]+\"|[\w.$]+)\s+FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+({qualified_identifier})\s*\((.*?)\)(?:\s+NOT VALID)?(?:\s+ON DELETE ([\w\s]+))?(?:\s+ON UPDATE ([\w\s]+))?;",
         re.S | re.I
     )
 
     # Primary key definition in ALTER TABLE
     alter_pk_pattern = re.compile(
-        r"ALTER TABLE (?:ONLY )?([\w.]+)\s+ADD CONSTRAINT [\w.]+\s+PRIMARY KEY\s*\((.*?)\);",
+        rf"ALTER TABLE (?:ONLY )?({qualified_identifier})\s+ADD CONSTRAINT (?:\"[^\"]+\"|[\w.$]+)\s+PRIMARY KEY\s*\((.*?)\);",
         re.S | re.I
     )
 
     # Inline REFERENCES pattern
     inline_fk_pattern = re.compile(
-        r'REFERENCES\s+([\w.]+)\s*\(([\w.]+)\)', re.I
+        rf'REFERENCES\s+({qualified_identifier})\s*\(({identifier})\)', re.I
     )
 
     # Function pattern - matches CREATE FUNCTION with various delimiters ($$, $tag$, ')
@@ -84,7 +101,7 @@ def parse_sql_dump(sql_dump):
 
         # Extract tables and their columns
         for match in table_pattern.finditer(sql_dump):
-            table_name = match.group(1).strip('"')
+            table_name = normalize_identifier(match.group(1))
             columns = []
             _lines = [table_name]
             for line in match.group(2).split(','):
@@ -119,8 +136,8 @@ def parse_sql_dump(sql_dump):
                         # --- Detect inline REFERENCES ---
                         fk_match = inline_fk_pattern.search(_line)
                         if fk_match:
-                            ref_table = fk_match.group(1)
-                            ref_column = fk_match.group(2)
+                            ref_table = normalize_identifier(fk_match.group(1))
+                            ref_column = fk_match.group(2).strip('"')
                             foreign_keys.append((table_name, column_name, ref_table, ref_column, _line, {}, None))
 
             tables[table_name] = {}
@@ -151,7 +168,7 @@ def parse_sql_dump(sql_dump):
 
         # Extract views
         for match in view_pattern.finditer(sql_dump):
-            view_name = match.group(1).strip('"')
+            view_name = normalize_identifier(match.group(1))
             view_definition = match.group(2).strip()
 
             # Truncate long view definitions for display
@@ -176,10 +193,10 @@ def parse_sql_dump(sql_dump):
         triggers = {}
         constraints = {}
         for match in alter_fk_pattern.finditer(sql_dump):
-            table_name = match.group(1)
-            fk_column = match.group(2).strip()
-            ref_table = match.group(3).strip()
-            ref_column = match.group(4).strip()
+            table_name = normalize_identifier(match.group(1))
+            fk_column = match.group(2).strip().strip('"')
+            ref_table = normalize_identifier(match.group(3).strip())
+            ref_column = match.group(4).strip().strip('"')
             _line = match.string[match.start():match.end()]
 
             if table_name in tables and ref_table in tables:
@@ -189,7 +206,7 @@ def parse_sql_dump(sql_dump):
 
         # Extract primary keys from ALTER TABLE
         for match in alter_pk_pattern.finditer(sql_dump):
-            table_name = match.group(1).strip('"')
+            table_name = normalize_identifier(match.group(1))
             pk_columns = [col.strip().strip('"') 
                          for col in match.group(2).split(',')]
             primary_keys[table_name] = pk_columns
@@ -229,7 +246,7 @@ def parse_sql_dump(sql_dump):
 
             trigger_name = match.group(1).strip('"')
             event = match.group(2).replace('\n', ' ').strip()
-            table_name = match.group(3).strip('"')
+            table_name = normalize_identifier(match.group(3))
             function_name = match.group(4).strip('"')
             function_args = match.group(5).strip()
             full_line = match.string[match.start():match.end()]
@@ -246,7 +263,7 @@ def parse_sql_dump(sql_dump):
         for match in trigger_pattern_noargs.finditer(sql_dump):
             trigger_name = match.group(1).strip('"')
             event = match.group(2).replace('\n', ' ').strip()
-            table_name = match.group(3).strip('"')
+            table_name = normalize_identifier(match.group(3))
             function_name = match.group(4).strip('"')
             function_args = None
             full_line = match.string[match.start():match.end()]
