@@ -1,4 +1,4 @@
-##!/usr/bin/env bash
+#!/usr/bin/env bash
 
 # Test runner script for pypgsvg
 # This script ensures proper environment setup before running tests
@@ -16,7 +16,7 @@ echo -e "${YELLOW}==== pypgsvg Test Runner ====${NC}"
 # 1. Set up virtual environment
 if [ ! -d ".venv" ]; then
     echo -e "${YELLOW}Creating virtual environment...${NC}"
-    python3 -m venv .venv
+    python -m venv .venv
     echo -e "${GREEN}Virtual environment created.${NC}"
 else
     echo -e "${GREEN}Using existing virtual environment.${NC}"
@@ -24,7 +24,7 @@ fi
 
 # 2. Activate virtual environment
 echo -e "${YELLOW}Activating virtual environment...${NC}"
-. venv/bin/activate
+source .venv/bin/activate
 
 # 3. Install dependencies
 echo -e "${YELLOW}Installing package and test dependencies...${NC}"
@@ -55,7 +55,8 @@ done
 # 5. Run the appropriate test suite
 if [ "$TEST_TYPE" = "unit" ]; then
     echo -e "${YELLOW}Running Python unit tests...${NC}"
-    python3 -m pytest tests/tests/ -v $EXTRA_ARGS
+    # Exclude browser-only test groups from unit mode.
+    python -m pytest tests/tests/ -v -m "not browser and not playwright_js and not playwright_js_with_server" $EXTRA_ARGS
     TEST_EXIT_CODE=$?
 elif [ "$TEST_TYPE" = "browser" ]; then
     echo -e "${YELLOW}Running browser functional tests...${NC}"
@@ -64,7 +65,7 @@ elif [ "$TEST_TYPE" = "browser" ]; then
         echo -e "${YELLOW}Installing Playwright browsers...${NC}"
         npx playwright install
     fi
-    npx playwright test --config=tests/playwright.config.js tests/browser/ $EXTRA_ARGS
+    npx playwright test tests/browser/ $EXTRA_ARGS
     TEST_EXIT_CODE=$?
 else
     echo -e "${RED}Unknown test type: $TEST_TYPE${NC}"
