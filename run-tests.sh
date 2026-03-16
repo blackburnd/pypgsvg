@@ -55,7 +55,8 @@ done
 # 5. Run the appropriate test suite
 if [ "$TEST_TYPE" = "unit" ]; then
     echo -e "${YELLOW}Running Python unit tests...${NC}"
-    python -m pytest tests/tests/ -v $EXTRA_ARGS
+    # Exclude browser-only test groups from unit mode.
+    python -m pytest tests/tests/ -v -m "not browser and not playwright_js and not playwright_js_with_server" $EXTRA_ARGS
     TEST_EXIT_CODE=$?
 elif [ "$TEST_TYPE" = "browser" ]; then
     echo -e "${YELLOW}Running browser functional tests...${NC}"
